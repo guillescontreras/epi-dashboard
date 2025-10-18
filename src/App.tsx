@@ -19,17 +19,29 @@ const App: React.FC = () => {
 
     try {
       // Obtener presigned URL
-      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // Tu URL corregida
+      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // Tu URL
       const presignedRes = await axios.get(apiUrl, {
         params: { filename: file.name },
       });
-      const presignedUrl = presignedRes.data.url;
+      console.log('API Response:', presignedRes.data);
 
-      // Depuración: Verifica la URL
-      console.log('Presigned URL:', presignedUrl);
+      // Extraer la URL del body si la respuesta incluye statusCode y body
+      let presignedUrl = presignedRes.data.url;
+      if (!presignedUrl && presignedRes.data.body) {
+        try {
+          const bodyData = JSON.parse(presignedRes.data.body);
+          presignedUrl = bodyData.url;
+        } catch (e) {
+          throw new Error('Formato de respuesta inválido');
+        }
+      }
+
       if (!presignedUrl || typeof presignedUrl !== 'string') {
         throw new Error('URL de subida inválida');
       }
+
+      // Depuración: Verifica la URL
+      console.log('Presigned URL:', presignedUrl);
 
       // Subir la imagen al bucket
       await axios.put(presignedUrl, file, {
