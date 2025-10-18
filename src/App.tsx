@@ -17,25 +17,40 @@ const App: React.FC = () => {
       return;
     }
 
-    // Simular subida a S3 y espera del JSON
-    const filename = `input/${file.name}`;
-    setImageUrl(`https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/${filename}`);
+    try {
+      // Obtener presigned URL
+      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // Reemplaza con tu URL
+      const presignedRes = await axios.get(apiUrl, {
+        params: { filename: file.name },
+      });
+      const presignedUrl = presignedRes.data.url;
 
-    const baseName = file.name.split('.')[0];
-    const jsonUrl = `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/web/${baseName}.json`;
+      // Subir la imagen al bucket
+      await axios.put(presignedUrl, file, { headers: { 'Content-Type': file.type } });
 
-    setTimeout(async () => {
-      try {
-        const res = await axios.get(jsonUrl);
-        setResults(res.data);
-        if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
-          toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
+      // Actualizar la URL de la imagen
+      setImageUrl(`https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${file.name}`);
+
+      // Esperar el JSON (simulado por ahora, reemplazar con API real)
+      const baseName = file.name.split('.')[0];
+      const jsonUrl = `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/web/${baseName}.json`;
+
+      setTimeout(async () => {
+        try {
+          const res = await axios.get(jsonUrl);
+          setResults(res.data);
+          if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
+            toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
+          }
+        } catch (err) {
+          toast.error('Error al obtener resultados: ' + (err.message || 'Verifica la conexión o el archivo JSON'));
+          console.error(err);
         }
-      } catch (err) {
-        toast.error('Error al obtener resultados');
-        console.error(err);
-      }
-    }, 3000);
+      }, 3000);
+    } catch (err) {
+      toast.error('Error al subir la imagen: ' + (err.message || 'Intenta de nuevo'));
+      console.error(err);
+    }
   };
 
   const exportCSV = () => {
