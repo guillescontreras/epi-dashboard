@@ -19,15 +19,20 @@ const App: React.FC = () => {
 
     try {
       // Obtener presigned URL
-      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // Tu URL
+      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload';
       const presignedRes = await axios.get(apiUrl, {
         params: { filename: file.name },
       });
       console.log('API Response:', presignedRes.data);
 
-      // Extraer la URL asegurando que sea una cadena válida
       let presignedUrl = presignedRes.data.url;
-      if (typeof presignedUrl !== 'string') {
+      if (typeof presignedUrl === 'string') {
+        presignedUrl = presignedUrl.trim(); // Eliminar espacios en blanco
+      } else {
+        throw new Error('URL de subida inválida');
+      }
+
+      if (!presignedUrl || typeof presignedUrl !== 'string') {
         throw new Error('URL de subida inválida');
       }
 
@@ -53,13 +58,13 @@ const App: React.FC = () => {
           if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
             toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
           }
-        } catch (err) {
+        } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : 'Verifica la conexión o el archivo JSON';
           toast.error('Error al obtener resultados: ' + errorMessage);
           console.error(err);
         }
       }, 3000);
-    } catch (err) {
+    } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
       toast.error('Error al subir la imagen: ' + errorMessage);
       console.error(err);
