@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -11,7 +11,8 @@ const App: React.FC = () => {
   const [detectionType, setDetectionType] = useState<string>('ppe_detection');
   const [minConfidence, setMinConfidence] = useState<number>(75);
   const [progress, setProgress] = useState<number>(0);
-  const [epiItems, setEpiItems] = useState<string[]>([]);
+  const [strictMode, setStrictMode] = useState<boolean>(true);
+  const [epiItems, setEpiItems] = useState<string[]>(['HEAD_COVER', 'HAND_COVER', 'FACE_COVER']);
   const imageRef = useRef<HTMLImageElement>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
@@ -24,23 +25,19 @@ const App: React.FC = () => {
     }
   };
 
-  const simulateProgress = () => {
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 10;
-      setProgress(currentProgress);
-      if (currentProgress >= 100) clearInterval(interval);
-    }, 500); // Simula progreso en 5 segundos
-  };
-
   const handleUpload = async () => {
     if (!file) {
       toast.error('Por favor, selecciona una imagen');
       return;
     }
 
-    setProgress(10);
-    simulateProgress();
+    setProgress(0);
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      currentProgress += 10;
+      setProgress(Math.min(currentProgress, 100)); // Limita a 100%
+      if (currentProgress >= 100) clearInterval(interval);
+    }, 500);
 
     try {
       // Obtener presigned URL
@@ -63,9 +60,10 @@ const App: React.FC = () => {
       await axios.put(presignedUrl, file, {
         headers: { 'Content-Type': file.type || 'image/jpeg' },
         onUploadProgress: (progressEvent) => {
-          const total = (progressEvent.total ?? file.size) || 1;
-          const percentCompleted = Math.round((progressEvent.loaded * 30) / total);
-          setProgress(percentCompleted);
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 30) / progressEvent.total);
+            setProgress(Math.min(percentCompleted, 30)); // Limita a 30% durante subida
+          }
         },
       });
 
@@ -162,10 +160,11 @@ const App: React.FC = () => {
           <div className="mt-2">
             <label className="block mb-2 font-semibold">Elementos a Auditar</label>
             <div>
-              <label><input type="checkbox" value="HEAD_COVER" onChange={() => handleEpiItemChange('HEAD_COVER')} /> Casco</label>
-              <label><input type="checkbox" value="HAND_COVER" onChange={() => handleEpiItemChange('HAND_COVER')} /> Guantes</label>
-              <label><input type="checkbox" value="FACE_COVER" onChange={() => handleEpiItemChange('FACE_COVER')} /> Mascarilla</label>
+              <label><input type="checkbox" value="HEAD_COVER" checked={epiItems.includes('HEAD_COVER')} onChange={() => handleEpiItemChange('HEAD_COVER')} /> Casco</label>
+              <label><input type="checkbox" value="HAND_COVER" checked={epiItems.includes('HAND_COVER')} onChange={() => handleEpiItemChange('HAND_COVER')} /> Guantes</label>
+              <label><input type="checkbox" value="FACE_COVER" checked={epiItems.includes('FACE_COVER')} onChange={() => handleEpiItemChange('FACE_COVER')} /> Mascarilla</label>
             </div>
+            <label><input type="checkbox" checked={strictMode} onChange={() => setStrictMode(!strictMode)} /> Strict Mode (Todos los elementos requeridos)</label>
           </div>
         )}
       </div>
@@ -225,6 +224,7 @@ const App: React.FC = () => {
                   const y = box.Top * imageDimensions.height;
                   const w = box.Width * imageDimensions.width;
                   const h = box.Height * imageDimensions.height;
+                  const color = p.ProtectiveEquipmentSummarization?.AllRequiredEquipmentCovered ? 'green' : 'red';
                   return (
                     <g key={`person-${i}`}>
                       <rect
@@ -233,10 +233,10 @@ const App: React.FC = () => {
                         width={w}
                         height={h}
                         fill="none"
-                        stroke="blue"
+                        stroke={color}
                         strokeWidth="2"
                       />
-                      <text x={x} y={y - 5} fontSize="12" fill="blue">
+                      <text x={x} y={y - 5} fontSize="12" fill={color}>
                         Person {i} - {p.Confidence.toFixed(2)}%
                       </text>
                     </g>
@@ -252,6 +252,7 @@ const App: React.FC = () => {
                         const y = box.Top * imageDimensions.height;
                         const w = box.Width * imageDimensions.width;
                         const h = box.Height * imageDimensions.height;
+                        const color = ed.Confidence >= minConfidence ? 'green' : 'red';
                         return (
                           <g key={`epi-${j}`}>
                             <rect
@@ -260,10 +261,10 @@ const App: React.FC = () => {
                               width={w}
                               height={h}
                               fill="none"
-                              stroke="green"
+                              stroke={color}
                               strokeWidth="2"
                             />
-                            <text x={x} y={y - 5} fontSize="12" fill="green">
+                            <text x={x} y={y - 5} fontSize="12" fill={color}>
                               {ed.Type} - {ed.Confidence.toFixed(2)}%
                             </text>
                           </g>
@@ -471,7 +472,7 @@ const App: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {results.TextDetections.filter((t: any) => t.Type === 'LINE').map((t: any, i: number) => (
+                {results.TextDetections.map((t: any, i: number) => (
                   <tr key={`text-${i}`}>
                     <td className="border p-2">{t.DetectedText}</td>
                     <td className="border p-2">{t.Confidence.toFixed(2)}%</td>
