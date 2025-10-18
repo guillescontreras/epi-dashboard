@@ -19,19 +19,27 @@ const App: React.FC = () => {
 
     try {
       // Obtener presigned URL
-      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // Reemplaza con tu URL
+      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // Tu URL corregida
       const presignedRes = await axios.get(apiUrl, {
         params: { filename: file.name },
       });
       const presignedUrl = presignedRes.data.url;
 
+      // Depuración: Verifica la URL
+      console.log('Presigned URL:', presignedUrl);
+      if (!presignedUrl || typeof presignedUrl !== 'string') {
+        throw new Error('URL de subida inválida');
+      }
+
       // Subir la imagen al bucket
-      await axios.put(presignedUrl, file, { headers: { 'Content-Type': file.type } });
+      await axios.put(presignedUrl, file, {
+        headers: { 'Content-Type': file.type || 'image/jpeg' },
+      });
 
       // Actualizar la URL de la imagen
       setImageUrl(`https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${file.name}`);
 
-      // Esperar el JSON (simulado por ahora, reemplazar con API real)
+      // Esperar el JSON (simulado por ahora)
       const baseName = file.name.split('.')[0];
       const jsonUrl = `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/web/${baseName}.json`;
 
