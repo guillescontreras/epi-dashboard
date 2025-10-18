@@ -25,18 +25,9 @@ const App: React.FC = () => {
       });
       console.log('API Response:', presignedRes.data);
 
-      // Extraer la URL del body si la respuesta incluye statusCode y body
+      // Extraer la URL asegurando que sea una cadena válida
       let presignedUrl = presignedRes.data.url;
-      if (!presignedUrl && presignedRes.data.body) {
-        try {
-          const bodyData = JSON.parse(presignedRes.data.body);
-          presignedUrl = bodyData.url;
-        } catch (e) {
-          throw new Error('Formato de respuesta inválido');
-        }
-      }
-
-      if (!presignedUrl || typeof presignedUrl !== 'string') {
+      if (typeof presignedUrl !== 'string') {
         throw new Error('URL de subida inválida');
       }
 
