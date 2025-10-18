@@ -16,8 +16,8 @@ const App: React.FC = () => {
   const handleImageLoad = () => {
     if (imageRef.current) {
       setImageDimensions({
-        width: imageRef.current.naturalWidth,
-        height: imageRef.current.naturalHeight,
+        width: imageRef.current.clientWidth,
+        height: imageRef.current.clientHeight,
       });
     }
   };
@@ -30,7 +30,7 @@ const App: React.FC = () => {
 
     try {
       // Obtener presigned URL
-      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload';
+      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // Tu URL
       const presignedRes = await axios.get(apiUrl, {
         params: { filename: file.name },
       });
@@ -38,7 +38,7 @@ const App: React.FC = () => {
 
       let presignedUrl = presignedRes.data.url;
       if (typeof presignedUrl === 'string') {
-        presignedUrl = presignedUrl.trim();
+        presignedUrl = presignedUrl.trim(); // Eliminar espacios en blanco
       } else {
         throw new Error('URL de subida inválida');
       }
@@ -69,7 +69,7 @@ const App: React.FC = () => {
           toast.error('Error al obtener resultados: ' + errorMessage);
           console.error(err);
         }
-      }, 3000);
+      }, 5000); // Aumentado a 5 segundos para dar más tiempo a la Lambda
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
       toast.error('Error al subir la imagen: ' + errorMessage);
@@ -167,8 +167,8 @@ const App: React.FC = () => {
 
           <h3 className="text-lg font-semibold">Imagen con Anotaciones</h3>
           <div style={{ position: 'relative', maxWidth: '100%' }}>
-            <img src={imageUrl} alt="Original" style={{ maxWidth: '100%' }} ref={imageRef} onLoad={handleImageLoad} />
-            <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+            <img ref={imageRef} src={imageUrl} alt="Original" style={{ maxWidth: '100%' }} onLoad={handleImageLoad} />
+            <svg style={{ position: 'absolute', top: 0, left: 0, width: imageDimensions.width, height: imageDimensions.height }}>
               {results.DetectionType === 'ppe_detection' &&
                 results.ProtectiveEquipment.map((p: any, i: number) => {
                   const box = p.BoundingBox;
@@ -177,16 +177,20 @@ const App: React.FC = () => {
                   const w = box.Width * imageDimensions.width;
                   const h = box.Height * imageDimensions.height;
                   return (
-                    <rect
-                      key={`person-${i}`}
-                      x={x}
-                      y={y}
-                      width={w}
-                      height={h}
-                      fill="none"
-                      stroke="blue"
-                      strokeWidth="2"
-                    />
+                    <g key={`person-${i}`}>
+                      <rect
+                        x={x}
+                        y={y}
+                        width={w}
+                        height={h}
+                        fill="none"
+                        stroke="blue"
+                        strokeWidth="2"
+                      />
+                      <text x={x} y={y - 5} fontSize="12" fill="blue">
+                        Person {i} - {p.Confidence.toFixed(2)}%
+                      </text>
+                    </g>
                   );
                 })}
               {results.DetectionType === 'ppe_detection' &&
@@ -200,16 +204,20 @@ const App: React.FC = () => {
                         const w = box.Width * imageDimensions.width;
                         const h = box.Height * imageDimensions.height;
                         return (
-                          <rect
-                            key={`epi-${j}`}
-                            x={x}
-                            y={y}
-                            width={w}
-                            height={h}
-                            fill="none"
-                            stroke="green"
-                            strokeWidth="2"
-                          />
+                          <g key={`epi-${j}`}>
+                            <rect
+                              x={x}
+                              y={y}
+                              width={w}
+                              height={h}
+                              fill="none"
+                              stroke="green"
+                              strokeWidth="2"
+                            />
+                            <text x={x} y={y - 5} fontSize="12" fill="green">
+                              {ed.Type} - {ed.Confidence.toFixed(2)}%
+                            </text>
+                          </g>
                         );
                       }
                       return null;
@@ -224,53 +232,57 @@ const App: React.FC = () => {
                   const w = box.Width * imageDimensions.width;
                   const h = box.Height * imageDimensions.height;
                   return (
-                    <rect
-                      key={`face-${i}`}
-                      x={x}
-                      y={y}
-                      width={w}
-                      height={h}
-                      fill="none"
-                      stroke="red"
-                      strokeWidth="2"
-                    />
+                    <g key={`face-${i}`}>
+                      <rect
+                        x={x}
+                        y={y}
+                        width={w}
+                        height={h}
+                        fill="none"
+                        stroke="red"
+                        strokeWidth="2"
+                      />
+                      <text x={x} y={y - 5} fontSize="12" fill="red">
+                        Face {i} - {f.Confidence.toFixed(2)}%
+                      </text>
+                    </g>
                   );
                 })}
-              </svg>
-            </div>
-
-            <h3 className="text-lg font-semibold mt-4">Detalles de Detección</h3>
-            {results.DetectionType === 'ppe_detection' && (
-              <table className="table-auto w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className="border p-2">Persona ID</th>
-                    <th className="border p-2">Parte del Cuerpo</th>
-                    <th className="border p-2">Tipo de EPI</th>
-                    <th className="border p-2">Confianza</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.ProtectiveEquipment.flatMap((p: any, i: number) =>
-                    p.BodyParts.flatMap((bp: any) =>
-                      bp.EquipmentDetections.map((ed: any, j: number) => (
-                        <tr key={`epi-${i}-${j}`}>
-                          <td className="border p-2">{i}</td>
-                          <td className="border p-2">{bp.Name}</td>
-                          <td className="border p-2">{ed.Type}</td>
-                          <td className="border p-2">{ed.Confidence.toFixed(2)}%</td>
-                        </tr>
-                      ))
-                    )
-                  )}
-                </tbody>
-              </table>
-            )}
+            </svg>
           </div>
-        )}
-        <ToastContainer />
-      </div>
-    );
-  };
 
-  export default App;
+          <h3 className="text-lg font-semibold mt-4">Detalles de Detección</h3>
+          {results.DetectionType === 'ppe_detection' && (
+            <table className="table-auto w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border p-2">Persona ID</th>
+                  <th className="border p-2">Parte del Cuerpo</th>
+                  <th className="border p-2">Tipo de EPI</th>
+                  <th className="border p-2">Confianza</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.ProtectiveEquipment.flatMap((p: any, i: number) =>
+                  p.BodyParts.flatMap((bp: any) =>
+                    bp.EquipmentDetections.map((ed: any, j: number) => (
+                      <tr key={`epi-${i}-${j}`}>
+                        <td className="border p-2">{i}</td>
+                        <td className="border p-2">{bp.Name}</td>
+                        <td className="border p-2">{ed.Type}</td>
+                        <td className="border p-2">{ed.Confidence.toFixed(2)}%</td>
+                      </tr>
+                    ))
+                  )
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+      <ToastContainer />
+    </div>
+  );
+};
+
+export default App;
