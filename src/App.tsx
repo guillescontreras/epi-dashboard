@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -10,6 +10,8 @@ const App: React.FC = () => {
   const [results, setResults] = useState<any>(null);
   const [detectionType, setDetectionType] = useState<string>('ppe_detection');
   const [minConfidence, setMinConfidence] = useState<number>(75);
+  const [progress, setProgress] = useState<number>(0);
+  const [epiItems, setEpiItems] = useState<string[]>([]);
   const imageRef = useRef<HTMLImageElement>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
@@ -22,15 +24,27 @@ const App: React.FC = () => {
     }
   };
 
+  const simulateProgress = () => {
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      currentProgress += 10;
+      setProgress(currentProgress);
+      if (currentProgress >= 100) clearInterval(interval);
+    }, 500); // Simula progreso en 5 segundos
+  };
+
   const handleUpload = async () => {
     if (!file) {
       toast.error('Por favor, selecciona una imagen');
       return;
     }
 
+    setProgress(10);
+    simulateProgress();
+
     try {
       // Obtener presigned URL
-      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // Tu URL
+      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload';
       const presignedRes = await axios.get(apiUrl, {
         params: { filename: file.name },
       });
@@ -38,7 +52,7 @@ const App: React.FC = () => {
 
       let presignedUrl = presignedRes.data.url;
       if (typeof presignedUrl === 'string') {
-        presignedUrl = presignedUrl.trim(); // Eliminar espacios en blanco
+        presignedUrl = presignedUrl.trim();
       } else {
         throw new Error('URL de subida inválida');
       }
@@ -48,12 +62,19 @@ const App: React.FC = () => {
       // Subir la imagen al bucket
       await axios.put(presignedUrl, file, {
         headers: { 'Content-Type': file.type || 'image/jpeg' },
+        onUploadProgress: (progressEvent) => {
+          const total = (progressEvent.total ?? file.size) || 1;
+          const percentCompleted = Math.round((progressEvent.loaded * 30) / total);
+          setProgress(percentCompleted);
+        },
       });
+
+      setProgress(40);
 
       // Actualizar la URL de la imagen
       setImageUrl(`https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${file.name}`);
 
-      // Esperar el JSON (simulado por ahora)
+      // Esperar el JSON
       const baseName = file.name.split('.')[0];
       const jsonUrl = `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/web/${baseName}.json`;
 
@@ -61,18 +82,22 @@ const App: React.FC = () => {
         try {
           const res = await axios.get(jsonUrl);
           setResults(res.data);
+          setProgress(70);
           if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
             toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
           }
+          setProgress(100);
         } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : 'Verifica la conexión o el archivo JSON';
           toast.error('Error al obtener resultados: ' + errorMessage);
+          setProgress(0);
           console.error(err);
         }
-      }, 5000); // Aumentado a 5 segundos para dar más tiempo a la Lambda
+      }, 5000);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
       toast.error('Error al subir la imagen: ' + errorMessage);
+      setProgress(0);
       console.error(err);
     }
   };
@@ -86,7 +111,7 @@ const App: React.FC = () => {
           BodyPart: bp.Name,
           Type: ed.Type,
           Confidence: ed.Confidence.toFixed(2),
-          Compliant: ed.Confidence >= results.MinConfidence ? 'Sí' : 'No',
+          Compliant: ed.Confidence >= minConfidence ? 'Sí' : 'No',
         }))
       )
     );
@@ -99,9 +124,15 @@ const App: React.FC = () => {
     a.click();
   };
 
+  const handleEpiItemChange = (item: string) => {
+    setEpiItems((prev) => 
+      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+    );
+  };
+
   return (
     <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Dashboard de Auditoría EPI</h1>
+      <h1 className="text-2xl font-bold mb-4">Análisis visual basado en algoritmos de detección - CoironTech</h1>
       
       <div className="mb-4">
         <label className="block mb-2 font-semibold">Seleccionar Imagen</label>
@@ -114,7 +145,7 @@ const App: React.FC = () => {
       </div>
 
       <div className="mb-4">
-        <label className="block mb-2 font-semibold">Tipo de Detección</label>
+        <label className="block mb-2 font-semibold">Algoritmo de Detección</label>
         <select
           value={detectionType}
           onChange={(e) => setDetectionType(e.target.value)}
@@ -127,18 +158,29 @@ const App: React.FC = () => {
           <option value="moderation_detection">Contenido Moderado</option>
           <option value="celebrity_detection">Celebridades</option>
         </select>
+        {detectionType === 'ppe_detection' && (
+          <div className="mt-2">
+            <label className="block mb-2 font-semibold">Elementos a Auditar</label>
+            <div>
+              <label><input type="checkbox" value="HEAD_COVER" onChange={() => handleEpiItemChange('HEAD_COVER')} /> Casco</label>
+              <label><input type="checkbox" value="HAND_COVER" onChange={() => handleEpiItemChange('HAND_COVER')} /> Guantes</label>
+              <label><input type="checkbox" value="FACE_COVER" onChange={() => handleEpiItemChange('FACE_COVER')} /> Mascarilla</label>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mb-4">
         <label className="block mb-2 font-semibold">Confianza Mínima (%)</label>
         <input
-          type="number"
-          value={minConfidence}
-          onChange={(e) => setMinConfidence(Number(e.target.value))}
+          type="range"
           min="0"
           max="100"
-          className="p-2 border rounded w-full"
+          value={minConfidence}
+          onChange={(e) => setMinConfidence(Number(e.target.value))}
+          className="w-full"
         />
+        <span>{minConfidence}%</span>
       </div>
 
       <button
@@ -148,6 +190,13 @@ const App: React.FC = () => {
         Subir y Analizar
       </button>
 
+      {progress > 0 && (
+        <div className="mt-4">
+          <progress value={progress} max="100" className="w-full" />
+          <p>Progreso: {progress}%</p>
+        </div>
+      )}
+
       {results && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold">Resultados</h2>
@@ -155,7 +204,7 @@ const App: React.FC = () => {
             <div className="mb-4">
               <p><strong>Total Personas:</strong> {results.Summary.totalPersons}</p>
               <p><strong>Cumplientes:</strong> {results.Summary.compliant}</p>
-              <p><strong>Confianza Mínima:</strong> {results.Summary.minConfidence}%</p>
+              <p><strong>Confianza Mínima:</strong> {minConfidence}%</p>
               <button
                 onClick={exportCSV}
                 className="bg-green-500 text-white p-2 rounded hover:bg-green-600 mt-2"
@@ -197,7 +246,7 @@ const App: React.FC = () => {
                 results.ProtectiveEquipment.flatMap((p: any) =>
                   p.BodyParts.flatMap((bp: any) =>
                     bp.EquipmentDetections.map((ed: any, j: number) => {
-                      if (ed.Confidence >= results.MinConfidence) {
+                      if (ed.Confidence >= minConfidence && (!epiItems.length || epiItems.includes(ed.Type))) {
                         const box = ed.BoundingBox;
                         const x = box.Left * imageDimensions.width;
                         const y = box.Top * imageDimensions.height;
@@ -248,6 +297,105 @@ const App: React.FC = () => {
                     </g>
                   );
                 })}
+              {results.DetectionType === 'label_detection' &&
+                results.Labels.map((l: any, i: number) => {
+                  const box = l.Instances?.[0]?.BoundingBox || { Left: 0, Top: 0, Width: 0.1, Height: 0.1 };
+                  const x = box.Left * imageDimensions.width;
+                  const y = box.Top * imageDimensions.height;
+                  const w = box.Width * imageDimensions.width;
+                  const h = box.Height * imageDimensions.height;
+                  return (
+                    <g key={`label-${i}`}>
+                      <rect
+                        x={x}
+                        y={y}
+                        width={w}
+                        height={h}
+                        fill="none"
+                        stroke="purple"
+                        strokeWidth="2"
+                      />
+                      <text x={x} y={y - 5} fontSize="12" fill="purple">
+                        {l.Name} - {l.Confidence.toFixed(2)}%
+                      </text>
+                    </g>
+                  );
+                })}
+              {results.DetectionType === 'text_detection' &&
+                results.TextDetections.map((t: any, i: number) => {
+                  if (t.Type === 'LINE') {
+                    const box = t.Geometry.BoundingBox;
+                    const x = box.Left * imageDimensions.width;
+                    const y = box.Top * imageDimensions.height;
+                    const w = box.Width * imageDimensions.width;
+                    const h = box.Height * imageDimensions.height;
+                    return (
+                      <g key={`text-${i}`}>
+                        <rect
+                          x={x}
+                          y={y}
+                          width={w}
+                          height={h}
+                          fill="none"
+                          stroke="orange"
+                          strokeWidth="2"
+                        />
+                        <text x={x} y={y - 5} fontSize="12" fill="orange">
+                          {t.DetectedText} - {t.Confidence.toFixed(2)}%
+                        </text>
+                      </g>
+                    );
+                  }
+                  return null;
+                })}
+              {results.DetectionType === 'moderation_detection' &&
+                results.ModerationLabels.map((m: any, i: number) => {
+                  const box = m.BoundingBox || { Left: 0, Top: 0, Width: 0.1, Height: 0.1 };
+                  const x = box.Left * imageDimensions.width;
+                  const y = box.Top * imageDimensions.height;
+                  const w = box.Width * imageDimensions.width;
+                  const h = box.Height * imageDimensions.height;
+                  return (
+                    <g key={`moderation-${i}`}>
+                      <rect
+                        x={x}
+                        y={y}
+                        width={w}
+                        height={h}
+                        fill="none"
+                        stroke="yellow"
+                        strokeWidth="2"
+                      />
+                      <text x={x} y={y - 5} fontSize="12" fill="yellow">
+                        {m.Name} - {m.Confidence.toFixed(2)}%
+                      </text>
+                    </g>
+                  );
+                })}
+              {results.DetectionType === 'celebrity_detection' &&
+                results.Celebrities.map((c: any, i: number) => {
+                  const box = c.Face?.BoundingBox || { Left: 0, Top: 0, Width: 0.1, Height: 0.1 };
+                  const x = box.Left * imageDimensions.width;
+                  const y = box.Top * imageDimensions.height;
+                  const w = box.Width * imageDimensions.width;
+                  const h = box.Height * imageDimensions.height;
+                  return (
+                    <g key={`celebrity-${i}`}>
+                      <rect
+                        x={x}
+                        y={y}
+                        width={w}
+                        height={h}
+                        fill="none"
+                        stroke="pink"
+                        strokeWidth="2"
+                      />
+                      <text x={x} y={y - 5} fontSize="12" fill="pink">
+                        {c.Name} - {c.MatchConfidence.toFixed(2)}%
+                      </text>
+                    </g>
+                  );
+                })}
             </svg>
           </div>
 
@@ -275,6 +423,96 @@ const App: React.FC = () => {
                     ))
                   )
                 )}
+              </tbody>
+            </table>
+          )}
+          {results.DetectionType === 'face_detection' && (
+            <table className="table-auto w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border p-2">ID Rostro</th>
+                  <th className="border p-2">Confianza</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.Faces.map((f: any, i: number) => (
+                  <tr key={`face-${i}`}>
+                    <td className="border p-2">{i}</td>
+                    <td className="border p-2">{f.Confidence.toFixed(2)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {results.DetectionType === 'label_detection' && (
+            <table className="table-auto w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border p-2">Objeto</th>
+                  <th className="border p-2">Confianza</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.Labels.map((l: any, i: number) => (
+                  <tr key={`label-${i}`}>
+                    <td className="border p-2">{l.Name}</td>
+                    <td className="border p-2">{l.Confidence.toFixed(2)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {results.DetectionType === 'text_detection' && (
+            <table className="table-auto w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border p-2">Texto Detectado</th>
+                  <th className="border p-2">Confianza</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.TextDetections.filter((t: any) => t.Type === 'LINE').map((t: any, i: number) => (
+                  <tr key={`text-${i}`}>
+                    <td className="border p-2">{t.DetectedText}</td>
+                    <td className="border p-2">{t.Confidence.toFixed(2)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {results.DetectionType === 'moderation_detection' && (
+            <table className="table-auto w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border p-2">Categoría</th>
+                  <th className="border p-2">Confianza</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.ModerationLabels.map((m: any, i: number) => (
+                  <tr key={`moderation-${i}`}>
+                    <td className="border p-2">{m.Name}</td>
+                    <td className="border p-2">{m.Confidence.toFixed(2)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {results.DetectionType === 'celebrity_detection' && (
+            <table className="table-auto w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border p-2">Celebridad</th>
+                  <th className="border p-2">Confianza</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.Celebrities.map((c: any, i: number) => (
+                  <tr key={`celebrity-${i}`}>
+                    <td className="border p-2">{c.Name}</td>
+                    <td className="border p-2">{c.MatchConfidence.toFixed(2)}%</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}
