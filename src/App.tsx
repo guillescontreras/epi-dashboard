@@ -43,12 +43,14 @@ const App: React.FC = () => {
             toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
           }
         } catch (err) {
-          toast.error('Error al obtener resultados: ' + (err.message || 'Verifica la conexión o el archivo JSON'));
+          const errorMessage = err instanceof Error ? err.message : 'Verifica la conexión o el archivo JSON';
+          toast.error('Error al obtener resultados: ' + errorMessage);
           console.error(err);
         }
       }, 3000);
     } catch (err) {
-      toast.error('Error al subir la imagen: ' + (err.message || 'Intenta de nuevo'));
+      const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
+      toast.error('Error al subir la imagen: ' + errorMessage);
       console.error(err);
     }
   };
