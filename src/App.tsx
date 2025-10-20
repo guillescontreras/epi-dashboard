@@ -41,7 +41,7 @@ const App: React.FC = () => {
 
     try {
       // Obtener presigned URL
-      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // URL original para presigned
+      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload'; // URL absoluta
       const presignedRes = await axios.get(apiUrl, {
         params: { filename: file.name },
       });
@@ -62,7 +62,7 @@ const App: React.FC = () => {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
             const percentCompleted = Math.round((progressEvent.loaded * 30) / progressEvent.total);
-            setProgress(Math.min(percentCompleted, 30));
+            setProgress(percentCompleted);
           }
         },
       });
@@ -72,8 +72,8 @@ const App: React.FC = () => {
       // Actualizar la URL de la imagen
       setImageUrl(`https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${file.name}`);
 
-      // Invocar la Lambda para análisis con la nueva URL
-      const analyzeApiUrl = 'https://tf52bbq6o6.execute-api.us-east-1.amazonaws.com/prod/analyze'; // Nueva URL proporcionada
+      // Invocar la Lambda para análisis
+      const analyzeApiUrl = 'https://tf52bbq6o6.execute-api.us-east-1.amazonaws.com/prod/analyze'; // URL absoluta
       const lambdaPayload = {
         bucket: 'rekognition-gcontreras',
         filename: `input/${file.name}`,
