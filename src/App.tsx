@@ -77,17 +77,18 @@ const handleUpload = async () => {
     const lambdaPayload = {
       bucket: 'rekognition-gcontreras',
       filename: `input/${file.name}`,
-      detection_type: detectionType, // Asegurarse de que este valor sea el seleccionado
+      detection_type: detectionType,
       min_confidence: minConfidence,
     };
-    console.log('Payload enviado a analyze:', lambdaPayload); // Agregar log para depuración
+    console.log('Payload enviado a analyze:', lambdaPayload);
 
-    await axios.post(analyzeApiUrl, lambdaPayload);
+    const analyzeRes = await axios.post(analyzeApiUrl, lambdaPayload);
     setProgress(50);
+    const jsonKey = analyzeRes.data.resultsFile; // Obtener el nombre único del JSON
+    console.log('JSON Key recibido:', jsonKey); // Depuración
 
     // Esperar el JSON
-    const baseName = file.name.split('.')[0];
-    const jsonUrl = `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/web/${baseName}.json`;
+    const jsonUrl = `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/${jsonKey}`;
 
     setTimeout(async () => {
       try {
