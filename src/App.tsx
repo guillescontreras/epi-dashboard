@@ -32,28 +32,21 @@ const App: React.FC = () => {
     }
 
     setProgress(0);
-    let currentProgress = 0;
     const interval = setInterval(() => {
-      currentProgress += 10;
-      setProgress(Math.min(currentProgress, 100));
-      if (currentProgress >= 100) clearInterval(interval);
+      setProgress((prev) => Math.min(prev + 10, 100));
     }, 500);
 
     try {
-      // Obtener presigned URL
-      const apiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload';
-      const presignedRes = await axios.get(apiUrl, {
-        params: { filename: file.name },
-      });
+      // Obtener presigned URL para subir
+      const uploadApiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload';
+      const presignedRes = await axios.get(uploadApiUrl, { params: { filename: file.name } });
       console.log('API Response:', presignedRes.data);
 
       let presignedUrl = presignedRes.data.url;
-      if (typeof presignedUrl === 'string') {
-        presignedUrl = presignedUrl.trim();
-      } else {
+      if (typeof presignedUrl !== 'string' || !presignedUrl.trim()) {
         throw new Error('URL de subida inválida');
       }
-
+      presignedUrl = presignedUrl.trim();
       console.log('Presigned URL:', presignedUrl);
 
       // Subir la imagen al bucket
@@ -84,32 +77,30 @@ const App: React.FC = () => {
 
       const analyzeRes = await axios.post(analyzeApiUrl, lambdaPayload);
       setProgress(50);
-      const jsonKey = analyzeRes.data.resultsFile; // Obtener el nombre único del JSON
-      console.log('JSON Key recibido:', jsonKey); // Depuración
 
-      // Esperar el JSON
-      const jsonUrl = `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/${jsonKey}`;
+      const { presignedUrl: jsonPresignedUrl } = analyzeRes.data;
+      console.log('Presigned URL recibida:', jsonPresignedUrl);
 
-      setTimeout(async () => {
-        try {
-          const res = await axios.get(jsonUrl);
-          setResults(res.data);
-          setProgress(70);
-          if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
-            toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
-          }
-          setProgress(100);
-        } catch (err: unknown) {
-          const errorMessage = err instanceof Error ? err.message : 'Verifica la conexión o el archivo JSON';
-          toast.error('Error al obtener resultados: ' + errorMessage);
-          setProgress(0);
-          console.error(err);
-        }
-      }, 5000);
+      if (!jsonPresignedUrl || typeof jsonPresignedUrl !== 'string') {
+        throw new Error('URL presigned para JSON no válida');
+      }
+
+      // Obtener el JSON usando la presigned URL
+      const res = await axios.get(jsonPresignedUrl);
+      setResults(res.data);
+      setProgress(70);
+
+      if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
+        toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
+      }
+
+      setProgress(100);
+      clearInterval(interval);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
-      toast.error('Error al subir la imagen: ' + errorMessage);
+      toast.error('Error en el proceso: ' + errorMessage);
       setProgress(0);
+      clearInterval(interval);
       console.error(err);
     }
   };
