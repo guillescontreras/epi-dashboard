@@ -78,10 +78,26 @@ const App: React.FC = () => {
       const analyzeRes = await axios.post(analyzeApiUrl, lambdaPayload);
       setProgress(50);
 
-      const { presignedUrl: jsonPresignedUrl } = analyzeRes.data;
+      console.log('Respuesta completa de analyze:', analyzeRes.data);
+      console.log('Status de respuesta:', analyzeRes.status);
+      
+      // Parsear el body si viene como string
+      let responseData = analyzeRes.data;
+      if (typeof responseData.body === 'string') {
+        try {
+          responseData = JSON.parse(responseData.body);
+          console.log('Body parseado:', responseData);
+        } catch (parseError) {
+          console.error('Error parseando body:', parseError);
+          throw new Error('Respuesta de análisis inválida');
+        }
+      }
+
+      const jsonPresignedUrl = responseData.presignedUrl;
       console.log('Presigned URL recibida:', jsonPresignedUrl);
 
       if (!jsonPresignedUrl || typeof jsonPresignedUrl !== 'string') {
+        console.error('Estructura de respuesta:', responseData);
         throw new Error('URL presigned para JSON no válida');
       }
 
