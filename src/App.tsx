@@ -1,10 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Papa from 'papaparse';
+import ModernHeader from './components/ModernHeader';
+import ModernAnalysisPanel from './components/ModernAnalysisPanel';
+import Dashboard from './components/Dashboard';
+
+import ImageComparison from './components/ImageComparison';
 
 const App: React.FC = () => {
+  const [activeSection, setActiveSection] = useState<string>('analysis');
   const [file, setFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
   const [results, setResults] = useState<any>(null);
@@ -12,18 +18,9 @@ const App: React.FC = () => {
   const [minConfidence, setMinConfidence] = useState<number>(75);
   const [progress, setProgress] = useState<number>(0);
   const [strictMode, setStrictMode] = useState<boolean>(true);
-  const [epiItems, setEpiItems] = useState<string[]>(['HEAD_COVER', 'HAND_COVER', 'FACE_COVER']);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [epiItems, setEpiItems] = useState<string[]>(['HEAD_COVER', 'EYE_COVER', 'HAND_COVER', 'FOOT_COVER', 'FACE_COVER', 'EAR_COVER']);
+  const [analysisHistory, setAnalysisHistory] = useState<any[]>([]);
 
-  const handleImageLoad = () => {
-    if (imageRef.current) {
-      setImageDimensions({
-        width: imageRef.current.clientWidth,
-        height: imageRef.current.clientHeight,
-      });
-    }
-  };
 
   const handleUpload = async () => {
     if (!file) {
@@ -72,21 +69,28 @@ const App: React.FC = () => {
         filename: `input/${file.name}`,
         detection_type: detectionType,
         min_confidence: minConfidence,
+        epi_items: detectionType === 'ppe_detection' ? epiItems : undefined,
       };
       console.log('Payload enviado a analyze:', lambdaPayload);
 
       const analyzeRes = await axios.post(analyzeApiUrl, lambdaPayload);
       setProgress(50);
 
-      console.log('Respuesta completa de analyze:', analyzeRes.data);
-      console.log('Status de respuesta:', analyzeRes.status);
-      
       // Parsear el body si viene como string
       let responseData = analyzeRes.data;
-      if (typeof responseData.body === 'string') {
+      if (typeof responseData === 'string') {
+        try {
+          responseData = JSON.parse(responseData);
+        } catch (parseError) {
+          console.error('Error parseando respuesta:', parseError);
+          throw new Error('Respuesta de análisis inválida');
+        }
+      }
+      
+      // Si la respuesta tiene body como string, parsearlo
+      if (responseData.body && typeof responseData.body === 'string') {
         try {
           responseData = JSON.parse(responseData.body);
-          console.log('Body parseado:', responseData);
         } catch (parseError) {
           console.error('Error parseando body:', parseError);
           throw new Error('Respuesta de análisis inválida');
@@ -94,16 +98,18 @@ const App: React.FC = () => {
       }
 
       const jsonPresignedUrl = responseData.presignedUrl;
-      console.log('Presigned URL recibida:', jsonPresignedUrl);
 
       if (!jsonPresignedUrl || typeof jsonPresignedUrl !== 'string') {
-        console.error('Estructura de respuesta:', responseData);
+        console.error('Estructura de respuesta completa:', analyzeRes.data);
+        console.error('ResponseData procesada:', responseData);
         throw new Error('URL presigned para JSON no válida');
       }
 
       // Obtener el JSON usando la presigned URL
       const res = await axios.get(jsonPresignedUrl);
-      setResults(res.data);
+      const analysisResult = { ...res.data, timestamp: Date.now() };
+      setResults(analysisResult);
+      setAnalysisHistory(prev => [...prev, analysisResult]);
       setProgress(70);
 
       if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
@@ -111,12 +117,17 @@ const App: React.FC = () => {
       }
 
       setProgress(100);
-      clearInterval(interval);
+      setTimeout(() => {
+        setProgress(0);
+        clearInterval(interval);
+      }, 1000);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
       toast.error('Error en el proceso: ' + errorMessage);
-      setProgress(0);
-      clearInterval(interval);
+      setTimeout(() => {
+        setProgress(0);
+        clearInterval(interval);
+      }, 1000);
       console.error(err);
     }
   };
@@ -149,414 +160,183 @@ const App: React.FC = () => {
     );
   };
 
-  return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Análisis visual basado en algoritmos de detección - CoironTech</h1>
-      
-      <div className="mb-4">
-        <label className="block mb-2 font-semibold">Seleccionar Imagen</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="mb-2 border p-2 rounded"
-        />
-      </div>
-
-      <div className="mb-4">
-        <label className="block mb-2 font-semibold">Algoritmo de Detección</label>
-        <select
-          value={detectionType}
-          onChange={(e) => setDetectionType(e.target.value)}
-          className="p-2 border rounded w-full"
-        >
-          <option value="ppe_detection">EPI (Equipos de Protección)</option>
-          <option value="face_detection">Rostros</option>
-          <option value="label_detection">Objetos</option>
-          <option value="text_detection">Texto</option>
-          <option value="moderation_detection">Contenido Moderado</option>
-          <option value="celebrity_detection">Celebridades</option>
-        </select>
-        {detectionType === 'ppe_detection' && (
-          <div className="mt-2">
-            <label className="block mb-2 font-semibold">Elementos a Auditar</label>
-            <div>
-              <label><input type="checkbox" value="HEAD_COVER" checked={epiItems.includes('HEAD_COVER')} onChange={() => handleEpiItemChange('HEAD_COVER')} /> Casco</label>
-              <label><input type="checkbox" value="HAND_COVER" checked={epiItems.includes('HAND_COVER')} onChange={() => handleEpiItemChange('HAND_COVER')} /> Guantes</label>
-              <label><input type="checkbox" value="FACE_COVER" checked={epiItems.includes('FACE_COVER')} onChange={() => handleEpiItemChange('FACE_COVER')} /> Mascarilla</label>
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'analysis':
+        return (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div className="xl:col-span-2">
+              <ModernAnalysisPanel
+                file={file}
+                setFile={setFile}
+                detectionType={detectionType}
+                setDetectionType={setDetectionType}
+                minConfidence={minConfidence}
+                setMinConfidence={setMinConfidence}
+                epiItems={epiItems}
+                handleEpiItemChange={handleEpiItemChange}
+                strictMode={strictMode}
+                setStrictMode={setStrictMode}
+                handleUpload={handleUpload}
+                progress={progress}
+              />
             </div>
-            <label><input type="checkbox" checked={strictMode} onChange={() => setStrictMode(!strictMode)} /> Strict Mode (Todos los elementos requeridos)</label>
+            <div className="space-y-6">
+              {results && (
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+                    <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                      <span>📊</span>
+                      <span>Resultados del Análisis</span>
+                    </h2>
+                  </div>
+                  
+                  <div className="p-6">
+                    {results.DetectionType === 'ppe_detection' && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
+                            <p className="text-3xl font-bold">{results.Summary?.totalPersons || 0}</p>
+                            <p className="text-sm opacity-90">Personas Detectadas</p>
+                          </div>
+                          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
+                            <p className="text-3xl font-bold">{results.Summary?.compliant || 0}</p>
+                            <p className="text-sm opacity-90">Cumplientes</p>
+                          </div>
+                          <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
+                            <p className="text-3xl font-bold">{minConfidence}%</p>
+                            <p className="text-sm opacity-90">Confianza Mínima</p>
+                          </div>
+                        </div>
+                        
+                        {/* Resumen por Elemento EPI */}
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Elementos EPI Seleccionados:</h4>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            {epiItems.map((item) => {
+                              const itemName = item === 'HEAD_COVER' ? 'Casco' :
+                                             item === 'EYE_COVER' ? 'Gafas' :
+                                             item === 'HAND_COVER' ? 'Guantes' :
+                                             item === 'FOOT_COVER' ? 'Calzado' :
+                                             item === 'FACE_COVER' ? 'Mascarilla' :
+                                             item === 'EAR_COVER' ? 'Orejeras' : item;
+                              
+                              // Contar detecciones de este elemento
+                              const detections = results.ProtectiveEquipment?.reduce((count: number, person: any) => {
+                                return count + (person.BodyParts?.reduce((partCount: number, part: any) => {
+                                  return partCount + (part.EquipmentDetections?.filter((eq: any) => 
+                                    eq.Type === item && eq.Confidence >= minConfidence
+                                  ).length || 0);
+                                }, 0) || 0);
+                              }, 0) || 0;
+                              
+                              return (
+                                <div key={item} className={`flex items-center justify-between p-2 rounded ${
+                                  detections > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }`}>
+                                  <span>{itemName}</span>
+                                  <span className="font-bold">{detections > 0 ? '✓' : '✗'}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        
+                        <button
+                          onClick={exportCSV}
+                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-xl font-medium hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                        >
+                          <span>📄</span>
+                          <span>Exportar Reporte</span>
+                        </button>
+                      </div>
+                    )}
+                    {results.DetectionType === 'face_detection' && (
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-4 text-white text-center">
+                          <p className="text-3xl font-bold">{results.Summary?.totalFaces || 0}</p>
+                          <p className="text-sm opacity-90">Rostros Detectados</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
+                          <p className="text-3xl font-bold">{minConfidence}%</p>
+                          <p className="text-sm opacity-90">Confianza Mínima</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 'dashboard':
+        return <Dashboard analysisHistory={analysisHistory} />;
+      case 'history':
+        return (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">📋 Historial de Análisis</h2>
+            {analysisHistory.length > 0 ? (
+              <div className="space-y-4">
+                {analysisHistory.map((analysis, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-gray-900">
+                          {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPI' :
+                           analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
+                           '🔍 Análisis General'}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {new Date(analysis.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">Confianza: {analysis.MinConfidence}%</p>
+                        {analysis.Summary && (
+                          <p className="text-sm text-gray-600">
+                            {analysis.DetectionType === 'ppe_detection' && 
+                              `${analysis.Summary.compliant}/${analysis.Summary.totalPersons} cumplientes`}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">📋</div>
+                <p className="text-gray-500">No hay análisis en el historial</p>
+              </div>
+            )}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+      <ModernHeader activeSection={activeSection} onSectionChange={setActiveSection} />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {renderContent()}
+        
+        {/* Visualización de Resultados */}
+        {results && activeSection === 'analysis' && imageUrl && (
+          <div className="mt-8">
+            <ImageComparison 
+              results={results}
+              imageUrl={imageUrl}
+              minConfidence={minConfidence}
+              epiItems={epiItems}
+            />
           </div>
         )}
-      </div>
+      </main>
 
-      <div className="mb-4">
-        <label className="block mb-2 font-semibold">Confianza Mínima (%)</label>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={minConfidence}
-          onChange={(e) => setMinConfidence(Number(e.target.value))}
-          className="w-full"
-        />
-        <span>{minConfidence}%</span>
-      </div>
-
-      <button
-        onClick={handleUpload}
-        className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-      >
-        Subir y Analizar
-      </button>
-
-      {progress > 0 && (
-        <div className="mt-4">
-          <progress value={progress} max="100" className="w-full" />
-          <p>Progreso: {progress}%</p>
-        </div>
-      )}
-
-      {results && (
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold">Resultados</h2>
-          {results.DetectionType === 'ppe_detection' && (
-            <div className="mb-4">
-              <p><strong>Total Personas:</strong> {results.Summary.totalPersons}</p>
-              <p><strong>Cumplientes:</strong> {results.Summary.compliant}</p>
-              <p><strong>Confianza Mínima:</strong> {minConfidence}%</p>
-              <button
-                onClick={exportCSV}
-                className="bg-green-500 text-white p-2 rounded hover:bg-green-600 mt-2"
-              >
-                Exportar Reporte CSV
-              </button>
-            </div>
-          )}
-          {results.DetectionType === 'face_detection' && (
-            <div className="mb-4">
-              <p><strong>Total Rostros:</strong> {results.Summary.totalFaces}</p>
-              <p><strong>Confianza Mínima:</strong> {minConfidence}%</p>
-            </div>
-          )}
-          {results.DetectionType === 'label_detection' && (
-            <div className="mb-4">
-              <p><strong>Total Objetos:</strong> {results.Summary.totalLabels}</p>
-              <p><strong>Confianza Mínima:</strong> {minConfidence}%</p>
-            </div>
-          )}
-
-          <h3 className="text-lg font-semibold">Imagen con Anotaciones</h3>
-          <div style={{ position: 'relative', maxWidth: '100%' }}>
-            <img ref={imageRef} src={imageUrl} alt="Original" style={{ maxWidth: '100%' }} onLoad={handleImageLoad} />
-            <svg style={{ position: 'absolute', top: 0, left: 0, width: imageDimensions.width, height: imageDimensions.height }}>
-              {results.DetectionType === 'ppe_detection' &&
-                results.ProtectiveEquipment.map((p: any, i: number) => {
-                  const box = p.BoundingBox;
-                  const x = box.Left * imageDimensions.width;
-                  const y = box.Top * imageDimensions.height;
-                  const w = box.Width * imageDimensions.width;
-                  const h = box.Height * imageDimensions.height;
-                  const color = p.ProtectiveEquipmentSummarization?.AllRequiredEquipmentCovered ? 'green' : 'red';
-                  return (
-                    <g key={`person-${i}`}>
-                      <rect
-                        x={x}
-                        y={y}
-                        width={w}
-                        height={h}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth="2"
-                      />
-                      <text x={x} y={y - 5} fontSize="12" fill={color}>
-                        Person {i} - {p.Confidence.toFixed(2)}%
-                      </text>
-                    </g>
-                  );
-                })}
-              {results.DetectionType === 'ppe_detection' &&
-                results.ProtectiveEquipment.flatMap((p: any) =>
-                  p.BodyParts.flatMap((bp: any) =>
-                    bp.EquipmentDetections.map((ed: any, j: number) => {
-                      if (ed.Confidence >= minConfidence && (!epiItems.length || epiItems.includes(ed.Type))) {
-                        const box = ed.BoundingBox;
-                        const x = box.Left * imageDimensions.width;
-                        const y = box.Top * imageDimensions.height;
-                        const w = box.Width * imageDimensions.width;
-                        const h = box.Height * imageDimensions.height;
-                        const color = ed.Confidence >= minConfidence ? 'green' : 'red';
-                        return (
-                          <g key={`epi-${j}`}>
-                            <rect
-                              x={x}
-                              y={y}
-                              width={w}
-                              height={h}
-                              fill="none"
-                              stroke={color}
-                              strokeWidth="2"
-                            />
-                            <text x={x} y={y - 5} fontSize="12" fill={color}>
-                              {ed.Type} - {ed.Confidence.toFixed(2)}%
-                            </text>
-                          </g>
-                        );
-                      }
-                      return null;
-                    })
-                  )
-                )}
-              {results.DetectionType === 'face_detection' &&
-                results.Faces.map((f: any, i: number) => {
-                  const box = f.BoundingBox;
-                  const x = box.Left * imageDimensions.width;
-                  const y = box.Top * imageDimensions.height;
-                  const w = box.Width * imageDimensions.width;
-                  const h = box.Height * imageDimensions.height;
-                  return (
-                    <g key={`face-${i}`}>
-                      <rect
-                        x={x}
-                        y={y}
-                        width={w}
-                        height={h}
-                        fill="none"
-                        stroke="blue"
-                        strokeWidth="2"
-                      />
-                      <text x={x} y={y - 5} fontSize="12" fill="blue">
-                        Face {i} - {f.Confidence.toFixed(2)}%
-                      </text>
-                    </g>
-                  );
-                })}
-              {results.DetectionType === 'label_detection' &&
-                results.Labels.map((l: any, i: number) => {
-                  const box = l.Instances?.[0]?.BoundingBox || { Left: 0, Top: 0, Width: 0.1, Height: 0.1 };
-                  const x = box.Left * imageDimensions.width;
-                  const y = box.Top * imageDimensions.height;
-                  const w = box.Width * imageDimensions.width;
-                  const h = box.Height * imageDimensions.height;
-                  return (
-                    <g key={`label-${i}`}>
-                      <rect
-                        x={x}
-                        y={y}
-                        width={w}
-                        height={h}
-                        fill="none"
-                        stroke="purple"
-                        strokeWidth="2"
-                      />
-                      <text x={x} y={y - 5} fontSize="12" fill="purple">
-                        {l.Name} - {l.Confidence.toFixed(2)}%
-                      </text>
-                    </g>
-                  );
-                })}
-              {results.DetectionType === 'text_detection' &&
-                results.TextDetections.map((t: any, i: number) => {
-                  if (t.Type === 'LINE') {
-                    const box = t.Geometry.BoundingBox;
-                    const x = box.Left * imageDimensions.width;
-                    const y = box.Top * imageDimensions.height;
-                    const w = box.Width * imageDimensions.width;
-                    const h = box.Height * imageDimensions.height;
-                    return (
-                      <g key={`text-${i}`}>
-                        <rect
-                          x={x}
-                          y={y}
-                          width={w}
-                          height={h}
-                          fill="none"
-                          stroke="orange"
-                          strokeWidth="2"
-                        />
-                        <text x={x} y={y - 5} fontSize="12" fill="orange">
-                          {t.DetectedText} - {t.Confidence.toFixed(2)}%
-                        </text>
-                      </g>
-                    );
-                  }
-                  return null;
-                })}
-              {results.DetectionType === 'moderation_detection' &&
-                results.ModerationLabels.map((m: any, i: number) => {
-                  const box = m.BoundingBox || { Left: 0, Top: 0, Width: 0.1, Height: 0.1 };
-                  const x = box.Left * imageDimensions.width;
-                  const y = box.Top * imageDimensions.height;
-                  const w = box.Width * imageDimensions.width;
-                  const h = box.Height * imageDimensions.height;
-                  return (
-                    <g key={`moderation-${i}`}>
-                      <rect
-                        x={x}
-                        y={y}
-                        width={w}
-                        height={h}
-                        fill="none"
-                        stroke="yellow"
-                        strokeWidth="2"
-                      />
-                      <text x={x} y={y - 5} fontSize="12" fill="yellow">
-                        {m.Name} - {m.Confidence.toFixed(2)}%
-                      </text>
-                    </g>
-                  );
-                })}
-              {results.DetectionType === 'celebrity_detection' &&
-                results.Celebrities.map((c: any, i: number) => {
-                  const box = c.Face?.BoundingBox || { Left: 0, Top: 0, Width: 0.1, Height: 0.1 };
-                  const x = box.Left * imageDimensions.width;
-                  const y = box.Top * imageDimensions.height;
-                  const w = box.Width * imageDimensions.width;
-                  const h = box.Height * imageDimensions.height;
-                  return (
-                    <g key={`celebrity-${i}`}>
-                      <rect
-                        x={x}
-                        y={y}
-                        width={w}
-                        height={h}
-                        fill="none"
-                        stroke="pink"
-                        strokeWidth="2"
-                      />
-                      <text x={x} y={y - 5} fontSize="12" fill="pink">
-                        {c.Name} - {c.MatchConfidence.toFixed(2)}%
-                      </text>
-                    </g>
-                  );
-                })}
-            </svg>
-          </div>
-
-          <h3 className="text-lg font-semibold mt-4">Detalles de Detección</h3>
-          {results.DetectionType === 'ppe_detection' && (
-            <table className="table-auto w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">Persona ID</th>
-                  <th className="border p-2">Parte del Cuerpo</th>
-                  <th className="border p-2">Tipo de EPI</th>
-                  <th className="border p-2">Confianza</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.ProtectiveEquipment.flatMap((p: any, i: number) =>
-                  p.BodyParts.flatMap((bp: any) =>
-                    bp.EquipmentDetections.map((ed: any, j: number) => (
-                      <tr key={`epi-${i}-${j}`}>
-                        <td className="border p-2">{i}</td>
-                        <td className="border p-2">{bp.Name}</td>
-                        <td className="border p-2">{ed.Type}</td>
-                        <td className="border p-2">{ed.Confidence.toFixed(2)}%</td>
-                      </tr>
-                    ))
-                  )
-                )}
-              </tbody>
-            </table>
-          )}
-          {results.DetectionType === 'face_detection' && (
-            <table className="table-auto w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">ID Rostro</th>
-                  <th className="border p-2">Confianza</th>
-                  <th className="border p-2">Edad (Rango)</th>
-                  <th className="border p-2">Género</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.Faces.map((f: any, i: number) => (
-                  <tr key={`face-${i}`}>
-                    <td className="border p-2">{i}</td>
-                    <td className="border p-2">{f.Confidence.toFixed(2)}%</td>
-                    <td className="border p-2">{`${f.AgeRange.Low}-${f.AgeRange.High}`}</td>
-                    <td className="border p-2">{f.Gender.Value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {results.DetectionType === 'label_detection' && (
-            <table className="table-auto w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">Objeto</th>
-                  <th className="border p-2">Confianza</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.Labels.map((l: any, i: number) => (
-                  <tr key={`label-${i}`}>
-                    <td className="border p-2">{l.Name}</td>
-                    <td className="border p-2">{l.Confidence.toFixed(2)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {results.DetectionType === 'text_detection' && (
-            <table className="table-auto w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">Texto Detectado</th>
-                  <th className="border p-2">Confianza</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.TextDetections.map((t: any, i: number) => (
-                  <tr key={`text-${i}`}>
-                    <td className="border p-2">{t.DetectedText}</td>
-                    <td className="border p-2">{t.Confidence.toFixed(2)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {results.DetectionType === 'moderation_detection' && (
-            <table className="table-auto w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">Categoría</th>
-                  <th className="border p-2">Confianza</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.ModerationLabels.map((m: any, i: number) => (
-                  <tr key={`moderation-${i}`}>
-                    <td className="border p-2">{m.Name}</td>
-                    <td className="border p-2">{m.Confidence.toFixed(2)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {results.DetectionType === 'celebrity_detection' && (
-            <table className="table-auto w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">Celebridad</th>
-                  <th className="border p-2">Confianza</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.Celebrities.map((c: any, i: number) => (
-                  <tr key={`celebrity-${i}`}>
-                    <td className="border p-2">{c.Name}</td>
-                    <td className="border p-2">{c.MatchConfidence.toFixed(2)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
-      <ToastContainer />
+      <ToastContainer position="top-right" />
     </div>
   );
 };
