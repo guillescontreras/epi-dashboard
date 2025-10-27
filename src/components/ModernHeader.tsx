@@ -3,9 +3,10 @@ import React from 'react';
 interface ModernHeaderProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
+  onGuidedMode?: () => void;
 }
 
-const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionChange }) => {
+const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionChange, onGuidedMode }) => {
   const sections = [
     { id: 'analysis', name: 'Análisis', icon: '🔬' },
     { id: 'dashboard', name: 'Dashboard', icon: '📊' },
@@ -20,8 +21,8 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
           {/* Logo y Título */}
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg sm:text-xl">CT</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                <img src="/CoironTech-logo1.jpeg" alt="CoironTech" className="w-full h-full object-contain p-1" />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-400 rounded-full animate-pulse"></div>
             </div>
@@ -32,9 +33,20 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
           </div>
           
           {/* Status Indicator - Solo en desktop */}
-          <div className="hidden lg:flex items-center space-x-2 text-green-400">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium">Sistema Activo</span>
+          <div className="hidden lg:flex items-center space-x-4">
+            <div className="flex items-center space-x-2 text-green-400">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium">Sistema Activo</span>
+            </div>
+            {onGuidedMode && (
+              <button
+                onClick={onGuidedMode}
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm flex items-center space-x-2"
+              >
+                <span>🧭</span>
+                <span>Asistente</span>
+              </button>
+            )}
           </div>
         </div>
         

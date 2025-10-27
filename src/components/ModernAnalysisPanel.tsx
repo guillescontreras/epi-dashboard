@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 interface ModernAnalysisPanelProps {
   file: File | null;
   setFile: (file: File | null) => void;
+  files?: File[];
+  setFiles?: (files: File[]) => void;
   detectionType: string;
   setDetectionType: (type: string) => void;
   minConfidence: number;
@@ -16,7 +18,7 @@ interface ModernAnalysisPanelProps {
 }
 
 const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
-  file, setFile, detectionType, setDetectionType, minConfidence, setMinConfidence,
+  file, setFile, files = [], setFiles = () => {}, detectionType, setDetectionType, minConfidence, setMinConfidence,
   epiItems, handleEpiItemChange, strictMode, setStrictMode, handleUpload, progress
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -36,15 +38,23 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
     setIsDragOver(false);
     
     const files = Array.from(e.dataTransfer.files);
+    const videoFile = files.find(file => file.type.startsWith('video/'));
     const imageFile = files.find(file => file.type.startsWith('image/'));
     
-    if (imageFile) {
+    if (videoFile) {
+      setFile(videoFile);
+      setDetectionType('ppe_video_detection');
+    } else if (imageFile) {
       setFile(imageFile);
+      if (detectionType === 'ppe_video_detection') {
+        setDetectionType('ppe_detection');
+      }
     }
   };
 
   const detectionTypes = [
-    { value: 'ppe_detection', label: 'Detección de EPI', icon: '🦺', color: 'from-green-500 to-emerald-600' },
+    { value: 'ppe_detection', label: 'Detección de EPI (Imagen)', icon: '🦺', color: 'from-green-500 to-emerald-600' },
+    { value: 'realtime_detection', label: 'Detección en Tiempo Real', icon: '📹', color: 'from-pink-500 to-rose-600' },
     { value: 'face_detection', label: 'Análisis Facial', icon: '👤', color: 'from-blue-500 to-cyan-600' },
     { value: 'label_detection', label: 'Detección de Objetos', icon: '🏷️', color: 'from-purple-500 to-violet-600' },
     { value: 'text_detection', label: 'Reconocimiento de Texto', icon: '📝', color: 'from-orange-500 to-amber-600' }
@@ -117,8 +127,25 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
             <input
               id="file-input"
               type="file"
-              accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              accept={detectionType === 'ppe_video_detection' ? 'video/mp4,video/avi,video/mov,video/quicktime' : 'image/jpeg,image/jpg,image/png'}
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0];
+                if (selectedFile) {
+                  if (selectedFile.type.startsWith('video/')) {
+                    setFile(selectedFile);
+                    setDetectionType('ppe_video_detection');
+                  } else if (selectedFile.type.startsWith('image/')) {
+                    setFile(selectedFile);
+                    if (detectionType === 'ppe_video_detection') {
+                      setDetectionType('ppe_detection');
+                    }
+                  } else if (detectionType === 'ppe_batch_detection' && e.target.files) {
+                    setFiles(Array.from(e.target.files));
+                  } else {
+                    setFile(selectedFile);
+                  }
+                }
+              }}
               className="hidden"
             />
           </div>
@@ -159,7 +186,7 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
           </div>
 
           {/* EPI Configuration */}
-          {detectionType === 'ppe_detection' && (
+          {(detectionType === 'ppe_detection' || detectionType === 'ppe_video_detection' || detectionType === 'realtime_detection') && (
             <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
               <h3 className="font-medium text-gray-900 mb-3">Configuración EPI</h3>
               <div className="space-y-3">
@@ -230,13 +257,18 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
         <div className="p-6">
           <button
             onClick={handleUpload}
-            disabled={!file || progress > 0}
+            disabled={(detectionType !== 'realtime_detection' && !file) || progress > 0}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             {progress > 0 ? (
               <div className="flex items-center justify-center space-x-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 <span>Analizando... {progress}%</span>
+              </div>
+            ) : detectionType === 'realtime_detection' ? (
+              <div className="flex items-center justify-center space-x-2">
+                <span>📹</span>
+                <span>Abrir Cámara</span>
               </div>
             ) : (
               <div className="flex items-center justify-center space-x-2">

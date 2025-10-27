@@ -6,12 +6,16 @@ import Papa from 'papaparse';
 import ModernHeader from './components/ModernHeader';
 import ModernAnalysisPanel from './components/ModernAnalysisPanel';
 import Dashboard from './components/Dashboard';
-
+import RealtimeDetection from './components/RealtimeDetection';
 import ImageComparison from './components/ImageComparison';
+import WelcomeModal from './components/WelcomeModal';
+import GuidedAnalysisWizard from './components/GuidedAnalysisWizard';
+import VideoProcessor from './components/VideoProcessor';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
   const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [imageUrl, setImageUrl] = useState<string>('');
   const [results, setResults] = useState<any>(null);
   const [detectionType, setDetectionType] = useState<string>('ppe_detection');
@@ -20,19 +24,39 @@ const App: React.FC = () => {
   const [strictMode, setStrictMode] = useState<boolean>(true);
   const [epiItems, setEpiItems] = useState<string[]>(['HEAD_COVER', 'EYE_COVER', 'HAND_COVER', 'FOOT_COVER', 'FACE_COVER', 'EAR_COVER']);
   const [analysisHistory, setAnalysisHistory] = useState<any[]>([]);
+  const [showRealtimeDetection, setShowRealtimeDetection] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [useGuidedMode, setUseGuidedMode] = useState(true);
+  const [showVideoProcessor, setShowVideoProcessor] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
 
   const handleUpload = async () => {
+    if (detectionType === 'realtime_detection') {
+      setShowRealtimeDetection(true);
+      return;
+    }
+    
     if (!file) {
       toast.error('Por favor, selecciona una imagen');
       return;
     }
 
     // Validar formato de archivo
-    const validFormats = ['image/jpeg', 'image/jpg', 'image/png'];
-    if (!validFormats.includes(file.type)) {
-      toast.error('Formato no soportado. Use JPEG o PNG únicamente.');
-      return;
+    const validImageFormats = ['image/jpeg', 'image/jpg', 'image/png'];
+    const validVideoFormats = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime'];
+    const isVideo = detectionType === 'ppe_video_detection';
+    
+    if (isVideo) {
+      if (!validVideoFormats.includes(file.type)) {
+        toast.error('Formato de video no soportado. Use MP4, AVI o MOV.');
+        return;
+      }
+    } else {
+      if (!validImageFormats.includes(file.type)) {
+        toast.error('Formato no soportado. Use JPEG o PNG únicamente.');
+        return;
+      }
     }
 
     setProgress(0);
@@ -70,7 +94,10 @@ const App: React.FC = () => {
       setImageUrl(`https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${file.name}`);
 
       // Invocar la Lambda para análisis
-      const analyzeApiUrl = 'https://tf52bbq6o6.execute-api.us-east-1.amazonaws.com/prod/analyze';
+      const isVideo = detectionType === 'ppe_video_detection';
+      const analyzeApiUrl = isVideo 
+        ? 'https://tf52bbq6o6.execute-api.us-east-1.amazonaws.com/prod/analyze-video'
+        : 'https://tf52bbq6o6.execute-api.us-east-1.amazonaws.com/prod/analyze';
       const lambdaPayload = {
         bucket: 'rekognition-gcontreras',
         filename: `input/${file.name}`,
@@ -82,6 +109,118 @@ const App: React.FC = () => {
 
       const analyzeRes = await axios.post(analyzeApiUrl, lambdaPayload);
       setProgress(50);
+      
+      // Manejar video
+      if (detectionType === 'ppe_video_detection') {
+        toast.info('Procesando video... Esto puede tomar varios minutos.');
+        
+        const videoResponse = await axios.post(analyzeApiUrl, lambdaPayload);
+        let videoData = videoResponse.data;
+        if (typeof videoData === 'string') videoData = JSON.parse(videoData);
+        if (videoData.body && typeof videoData.body === 'string') videoData = JSON.parse(videoData.body);
+        
+        if (videoData.videoUrl) {
+          setResults({
+            DetectionType: 'ppe_video_detection',
+            videoUrl: videoData.videoUrl,
+            totalFrames: videoData.totalFrames,
+            summary: videoData.summary,
+            timestamp: Date.now()
+          });
+          setProgress(100);
+          toast.success('Video procesado exitosamente!');
+        } else if (videoData.error) {
+          toast.error(`Error: ${videoData.error}`);
+        }
+        
+        setTimeout(() => {
+          setProgress(0);
+          clearInterval(interval);
+        }, 1000);
+        return;
+      }
+      
+      // Manejar análisis por lotes
+      if (detectionType === 'ppe_batch_detection') {
+        const batchResults = [];
+        
+        for (let i = 0; i < files.length; i++) {
+          const currentFile = files[i];
+          setProgress(Math.round((i / files.length) * 90));
+          
+          // Subir imagen
+          const uploadRes = await axios.get(uploadApiUrl, { params: { filename: currentFile.name } });
+          const uploadUrl = uploadRes.data.url.trim();
+          await axios.put(uploadUrl, currentFile, { headers: { 'Content-Type': currentFile.type || 'image/jpeg' } });
+          
+          // Analizar imagen
+          const analyzePayload = {
+            bucket: 'rekognition-gcontreras',
+            filename: `input/${currentFile.name}`,
+            detection_type: 'ppe_detection',
+            min_confidence: minConfidence,
+            epi_items: epiItems,
+          };
+          
+          const analyzeResponse = await axios.post(analyzeApiUrl, analyzePayload);
+          let responseData = analyzeResponse.data;
+          if (typeof responseData === 'string') responseData = JSON.parse(responseData);
+          if (responseData.body && typeof responseData.body === 'string') responseData = JSON.parse(responseData.body);
+          
+          const jsonUrl = responseData.presignedUrl;
+          const resultData = await axios.get(jsonUrl);
+          
+          batchResults.push({
+            filename: currentFile.name,
+            imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${currentFile.name}`,
+            result: resultData.data
+          });
+        }
+        
+        // Consolidar resultados
+        const consolidatedResult = {
+          DetectionType: 'ppe_batch_detection',
+          BatchResults: batchResults,
+          Summary: {
+            totalImages: batchResults.length,
+            totalPersons: batchResults.reduce((sum, r) => sum + (r.result.Summary?.totalPersons || 0), 0),
+            totalCompliant: batchResults.reduce((sum, r) => sum + (r.result.Summary?.compliant || 0), 0),
+            minConfidence
+          },
+          timestamp: Date.now()
+        };
+        
+        setResults(consolidatedResult);
+        setAnalysisHistory(prev => [...prev, consolidatedResult]);
+        setProgress(100);
+        
+        toast.success(`Análisis por lotes completado: ${batchResults.length} imágenes procesadas`);
+        
+        setTimeout(() => {
+          setProgress(0);
+          clearInterval(interval);
+        }, 1000);
+        
+        return;
+      }
+      
+      // Manejar respuesta de video en desarrollo (legacy)
+      if (detectionType === 'ppe_video_detection') {
+        let responseData = analyzeRes.data;
+        if (typeof responseData === 'string') {
+          responseData = JSON.parse(responseData);
+        }
+        if (responseData.body && typeof responseData.body === 'string') {
+          responseData = JSON.parse(responseData.body);
+        }
+        
+        if (responseData.status === 'pending') {
+          toast.info(responseData.info || 'Análisis de video en desarrollo');
+          setProgress(0);
+          clearInterval(interval);
+          return;
+        }
+      }
       
       console.log('Respuesta completa de Lambda:', analyzeRes);
       console.log('Status de respuesta:', analyzeRes.status);
@@ -178,7 +317,126 @@ const App: React.FC = () => {
     );
   };
 
+  const handleGuidedComplete = async (config: any) => {
+    setResults(null);
+    setImageUrl('');
+    setMinConfidence(config.minConfidence);
+    setEpiItems(config.epiItems);
+    
+    if (config.mode === 'realtime') {
+      if (config.detectionType === 'realtime_video' && config.file) {
+        setVideoFile(config.file);
+        setShowVideoProcessor(true);
+      } else {
+        setShowRealtimeDetection(true);
+      }
+    } else {
+      setFile(config.file);
+      setDetectionType(config.detectionType);
+      setUseGuidedMode(false);
+      
+      // Ejecutar upload directamente con el archivo del config
+      setTimeout(async () => {
+        if (!config.file) {
+          toast.error('Por favor, selecciona una imagen');
+          return;
+        }
+        await handleUploadWithFile(config.file, config.detectionType, config.minConfidence, config.epiItems);
+      }, 100);
+    }
+  };
+  
+  const handleUploadWithFile = async (uploadFile: File, uploadDetectionType: string, uploadMinConfidence: number, uploadEpiItems: string[]) => {
+    const validImageFormats = ['image/jpeg', 'image/jpg', 'image/png'];
+    
+    if (!validImageFormats.includes(uploadFile.type)) {
+      toast.error('Formato no soportado. Use JPEG o PNG únicamente.');
+      return;
+    }
+
+    setProgress(0);
+    const interval = setInterval(() => {
+      setProgress((prev) => Math.min(prev + 10, 100));
+    }, 500);
+
+    try {
+      const uploadApiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload';
+      const presignedRes = await axios.get(uploadApiUrl, { params: { filename: uploadFile.name } });
+      let presignedUrl = presignedRes.data.url.trim();
+
+      await axios.put(presignedUrl, uploadFile, {
+        headers: { 'Content-Type': uploadFile.type || 'image/jpeg' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 30) / progressEvent.total);
+            setProgress(percentCompleted);
+          }
+        },
+      });
+
+      setProgress(40);
+      setImageUrl(`https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`);
+
+      const analyzeApiUrl = 'https://tf52bbq6o6.execute-api.us-east-1.amazonaws.com/prod/analyze';
+      const lambdaPayload = {
+        bucket: 'rekognition-gcontreras',
+        filename: `input/${uploadFile.name}`,
+        detection_type: uploadDetectionType,
+        min_confidence: uploadMinConfidence,
+        epi_items: uploadDetectionType === 'ppe_detection' ? uploadEpiItems : undefined,
+      };
+
+      const analyzeRes = await axios.post(analyzeApiUrl, lambdaPayload);
+      setProgress(50);
+
+      let responseData = analyzeRes.data;
+      if (typeof responseData === 'string') responseData = JSON.parse(responseData);
+      if (responseData.body && typeof responseData.body === 'string') responseData = JSON.parse(responseData.body);
+
+      const jsonPresignedUrl = responseData.presignedUrl;
+      const res = await axios.get(jsonPresignedUrl);
+      const analysisResult = { ...res.data, timestamp: Date.now() };
+      setResults(analysisResult);
+      setAnalysisHistory(prev => [...prev, analysisResult]);
+      setProgress(70);
+
+      if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
+        toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
+      }
+
+      setProgress(100);
+      setTimeout(() => {
+        setProgress(0);
+        clearInterval(interval);
+      }, 1000);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
+      toast.error('Error en el proceso: ' + errorMessage);
+      setTimeout(() => {
+        setProgress(0);
+        clearInterval(interval);
+      }, 1000);
+    }
+  };
+
   const renderContent = () => {
+    if (useGuidedMode) {
+      return (
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6 flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900">Asistente de Análisis</h1>
+            <button
+              onClick={() => setUseGuidedMode(false)}
+              className="text-gray-600 hover:text-gray-900 font-medium"
+            >
+              Modo Avanzado →
+            </button>
+          </div>
+          <GuidedAnalysisWizard onComplete={handleGuidedComplete} />
+        </div>
+      );
+    }
+    
     switch (activeSection) {
       case 'analysis':
         return (
@@ -187,6 +445,8 @@ const App: React.FC = () => {
               <ModernAnalysisPanel
                 file={file}
                 setFile={setFile}
+                files={files}
+                setFiles={setFiles}
                 detectionType={detectionType}
                 setDetectionType={setDetectionType}
                 minConfidence={minConfidence}
@@ -281,6 +541,22 @@ const App: React.FC = () => {
                         </div>
                       </div>
                     )}
+                    {results.DetectionType === 'ppe_batch_detection' && (
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-xl p-4 text-white text-center">
+                          <p className="text-3xl font-bold">{results.Summary?.totalImages || 0}</p>
+                          <p className="text-sm opacity-90">Imágenes Analizadas</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
+                          <p className="text-3xl font-bold">{results.Summary?.totalPersons || 0}</p>
+                          <p className="text-sm opacity-90">Personas Detectadas</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
+                          <p className="text-3xl font-bold">{results.Summary?.totalCompliant || 0}</p>
+                          <p className="text-sm opacity-90">Cumplientes</p>
+                        </div>
+                      </div>
+                    )}
                     {results.DetectionType === 'text_detection' && (
                       <div className="grid grid-cols-1 gap-4">
                         <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl p-4 text-white text-center">
@@ -350,14 +626,79 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
-      <ModernHeader activeSection={activeSection} onSectionChange={setActiveSection} />
+      <ModernHeader 
+        activeSection={activeSection} 
+        onSectionChange={setActiveSection}
+        onGuidedMode={() => setUseGuidedMode(true)}
+      />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderContent()}
         
-        {/* Visualización de Resultados */}
-        {results && activeSection === 'analysis' && imageUrl && (
+        {/* Visualización de Video Procesado */}
+        {results && activeSection === 'analysis' && results.DetectionType === 'ppe_video_detection' && results.videoUrl && (
           <div className="mt-8">
+            <div className="mb-4 flex justify-end">
+              <button
+                onClick={() => {
+                  setResults(null);
+                  setFile(null);
+                  setImageUrl('');
+                  setUseGuidedMode(true);
+                }}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
+              >
+                <span>🆕</span>
+                <span>Nuevo Análisis</span>
+              </button>
+            </div>
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-teal-50 to-cyan-50 px-6 py-4 border-b border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                  <span>🎥</span>
+                  <span>Video Procesado con Detección de EPI</span>
+                </h2>
+              </div>
+              <div className="p-6">
+                <video controls className="w-full rounded-xl" src={results.videoUrl}>
+                  Tu navegador no soporta el elemento de video.
+                </video>
+                <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+                  <div className="bg-gradient-to-r from-teal-500 to-cyan-500 p-3 rounded-lg text-white">
+                    <p className="text-xs opacity-90">Frames Analizados</p>
+                    <p className="text-2xl font-bold">{results.totalFrames}</p>
+                  </div>
+                  <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-3 rounded-lg text-white">
+                    <p className="text-xs opacity-90">Personas Detectadas</p>
+                    <p className="text-2xl font-bold">{results.summary?.totalPersons || 0}</p>
+                  </div>
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-3 rounded-lg text-white">
+                    <p className="text-xs opacity-90">Cumplientes</p>
+                    <p className="text-2xl font-bold">{results.summary?.compliant || 0}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Visualización de Resultados */}
+        {results && activeSection === 'analysis' && imageUrl && results.DetectionType !== 'ppe_video_detection' && (
+          <div className="mt-8">
+            <div className="mb-4 flex justify-end">
+              <button
+                onClick={() => {
+                  setResults(null);
+                  setFile(null);
+                  setImageUrl('');
+                  setUseGuidedMode(true);
+                }}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
+              >
+                <span>🆕</span>
+                <span>Nuevo Análisis</span>
+              </button>
+            </div>
             <ImageComparison 
               results={results}
               imageUrl={imageUrl}
@@ -370,13 +711,43 @@ const App: React.FC = () => {
 
       <ToastContainer position="top-right" />
       
+      {showWelcome && (
+        <WelcomeModal onClose={() => {
+          setShowWelcome(false);
+          setUseGuidedMode(true);
+        }} />
+      )}
+      
+      {showRealtimeDetection && (
+        <RealtimeDetection
+          onClose={() => {
+            setShowRealtimeDetection(false);
+            setUseGuidedMode(true);
+          }}
+          epiItems={epiItems}
+          minConfidence={minConfidence}
+        />
+      )}
+      
+      {showVideoProcessor && videoFile && (
+        <VideoProcessor
+          videoFile={videoFile}
+          onClose={() => {
+            setShowVideoProcessor(false);
+            setVideoFile(null);
+            setUseGuidedMode(true);
+          }}
+          minConfidence={minConfidence}
+        />
+      )}
+      
       {/* Footer */}
       <footer className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 text-white py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">CT</span>
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="/CoironTech-logo1.jpeg" alt="CoironTech" className="w-full h-full object-contain p-0.5" />
               </div>
               <div>
                 <p className="text-sm font-medium">Desarrollado por CoironTech</p>
