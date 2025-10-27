@@ -29,7 +29,18 @@ const App: React.FC = () => {
   const [useGuidedMode, setUseGuidedMode] = useState(true);
   const [showVideoProcessor, setShowVideoProcessor] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-
+  const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(0);
+  
+  React.useEffect(() => {
+    const saved = localStorage.getItem('totalAnalysisCount');
+    if (saved) setTotalAnalysisCount(parseInt(saved));
+  }, []);
+  
+  const incrementAnalysisCount = () => {
+    const newCount = totalAnalysisCount + 1;
+    setTotalAnalysisCount(newCount);
+    localStorage.setItem('totalAnalysisCount', newCount.toString());
+  };
 
   const handleUpload = async () => {
     if (detectionType === 'realtime_detection') {
@@ -59,10 +70,7 @@ const App: React.FC = () => {
       }
     }
 
-    setProgress(0);
-    const interval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + 10, 100));
-    }, 500);
+    setProgress(5);
 
     try {
       // Obtener presigned URL para subir
@@ -135,7 +143,7 @@ const App: React.FC = () => {
         
         setTimeout(() => {
           setProgress(0);
-          clearInterval(interval);
+          
         }, 1000);
         return;
       }
@@ -198,7 +206,7 @@ const App: React.FC = () => {
         
         setTimeout(() => {
           setProgress(0);
-          clearInterval(interval);
+          
         }, 1000);
         
         return;
@@ -217,7 +225,7 @@ const App: React.FC = () => {
         if (responseData.status === 'pending') {
           toast.info(responseData.info || 'Análisis de video en desarrollo');
           setProgress(0);
-          clearInterval(interval);
+          
           return;
         }
       }
@@ -270,7 +278,7 @@ const App: React.FC = () => {
       }
 
       setProgress(100);
-      clearInterval(interval);
+      
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
       if (errorMessage.includes('invalid image format')) {
@@ -279,7 +287,7 @@ const App: React.FC = () => {
         toast.error('Error en el proceso: ' + errorMessage);
       }
       setProgress(0);
-      clearInterval(interval);
+      
       console.error(err);
     }
   };
@@ -362,10 +370,7 @@ const App: React.FC = () => {
       return;
     }
 
-    setProgress(0);
-    const interval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + 10, 100));
-    }, 500);
+    setProgress(5);
 
     try {
       const uploadApiUrl = 'https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload';
@@ -413,12 +418,12 @@ const App: React.FC = () => {
       }
 
       setProgress(100);
-      clearInterval(interval);
+      
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
       toast.error('Error en el proceso: ' + errorMessage);
       setProgress(0);
-      clearInterval(interval);
+      
     }
   };
 
@@ -718,6 +723,10 @@ const App: React.FC = () => {
           if (progress > 0 && progress < 100) {
             return;
           }
+          // Cambiar a modo avanzado si se selecciona dashboard o historial
+          if (section === 'dashboard' || section === 'history') {
+            setUseGuidedMode(false);
+          }
           setActiveSection(section);
         }}
         onGuidedMode={() => {
@@ -903,6 +912,10 @@ const App: React.FC = () => {
                 <span>🌐</span>
                 <span>www.coirontech.com</span>
               </a>
+              <div className="flex items-center space-x-2 text-purple-200">
+                <span>📊</span>
+                <span>{totalAnalysisCount.toLocaleString()} análisis</span>
+              </div>
             </div>
           </div>
         </div>
