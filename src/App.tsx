@@ -629,7 +629,13 @@ const App: React.FC = () => {
       <ModernHeader 
         activeSection={activeSection} 
         onSectionChange={setActiveSection}
-        onGuidedMode={() => setUseGuidedMode(true)}
+        onGuidedMode={() => {
+          setUseGuidedMode(true);
+          setResults(null);
+          setFile(null);
+          setImageUrl('');
+          setActiveSection('analysis');
+        }}
       />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

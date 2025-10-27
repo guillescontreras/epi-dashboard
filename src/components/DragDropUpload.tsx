@@ -11,6 +11,13 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [isMobile, setIsMobile] = useState(false);
+  
+  React.useEffect(() => {
+    // Detectar si es móvil
+    const checkMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    setIsMobile(checkMobile);
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -45,36 +52,68 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
     }
   };
 
+  const handleMobileCamera = () => {
+    // En móviles, usar input file con capture
+    document.getElementById('camera-input')?.click();
+  };
+  
+  const handleCameraInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onFileSelect(file);
+    }
+  };
+  
   const startCamera = async () => {
+    if (isMobile) {
+      handleMobileCamera();
+      return;
+    }
+    
     stopCamera();
+    setShowCamera(true);
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        await videoRef.current.play();
       }
-      setShowCamera(true);
     } catch (err) {
       console.error('Error accessing camera:', err);
+      alert('No se pudo acceder a la cámara. Verifica los permisos.');
+      setShowCamera(false);
     }
   };
   
   const switchCamera = async () => {
     const newMode = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(newMode);
-    if (showCamera) {
-      stopCamera();
-      setTimeout(async () => {
-        try {
-          const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newMode } });
-          setStream(mediaStream);
-          if (videoRef.current) {
-            videoRef.current.srcObject = mediaStream;
-          }
-        } catch (err) {
-          console.error('Error switching camera:', err);
+    if (showCamera && stream) {
+      stream.getTracks().forEach(track => track.stop());
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: newMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          } 
+        });
+        setStream(mediaStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          await videoRef.current.play();
         }
-      }, 100);
+      } catch (err) {
+        console.error('Error switching camera:', err);
+        alert('No se pudo cambiar de cámara.');
+      }
     }
   };
 
@@ -87,7 +126,7 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
   };
 
   const capturePhoto = () => {
-    if (videoRef.current) {
+    if (videoRef.current && videoRef.current.videoWidth > 0) {
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
@@ -100,10 +139,19 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
             onFileSelect(file);
             stopCamera();
           }
-        }, 'image/jpeg');
+        }, 'image/jpeg', 0.95);
       }
+    } else {
+      alert('Espera a que la cámara esté lista');
     }
   };
+  
+  React.useEffect(() => {
+    return () => {
+      // Cleanup: detener cámara al desmontar
+      stopCamera();
+    };
+  }, []);
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
@@ -111,7 +159,14 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
       
       {showCamera && (
         <div className="mb-4 bg-black rounded-lg overflow-hidden">
-          <video ref={videoRef} autoPlay playsInline className="w-full" />
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline 
+            muted
+            className="w-full" 
+            style={{ minHeight: '200px' }}
+          />
           <div className="flex space-x-2 p-3 bg-gray-900">
             <button
               onClick={capturePhoto}
@@ -208,6 +263,14 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
           type="file"
           accept="image/jpeg,image/jpg,image/png"
           onChange={handleFileInput}
+          className="hidden"
+        />
+        <input
+          id="camera-input"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleCameraInput}
           className="hidden"
         />
       </div>

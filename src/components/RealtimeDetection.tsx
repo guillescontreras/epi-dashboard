@@ -119,12 +119,25 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
   const handleStop = () => {
     setIsDetecting(false);
     setShowSummary(true);
+    // Detener el stream de la cámara
+    if (webcamRef.current?.stream) {
+      webcamRef.current.stream.getTracks().forEach(track => track.stop());
+    }
   };
 
   const detectionSummary = detections.reduce((acc: any, det) => {
     acc[det.class] = (acc[det.class] || 0) + 1;
     return acc;
   }, {});
+
+  React.useEffect(() => {
+    return () => {
+      // Cleanup: detener cámara al desmontar componente
+      if (webcamRef.current?.stream) {
+        webcamRef.current.stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
