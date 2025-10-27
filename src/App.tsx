@@ -29,27 +29,10 @@ const App: React.FC = () => {
   const [useGuidedMode, setUseGuidedMode] = useState(true);
   const [showVideoProcessor, setShowVideoProcessor] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(0);
-  
-  React.useEffect(() => {
-    const fetchAnalysisCount = async () => {
-      try {
-        const response = await fetch('https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/web/');
-        const text = await response.text();
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(text, 'text/xml');
-        const keys = xml.getElementsByTagName('Key');
-        const jsonFiles = Array.from(keys).filter(key => 
-          key.textContent?.includes('web/') && key.textContent?.endsWith('.json')
-        );
-        setTotalAnalysisCount(jsonFiles.length);
-      } catch (error) {
-        const saved = localStorage.getItem('totalAnalysisCount');
-        if (saved) setTotalAnalysisCount(parseInt(saved));
-      }
-    };
-    fetchAnalysisCount();
-  }, []);
+  const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(() => {
+    const saved = localStorage.getItem('totalAnalysisCount');
+    return saved ? parseInt(saved) : 0;
+  });
   
   const incrementAnalysisCount = () => {
     const newCount = totalAnalysisCount + 1;
@@ -286,6 +269,7 @@ const App: React.FC = () => {
       const analysisResult = { ...res.data, timestamp: Date.now() };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
+      incrementAnalysisCount();
       setProgress(70);
 
       if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
@@ -426,6 +410,7 @@ const App: React.FC = () => {
       const analysisResult = { ...res.data, timestamp: Date.now() };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
+      incrementAnalysisCount();
       setProgress(70);
 
       if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
