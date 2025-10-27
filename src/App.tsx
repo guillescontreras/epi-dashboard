@@ -29,15 +29,24 @@ const App: React.FC = () => {
   const [useGuidedMode, setUseGuidedMode] = useState(true);
   const [showVideoProcessor, setShowVideoProcessor] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(() => {
-    const saved = localStorage.getItem('totalAnalysisCount');
-    return saved ? parseInt(saved) : 0;
-  });
+  const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(0);
+  
+  React.useEffect(() => {
+    const fetchAnalysisCount = async () => {
+      try {
+        const response = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
+        const data = await response.json();
+        setTotalAnalysisCount(data.count || 0);
+      } catch (error) {
+        console.error('Error contando análisis:', error);
+        setTotalAnalysisCount(0);
+      }
+    };
+    fetchAnalysisCount();
+  }, []);
   
   const incrementAnalysisCount = () => {
-    const newCount = totalAnalysisCount + 1;
-    setTotalAnalysisCount(newCount);
-    localStorage.setItem('totalAnalysisCount', newCount.toString());
+    setTotalAnalysisCount(prev => prev + 1);
   };
 
   const handleUpload = async () => {
