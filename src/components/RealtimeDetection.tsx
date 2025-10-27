@@ -46,7 +46,10 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
     if (!model || !webcamRef.current || !canvasRef.current || !isDetecting) return;
 
     const video = webcamRef.current.video;
-    if (!video || video.readyState !== 4) return;
+    if (!video || video.readyState !== 4) {
+      setTimeout(detectFrame, 100);
+      return;
+    }
 
     const predictions = await model.detect(video);
     const canvas = canvasRef.current;
@@ -98,7 +101,8 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
     setDetections(prev => [...prev.slice(-50), ...newDetections]);
     setStats({ total: personCount, compliant: compliantCount, nonCompliant: personCount - compliantCount });
 
-    requestAnimationFrame(detectFrame);
+    // Limitar a ~2 FPS para no sobrecargar el dispositivo
+    setTimeout(detectFrame, 500);
   };
 
   useEffect(() => {
@@ -197,6 +201,9 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Detecciones:</span>
                     <span className="text-2xl font-bold text-purple-600">{detections.length}</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                    ⏱️ Análisis: ~2 FPS (optimizado para dispositivos)
                   </div>
                 </div>
               </div>

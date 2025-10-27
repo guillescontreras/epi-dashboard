@@ -10,6 +10,7 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -45,8 +46,9 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
   };
 
   const startCamera = async () => {
+    stopCamera();
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -54,6 +56,25 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
       setShowCamera(true);
     } catch (err) {
       console.error('Error accessing camera:', err);
+    }
+  };
+  
+  const switchCamera = async () => {
+    const newMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newMode);
+    if (showCamera) {
+      stopCamera();
+      setTimeout(async () => {
+        try {
+          const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newMode } });
+          setStream(mediaStream);
+          if (videoRef.current) {
+            videoRef.current.srcObject = mediaStream;
+          }
+        } catch (err) {
+          console.error('Error switching camera:', err);
+        }
+      }, 100);
     }
   };
 
@@ -96,7 +117,13 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
               onClick={capturePhoto}
               className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 font-medium"
             >
-              📸 Capturar Foto
+              📸 Capturar
+            </button>
+            <button
+              onClick={switchCamera}
+              className="bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 font-medium"
+            >
+              🔄
             </button>
             <button
               onClick={stopCamera}
@@ -133,12 +160,21 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
                 {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
-            <button
-              onClick={() => document.getElementById('file-input')?.click()}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-            >
-              Cambiar imagen
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => document.getElementById('file-input')?.click()}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                📁 Seleccionar archivo
+              </button>
+              <span className="text-gray-400">|</span>
+              <button
+                onClick={startCamera}
+                className="text-green-600 hover:text-green-700 text-sm font-medium"
+              >
+                📷 Tomar foto
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -147,19 +183,19 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
               <p className="text-lg font-medium text-gray-900">
                 Arrastra una imagen aquí
               </p>
-              <p className="text-gray-500">o haz clic para seleccionar</p>
+              <p className="text-gray-500">o selecciona una opción</p>
               <p className="text-xs text-gray-400 mt-2">Formatos soportados: JPEG, PNG</p>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => document.getElementById('file-input')?.click()}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
                 📁 Seleccionar archivo
               </button>
               <button
                 onClick={startCamera}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
                 📷 Tomar foto
               </button>
