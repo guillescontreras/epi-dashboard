@@ -7,6 +7,9 @@ interface DragDropUploadProps {
 
 const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedFile }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -41,9 +44,69 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
     }
   };
 
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      setShowCamera(true);
+    } catch (err) {
+      console.error('Error accessing camera:', err);
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `captura-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            onFileSelect(file);
+            stopCamera();
+          }
+        }, 'image/jpeg');
+      }
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">📁 Seleccionar Imagen</h2>
+      
+      {showCamera && (
+        <div className="mb-4 bg-black rounded-lg overflow-hidden">
+          <video ref={videoRef} autoPlay playsInline className="w-full" />
+          <div className="flex space-x-2 p-3 bg-gray-900">
+            <button
+              onClick={capturePhoto}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 font-medium"
+            >
+              📸 Capturar Foto
+            </button>
+            <button
+              onClick={stopCamera}
+              className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 font-medium"
+            >
+              ✖
+            </button>
+          </div>
+        </div>
+      )}
       
       <div
         onDragOver={handleDragOver}
@@ -87,12 +150,20 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
               <p className="text-gray-500">o haz clic para seleccionar</p>
               <p className="text-xs text-gray-400 mt-2">Formatos soportados: JPEG, PNG</p>
             </div>
-            <button
-              onClick={() => document.getElementById('file-input')?.click()}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Seleccionar archivo
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => document.getElementById('file-input')?.click()}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                📁 Seleccionar archivo
+              </button>
+              <button
+                onClick={startCamera}
+                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                📷 Tomar foto
+              </button>
+            </div>
           </div>
         )}
         

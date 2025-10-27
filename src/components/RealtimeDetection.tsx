@@ -24,6 +24,7 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
   const [detections, setDetections] = useState<Detection[]>([]);
   const [stats, setStats] = useState({ total: 0, compliant: 0, nonCompliant: 0 });
   const [showSummary, setShowSummary] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   const epiMapping: { [key: string]: string[] } = {
     HEAD_COVER: ['helmet', 'hat'],
@@ -141,7 +142,7 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                   audio={false}
                   screenshotFormat="image/jpeg"
                   className="w-full"
-                  videoConstraints={{ facingMode: 'user' }}
+                  videoConstraints={{ facingMode }}
                 />
                 <canvas
                   ref={canvasRef}
@@ -149,30 +150,39 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                 />
               </div>
 
-              <div className="mt-4 flex space-x-4">
-                {!isDetecting && !showSummary ? (
+              <div className="mt-4 space-y-3">
+                <div className="flex space-x-3">
+                  {!isDetecting && !showSummary ? (
+                    <button
+                      onClick={handleStart}
+                      disabled={!model}
+                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {model ? '▶ Iniciar Detección' : '⏳ Cargando modelo...'}
+                    </button>
+                  ) : isDetecting ? (
+                    <button
+                      onClick={handleStop}
+                      className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-orange-600 hover:to-red-700"
+                    >
+                      ⏹ Finalizar y Ver Resumen
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setShowSummary(false); onClose(); }}
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-700"
+                    >
+                      🆕 Nuevo Análisis
+                    </button>
+                  )}
                   <button
-                    onClick={handleStart}
-                    disabled={!model}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setFacingMode(prev => prev === 'user' ? 'environment' : 'user')}
+                    className="bg-gray-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-gray-700 flex items-center justify-center"
+                    title="Cambiar cámara"
                   >
-                    {model ? '▶ Iniciar Detección' : '⏳ Cargando modelo...'}
+                    🔄
                   </button>
-                ) : isDetecting ? (
-                  <button
-                    onClick={handleStop}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-orange-600 hover:to-red-700"
-                  >
-                    ⏹ Finalizar y Ver Resumen
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => { setShowSummary(false); onClose(); }}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-700"
-                  >
-                    🆕 Nuevo Análisis
-                  </button>
-                )}
+                </div>
               </div>
             </div>
 

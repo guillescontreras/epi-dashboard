@@ -43,8 +43,8 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
                 onClick={onGuidedMode}
                 className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm flex items-center space-x-2"
               >
-                <span>🧭</span>
-                <span>Asistente</span>
+                <span>🏠</span>
+                <span>Inicio</span>
               </button>
             )}
           </div>
@@ -52,8 +52,8 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
         
         {/* Navegación Móvil */}
         <div className="pb-4">
-          <nav className="flex justify-center sm:justify-start">
-            <div className="flex bg-white/10 backdrop-blur-sm rounded-xl p-1 w-full sm:w-auto">
+          <nav className="flex justify-between items-center">
+            <div className="flex bg-white/10 backdrop-blur-sm rounded-xl p-1 flex-1 sm:flex-none">
               {sections.map((section) => (
                 <button
                   key={section.id}
@@ -69,6 +69,15 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
                 </button>
               ))}
             </div>
+            {onGuidedMode && (
+              <button
+                onClick={onGuidedMode}
+                className="lg:hidden ml-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm flex items-center space-x-1 text-sm"
+              >
+                <span>🏠</span>
+                <span>Inicio</span>
+              </button>
+            )}
           </nav>
         </div>
       </div>
