@@ -270,10 +270,7 @@ const App: React.FC = () => {
       }
 
       setProgress(100);
-      setTimeout(() => {
-        setProgress(0);
-        clearInterval(interval);
-      }, 1000);
+      clearInterval(interval);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
       if (errorMessage.includes('invalid image format')) {
@@ -281,10 +278,8 @@ const App: React.FC = () => {
       } else {
         toast.error('Error en el proceso: ' + errorMessage);
       }
-      setTimeout(() => {
-        setProgress(0);
-        clearInterval(interval);
-      }, 1000);
+      setProgress(0);
+      clearInterval(interval);
       console.error(err);
     }
   };
@@ -317,6 +312,21 @@ const App: React.FC = () => {
     );
   };
 
+  const [wizardKey, setWizardKey] = useState(0);
+  
+  const resetToStart = () => {
+    setResults(null);
+    setFile(null);
+    setFiles([]);
+    setImageUrl('');
+    setProgress(0);
+    setDetectionType('ppe_detection');
+    setUseGuidedMode(true);
+    setShowWelcome(false);
+    setWizardKey(prev => prev + 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleGuidedComplete = async (config: any) => {
     setResults(null);
     setImageUrl('');
@@ -333,9 +343,7 @@ const App: React.FC = () => {
     } else {
       setFile(config.file);
       setDetectionType(config.detectionType);
-      setUseGuidedMode(false);
       
-      // Ejecutar upload directamente con el archivo del config
       setTimeout(async () => {
         if (!config.file) {
           toast.error('Por favor, selecciona una imagen');
@@ -405,17 +413,12 @@ const App: React.FC = () => {
       }
 
       setProgress(100);
-      setTimeout(() => {
-        setProgress(0);
-        clearInterval(interval);
-      }, 1000);
+      clearInterval(interval);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
       toast.error('Error en el proceso: ' + errorMessage);
-      setTimeout(() => {
-        setProgress(0);
-        clearInterval(interval);
-      }, 1000);
+      setProgress(0);
+      clearInterval(interval);
     }
   };
 
@@ -432,7 +435,89 @@ const App: React.FC = () => {
               ⚙️ Modo Avanzado
             </button>
           </div>
-          <GuidedAnalysisWizard onComplete={handleGuidedComplete} />
+          <GuidedAnalysisWizard key={wizardKey} onComplete={handleGuidedComplete} />
+          
+          {/* Resultados en el asistente */}
+          {results && useGuidedMode && !showRealtimeDetection && !showVideoProcessor && (
+            <div className="mt-8">
+              <div className="mb-4 flex justify-end">
+                <button
+                  onClick={resetToStart}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
+                >
+                  <span>🆕</span>
+                  <span>Nuevo Análisis</span>
+                </button>
+              </div>
+              
+              {results.DetectionType === 'ppe_detection' && (
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+                    <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                      <span>📊</span>
+                      <span>Resumen del Análisis</span>
+                    </h2>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
+                        <p className="text-3xl font-bold">{results.Summary?.totalPersons || 0}</p>
+                        <p className="text-sm opacity-90">Personas Detectadas</p>
+                      </div>
+                      <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
+                        <p className="text-3xl font-bold">{results.Summary?.compliant || 0}</p>
+                        <p className="text-sm opacity-90">Cumplientes</p>
+                      </div>
+                      <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
+                        <p className="text-3xl font-bold">{minConfidence}%</p>
+                        <p className="text-sm opacity-90">Confianza Mínima</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Elementos EPI Seleccionados:</h4>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {epiItems.map((item) => {
+                          const itemName = item === 'HEAD_COVER' ? 'Casco' :
+                                         item === 'EYE_COVER' ? 'Gafas' :
+                                         item === 'HAND_COVER' ? 'Guantes' :
+                                         item === 'FOOT_COVER' ? 'Calzado' :
+                                         item === 'FACE_COVER' ? 'Mascarilla' :
+                                         item === 'EAR_COVER' ? 'Orejeras' : item;
+                          
+                          const detections = results.ProtectiveEquipment?.reduce((count: number, person: any) => {
+                            return count + (person.BodyParts?.reduce((partCount: number, part: any) => {
+                              return partCount + (part.EquipmentDetections?.filter((eq: any) => 
+                                eq.Type === item && eq.Confidence >= minConfidence
+                              ).length || 0);
+                            }, 0) || 0);
+                          }, 0) || 0;
+                          
+                          return (
+                            <div key={item} className={`flex items-center justify-between p-2 rounded ${
+                              detections > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              <span>{itemName}</span>
+                              <span className="font-bold">{detections > 0 ? '✓' : '✗'}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {imageUrl && (
+                <ImageComparison 
+                  results={results}
+                  imageUrl={imageUrl}
+                  minConfidence={minConfidence}
+                  epiItems={epiItems}
+                />
+              )}
+            </div>
+          )}
         </div>
       );
     }
@@ -628,13 +713,20 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       <ModernHeader 
         activeSection={activeSection} 
-        onSectionChange={setActiveSection}
+        onSectionChange={(section) => {
+          // Evitar cambio accidental de sección durante análisis
+          if (progress > 0 && progress < 100) {
+            return;
+          }
+          setActiveSection(section);
+        }}
         onGuidedMode={() => {
-          setUseGuidedMode(true);
-          setResults(null);
-          setFile(null);
-          setImageUrl('');
-          setActiveSection('analysis');
+          if (progress > 0 && progress < 100) {
+            if (!window.confirm('¿Detener el análisis en progreso y volver al inicio?')) {
+              return;
+            }
+          }
+          resetToStart();
         }}
       />
       
@@ -646,12 +738,7 @@ const App: React.FC = () => {
           <div className="mt-8">
             <div className="mb-4 flex justify-end">
               <button
-                onClick={() => {
-                  setResults(null);
-                  setFile(null);
-                  setImageUrl('');
-                  setUseGuidedMode(true);
-                }}
+                onClick={resetToStart}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
               >
                 <span>🆕</span>
@@ -688,17 +775,12 @@ const App: React.FC = () => {
           </div>
         )}
         
-        {/* Visualización de Resultados */}
-        {results && activeSection === 'analysis' && imageUrl && results.DetectionType !== 'ppe_video_detection' && (
+        {/* Visualización de Resultados - Solo en modo avanzado */}
+        {results && !useGuidedMode && activeSection === 'analysis' && imageUrl && results.DetectionType !== 'ppe_video_detection' && (
           <div className="mt-8">
             <div className="mb-4 flex justify-end">
               <button
-                onClick={() => {
-                  setResults(null);
-                  setFile(null);
-                  setImageUrl('');
-                  setUseGuidedMode(true);
-                }}
+                onClick={resetToStart}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
               >
                 <span>🆕</span>
@@ -716,6 +798,49 @@ const App: React.FC = () => {
       </main>
 
       <ToastContainer position="top-right" />
+      
+      {/* Indicador de progreso flotante */}
+      {progress > 0 && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-md">
+          {progress < 100 ? (
+            <div className="bg-white rounded-2xl shadow-2xl border-2 border-blue-500 p-4 animate-pulse">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xl">⏳</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-gray-900">Analizando imagen...</p>
+                  <p className="text-sm text-gray-600">Por favor espera</p>
+                </div>
+                <span className="text-2xl font-bold text-blue-600">{progress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-2xl p-4 animate-bounce cursor-pointer hover:scale-105 transition-transform"
+                 onClick={() => {
+                   setProgress(0);
+                   window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                 }}>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center animate-pulse">
+                  <span className="text-green-500 text-2xl">✓</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-white">¡Análisis completado!</p>
+                  <p className="text-sm text-green-100">Haz clic aquí para ver los resultados ↓</p>
+                </div>
+                <span className="text-white text-2xl animate-bounce">↓</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       
       {showWelcome && (
         <WelcomeModal onClose={() => {

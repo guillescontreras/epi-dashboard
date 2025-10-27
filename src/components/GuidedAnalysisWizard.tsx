@@ -9,10 +9,20 @@ interface GuidedAnalysisWizardProps {
     minConfidence: number;
     epiItems: string[];
   }) => void;
+  resetStep?: boolean;
 }
 
-const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete }) => {
+const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete, resetStep }) => {
   const [step, setStep] = useState(1);
+  
+  React.useEffect(() => {
+    if (resetStep) {
+      setStep(1);
+      setMode(null);
+      setDetectionType('');
+      setFile(null);
+    }
+  }, [resetStep]);
   const [mode, setMode] = useState<'image' | 'realtime' | null>(null);
   const [detectionType, setDetectionType] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
