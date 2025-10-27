@@ -32,8 +32,23 @@ const App: React.FC = () => {
   const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(0);
   
   React.useEffect(() => {
-    const saved = localStorage.getItem('totalAnalysisCount');
-    if (saved) setTotalAnalysisCount(parseInt(saved));
+    const fetchAnalysisCount = async () => {
+      try {
+        const response = await fetch('https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/web/');
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, 'text/xml');
+        const keys = xml.getElementsByTagName('Key');
+        const jsonFiles = Array.from(keys).filter(key => 
+          key.textContent?.includes('web/') && key.textContent?.endsWith('.json')
+        );
+        setTotalAnalysisCount(jsonFiles.length);
+      } catch (error) {
+        const saved = localStorage.getItem('totalAnalysisCount');
+        if (saved) setTotalAnalysisCount(parseInt(saved));
+      }
+    };
+    fetchAnalysisCount();
   }, []);
   
   const incrementAnalysisCount = () => {
@@ -915,6 +930,10 @@ const App: React.FC = () => {
               <div className="flex items-center space-x-2 text-purple-200">
                 <span>📊</span>
                 <span>{totalAnalysisCount.toLocaleString()} análisis</span>
+              </div>
+              <div className="flex items-center space-x-2 text-purple-200">
+                <span>🏷️</span>
+                <span>v1.0.0</span>
               </div>
             </div>
           </div>
