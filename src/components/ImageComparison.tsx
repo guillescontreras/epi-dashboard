@@ -84,7 +84,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                   const y = box.Top * imageDimensions.height;
                   const w = box.Width * imageDimensions.width;
                   const h = box.Height * imageDimensions.height;
-                  const color = equipment.Confidence >= minConfidence ? '#3B82F6' : '#F59E0B';
+                  const color = equipment.Confidence >= minConfidence ? '#10B981' : '#F59E0B';
                   
                   const equipmentName = equipment.Type === 'FACE_COVER' ? 'Mascarilla' :
                                      equipment.Type === 'HEAD_COVER' ? 'Casco' :
@@ -95,7 +95,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                   
                   // Usar color diferente para detecciones híbridas
                   const isHybrid = ['EYE_COVER', 'FOOT_COVER', 'EAR_COVER'].includes(equipment.Type);
-                  const hybridColor = isHybrid ? '#8B5CF6' : color;
+                  const hybridColor = isHybrid ? (equipment.Confidence >= minConfidence ? '#059669' : '#8B5CF6') : color;
                   
                   annotations.push(
                     <g key={`equipment-${i}-${bodyPart.Name}-${j}-${equipment.Type}`}>
@@ -215,6 +215,40 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
       });
     }
 
+    // Detección de texto
+    if (results.DetectionType === 'text_detection' && results.TextDetections) {
+      results.TextDetections.forEach((text: any, i: number) => {
+        if (text.Geometry?.BoundingBox && text.Type === 'LINE') {
+          const box = text.Geometry.BoundingBox;
+          const x = box.Left * imageDimensions.width;
+          const y = box.Top * imageDimensions.height;
+          const w = box.Width * imageDimensions.width;
+          const h = box.Height * imageDimensions.height;
+          
+          annotations.push(
+            <g key={`text-${i}`}>
+              <rect
+                x={x} y={y} width={w} height={h}
+                fill="none" stroke="#F59E0B" strokeWidth="2"
+                rx="2"
+              />
+              <rect
+                x={x} y={y - 20} width={Math.max(text.DetectedText?.length * 6 || 60, w)} height="16"
+                fill="#F59E0B" rx="8"
+              />
+              <text 
+                x={x + 2} y={y - 8} 
+                fontSize="10" fill="white" 
+                fontWeight="bold"
+              >
+                {text.DetectedText} ({text.Confidence?.toFixed(1)}%)
+              </text>
+            </g>
+          );
+        }
+      });
+    }
+
     return annotations;
   };
 
@@ -283,12 +317,12 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                   <span>No Cumpliente</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-2 bg-blue-500 rounded border-dashed border"></div>
-                  <span>EPI Nativo</span>
+                  <div className="w-4 h-2 bg-green-500 rounded border-dashed border"></div>
+                  <span>EPI Cumple</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-2 bg-purple-500 rounded border-dashed border" style={{borderStyle: 'dashed'}}></div>
-                  <span>EPI Híbrido (H)</span>
+                  <div className="w-4 h-2 bg-yellow-500 rounded border-dashed border"></div>
+                  <span>EPI No Cumple</span>
                 </div>
               </>
             )}
@@ -302,6 +336,12 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-2 bg-purple-500 rounded"></div>
                 <span>Objetos Detectados</span>
+              </div>
+            )}
+            {results.DetectionType === 'text_detection' && (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-2 bg-yellow-500 rounded"></div>
+                <span>Texto Detectado</span>
               </div>
             )}
           </div>
@@ -467,6 +507,52 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                             </div>
                           )}
                         </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Detalles de Texto Detectado */}
+        {results.DetectionType === 'text_detection' && results.TextDetections && (
+          <div className="mt-6 bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-yellow-50 px-4 py-3 border-b border-gray-200">
+              <h4 className="text-md font-semibold text-gray-800 flex items-center space-x-2">
+                <span>📝</span>
+                <span>Texto Detectado ({results.TextDetections.length})</span>
+              </h4>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Texto</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Confianza</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {results.TextDetections.filter((text: any) => text.Type === 'LINE').map((text: any, i: number) => (
+                    <tr key={i} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{i + 1}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-yellow-700">{text.DetectedText}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        <span className="inline-block bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
+                          {text.Type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          text.Confidence >= 90 ? 'bg-green-100 text-green-800' :
+                          text.Confidence >= 70 ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {text.Confidence?.toFixed(1)}%
+                        </span>
                       </td>
                     </tr>
                   ))}

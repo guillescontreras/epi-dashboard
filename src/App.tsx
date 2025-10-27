@@ -28,6 +28,13 @@ const App: React.FC = () => {
       return;
     }
 
+    // Validar formato de archivo
+    const validFormats = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validFormats.includes(file.type)) {
+      toast.error('Formato no soportado. Use JPEG o PNG únicamente.');
+      return;
+    }
+
     setProgress(0);
     const interval = setInterval(() => {
       setProgress((prev) => Math.min(prev + 10, 100));
@@ -75,6 +82,10 @@ const App: React.FC = () => {
 
       const analyzeRes = await axios.post(analyzeApiUrl, lambdaPayload);
       setProgress(50);
+      
+      console.log('Respuesta completa de Lambda:', analyzeRes);
+      console.log('Status de respuesta:', analyzeRes.status);
+      console.log('Data de respuesta:', analyzeRes.data);
 
       // Parsear el body si viene como string
       let responseData = analyzeRes.data;
@@ -96,12 +107,15 @@ const App: React.FC = () => {
           throw new Error('Respuesta de análisis inválida');
         }
       }
+      
+      console.log('ResponseData final procesada:', responseData);
 
       const jsonPresignedUrl = responseData.presignedUrl;
 
       if (!jsonPresignedUrl || typeof jsonPresignedUrl !== 'string') {
         console.error('Estructura de respuesta completa:', analyzeRes.data);
         console.error('ResponseData procesada:', responseData);
+        console.error('PresignedUrl encontrada:', jsonPresignedUrl);
         throw new Error('URL presigned para JSON no válida');
       }
 
@@ -123,7 +137,11 @@ const App: React.FC = () => {
       }, 1000);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
-      toast.error('Error en el proceso: ' + errorMessage);
+      if (errorMessage.includes('invalid image format')) {
+        toast.error('Formato de imagen no soportado. Use JPEG o PNG únicamente.');
+      } else {
+        toast.error('Error en el proceso: ' + errorMessage);
+      }
       setTimeout(() => {
         setProgress(0);
         clearInterval(interval);
@@ -263,6 +281,18 @@ const App: React.FC = () => {
                         </div>
                       </div>
                     )}
+                    {results.DetectionType === 'text_detection' && (
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl p-4 text-white text-center">
+                          <p className="text-3xl font-bold">{results.Summary?.totalTextDetections || 0}</p>
+                          <p className="text-sm opacity-90">Textos Detectados</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
+                          <p className="text-3xl font-bold">{minConfidence}%</p>
+                          <p className="text-sm opacity-90">Confianza Mínima</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -284,6 +314,8 @@ const App: React.FC = () => {
                         <h3 className="font-medium text-gray-900">
                           {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPI' :
                            analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
+                           analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
+                           analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
                            '🔍 Análisis General'}
                         </h3>
                         <p className="text-sm text-gray-500">
@@ -337,6 +369,42 @@ const App: React.FC = () => {
       </main>
 
       <ToastContainer position="top-right" />
+      
+      {/* Footer */}
+      <footer className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 text-white py-6 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">CT</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Desarrollado por CoironTech</p>
+                <p className="text-xs text-purple-200">Soluciones de IA para la industria</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 text-sm">
+              <a 
+                href="mailto:info@coirontech.com" 
+                className="flex items-center space-x-2 text-purple-200 hover:text-white transition-colors"
+              >
+                <span>✉️</span>
+                <span>info@coirontech.com</span>
+              </a>
+              <a 
+                href="https://www.coirontech.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-purple-200 hover:text-white transition-colors"
+              >
+                <span>🌐</span>
+                <span>www.coirontech.com</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

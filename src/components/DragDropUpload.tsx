@@ -23,7 +23,8 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
     setIsDragOver(false);
     
     const files = Array.from(e.dataTransfer.files);
-    const imageFile = files.find(file => file.type.startsWith('image/'));
+    const validFormats = ['image/jpeg', 'image/jpg', 'image/png'];
+    const imageFile = files.find(file => validFormats.includes(file.type));
     
     if (imageFile) {
       onFileSelect(imageFile);
@@ -33,7 +34,10 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      onFileSelect(file);
+      const validFormats = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (validFormats.includes(file.type)) {
+        onFileSelect(file);
+      }
     }
   };
 
@@ -81,6 +85,7 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
                 Arrastra una imagen aquí
               </p>
               <p className="text-gray-500">o haz clic para seleccionar</p>
+              <p className="text-xs text-gray-400 mt-2">Formatos soportados: JPEG, PNG</p>
             </div>
             <button
               onClick={() => document.getElementById('file-input')?.click()}
@@ -94,7 +99,7 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
         <input
           id="file-input"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/jpg,image/png"
           onChange={handleFileInput}
           className="hidden"
         />

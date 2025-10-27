@@ -47,9 +47,7 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
     { value: 'ppe_detection', label: 'Detección de EPI', icon: '🦺', color: 'from-green-500 to-emerald-600' },
     { value: 'face_detection', label: 'Análisis Facial', icon: '👤', color: 'from-blue-500 to-cyan-600' },
     { value: 'label_detection', label: 'Detección de Objetos', icon: '🏷️', color: 'from-purple-500 to-violet-600' },
-    { value: 'text_detection', label: 'Reconocimiento de Texto', icon: '📝', color: 'from-orange-500 to-amber-600' },
-    { value: 'moderation_detection', label: 'Moderación de Contenido', icon: '⚠️', color: 'from-red-500 to-rose-600' },
-    { value: 'celebrity_detection', label: 'Detección de Celebridades', icon: '⭐', color: 'from-yellow-500 to-orange-600' }
+    { value: 'text_detection', label: 'Reconocimiento de Texto', icon: '📝', color: 'from-orange-500 to-amber-600' }
   ];
 
   return (
