@@ -72,7 +72,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
           );
         }
 
-        // Equipos EPI detectados
+        // Equipos EPP detectados
         if (person.BodyParts) {
           person.BodyParts.forEach((bodyPart: any) => {
             if (bodyPart.EquipmentDetections) {
@@ -318,11 +318,11 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-2 bg-green-500 rounded border-dashed border"></div>
-                  <span>EPI Cumple</span>
+                  <span>EPP Cumple</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-2 bg-yellow-500 rounded border-dashed border"></div>
-                  <span>EPI No Cumple</span>
+                  <span>EPP No Cumple</span>
                 </div>
               </>
             )}
@@ -562,13 +562,13 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
           </div>
         )}
 
-        {/* Detalles de EPI Detectado */}
+        {/* Detalles de EPP Detectado */}
         {results.DetectionType === 'ppe_detection' && results.ProtectiveEquipment && (
           <div className="mt-6 bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="bg-green-50 px-4 py-3 border-b border-gray-200">
               <h4 className="text-md font-semibold text-gray-800 flex items-center space-x-2">
                 <span>🦺</span>
-                <span>Detalles de EPI Detectado</span>
+                <span>Detalles de EPP Detectado</span>
               </h4>
             </div>
             <div className="overflow-x-auto">

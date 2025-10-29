@@ -12,8 +12,8 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => {
           <div className="w-20 h-20 mx-auto bg-white rounded-2xl flex items-center justify-center mb-4 shadow-lg overflow-hidden">
             <img src="/CoironTech-logo1.jpeg" alt="CoironTech" className="w-full h-full object-contain p-2" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Bienvenido a CoironTech EPI Analyzer</h1>
-          <p className="text-blue-100">Análisis inteligente de seguridad con IA</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Bienvenido a CoironTech EPP Analyzer</h1>
+          <p className="text-blue-100">Elementos de Protección Personal con IA</p>
         </div>
 
         <div className="p-6">
@@ -22,7 +22,7 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => {
               <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-3 mx-auto">
                 <span className="text-2xl">🦺</span>
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">Detección EPIs</h3>
+              <h3 className="font-bold text-gray-900 mb-1">Detección EPP</h3>
               <p className="text-xs text-gray-600">Cascos, guantes, mascarillas</p>
             </div>
 
@@ -47,7 +47,7 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => {
                 <span className="text-2xl">🤖</span>
               </div>
               <h3 className="font-bold text-gray-900 mb-1">IA Avanzada</h3>
-              <p className="text-xs text-gray-600">AWS Rekognition + Bedrock</p>
+              <p className="text-xs text-gray-600">Visión Artificial + IA Generativa</p>
             </div>
           </div>
 

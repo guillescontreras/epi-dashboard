@@ -37,8 +37,8 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
                 alt="CoironTech" 
                 className="w-20 h-20 object-contain mb-4"
               />
-              <h1 className="text-2xl font-bold text-gray-800">EPI Dashboard</h1>
-              <p className="text-gray-600 text-sm">Análisis de Equipos de Protección Individual</p>
+              <h1 className="text-2xl font-bold text-gray-800">EPP Dashboard</h1>
+              <p className="text-gray-600 text-sm">Análisis de Elementos de Protección Personal</p>
             </div>
           );
         }

@@ -30,14 +30,14 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
   const [epiItems, setEpiItems] = useState<string[]>(['HEAD_COVER', 'EYE_COVER', 'HAND_COVER', 'FOOT_COVER', 'FACE_COVER', 'EAR_COVER']);
 
   const imageDetectionTypes = [
-    { value: 'ppe_detection', label: 'Detección de EPI', icon: '🦺', desc: 'Identifica elementos de protección personal' },
+    { value: 'ppe_detection', label: 'Detección de EPP', icon: '🦺', desc: 'Identifica elementos de protección personal' },
     { value: 'face_detection', label: 'Análisis Facial', icon: '👤', desc: 'Detecta rostros y características' },
     { value: 'label_detection', label: 'Detección de Objetos', icon: '🏷️', desc: 'Identifica objetos en la imagen' },
     { value: 'text_detection', label: 'Reconocimiento de Texto', icon: '📝', desc: 'Extrae texto de la imagen' }
   ];
 
   const realtimeDetectionTypes: Array<{value: string; label: string; icon: string; desc: string; disabled?: boolean}> = [
-    { value: 'realtime_ppe_coming', label: 'Detección de EPIs', icon: '🦺', desc: '🚧 Próximamente - Modelo en entrenamiento', disabled: true },
+    { value: 'realtime_ppe_coming', label: 'Detección de EPPs', icon: '🦺', desc: '🚧 Próximamente - Modelo en entrenamiento', disabled: true },
     { value: 'realtime_objects', label: 'Detección de Objetos', icon: '🏷️', desc: 'Detecta personas y objetos en tiempo real' }
   ];
 
@@ -118,7 +118,7 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
                 <span className="text-3xl">📸</span>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Análisis de Imagen</h3>
-              <p className="text-gray-600 mb-4">Sube una imagen para análisis detallado de EPIs, rostros, objetos y texto</p>
+              <p className="text-gray-600 mb-4">Sube una imagen para análisis detallado de EPPs, rostros, objetos y texto</p>
               <div className="flex items-center text-blue-600 font-semibold">
                 <span>Seleccionar</span>
                 <span className="ml-2">→</span>
@@ -210,7 +210,7 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
 
           {(detectionType === 'ppe_detection' || detectionType === 'realtime_ppe') && (
             <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4">🦺 Elementos EPI a Detectar</h3>
+              <h3 className="font-bold text-gray-900 mb-4">🦺 Elementos EPP a Detectar</h3>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { value: 'HEAD_COVER', label: 'Casco', icon: '🪖' },

@@ -74,8 +74,8 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
           personCount++;
         }
 
-        const isEPI = Object.values(epiMapping).flat().includes(prediction.class);
-        const color = isEPI ? '#00ff00' : '#ff0000';
+        const isEPP = Object.values(epiMapping).flat().includes(prediction.class);
+        const color = isEPP ? '#00ff00' : '#ff0000';
 
         ctx.strokeStyle = color;
         ctx.lineWidth = 3;
@@ -267,11 +267,11 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                   <p><strong>Estado actual:</strong></p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Detecta personas y objetos generales</li>
-                    <li>🛠️ Modelo en entrenamiento para EPIs específicos</li>
+                    <li>🛠️ Modelo en entrenamiento para EPPs específicos</li>
                     <li>Próximamente: cascos, guantes, mascarillas, gafas, botas</li>
                   </ul>
                   <p className="mt-2 text-blue-800 font-medium">
-                    🚀 Para detección precisa de EPIs, usa el análisis de imágenes
+                    🚀 Para detección precisa de EPPs, usa el análisis de imágenes
                   </p>
                 </div>
               </div>

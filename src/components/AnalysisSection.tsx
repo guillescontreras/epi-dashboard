@@ -37,7 +37,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               onChange={(e) => setDetectionType(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="ppe_detection">🦺 EPI (Equipos de Protección)</option>
+              <option value="ppe_detection">🦺 EPP (Equipos de Protección)</option>
               <option value="face_detection">👤 Rostros</option>
               <option value="label_detection">🏷️ Objetos</option>
               <option value="text_detection">📝 Texto</option>
@@ -49,7 +49,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
           {detectionType === 'ppe_detection' && (
             <div className="bg-blue-50 rounded-lg p-4">
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Elementos EPI a Auditar
+                Elementos EPP a Auditar
               </label>
               <div className="space-y-2">
                 {[

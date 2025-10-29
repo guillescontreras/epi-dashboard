@@ -53,7 +53,7 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
   };
 
   const detectionTypes = [
-    { value: 'ppe_detection', label: 'Detección de EPI (Imagen)', icon: '🦺', color: 'from-green-500 to-emerald-600' },
+    { value: 'ppe_detection', label: 'Detección de EPP (Imagen)', icon: '🦺', color: 'from-green-500 to-emerald-600' },
     { value: 'realtime_detection', label: 'Detección en Tiempo Real', icon: '📹', color: 'from-pink-500 to-rose-600' },
     { value: 'face_detection', label: 'Análisis Facial', icon: '👤', color: 'from-blue-500 to-cyan-600' },
     { value: 'label_detection', label: 'Detección de Objetos', icon: '🏷️', color: 'from-purple-500 to-violet-600' },
@@ -209,10 +209,10 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
             ))}
           </div>
 
-          {/* EPI Configuration */}
+          {/* EPP Configuration */}
           {(detectionType === 'ppe_detection' || detectionType === 'ppe_video_detection' || detectionType === 'realtime_detection') && (
             <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
-              <h3 className="font-medium text-gray-900 mb-3">Configuración EPI</h3>
+              <h3 className="font-medium text-gray-900 mb-3">Configuración EPP</h3>
               <div className="space-y-3">
                 {[
                   { value: 'HEAD_COVER', label: 'Casco', icon: '🪖' },

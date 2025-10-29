@@ -6,6 +6,7 @@ import Papa from 'papaparse';
 import './aws-config';
 import AuthWrapper from './components/AuthWrapper';
 import ModernHeader from './components/ModernHeader';
+import UserMenu from './components/UserMenu';
 import ModernAnalysisPanel from './components/ModernAnalysisPanel';
 import Dashboard from './components/Dashboard';
 import RealtimeDetection from './components/RealtimeDetection';
@@ -285,7 +286,7 @@ const App: React.FC = () => {
       setProgress(70);
 
       if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
-        toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
+        toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPP`);
       }
 
       setProgress(100);
@@ -426,7 +427,7 @@ const App: React.FC = () => {
       setProgress(70);
 
       if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
-        toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPI`);
+        toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPP`);
       }
 
       setProgress(100);
@@ -506,7 +507,7 @@ const App: React.FC = () => {
                     </div>
                     
                     <div className="bg-gray-50 rounded-xl p-4">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Elementos EPI Seleccionados:</h4>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Elementos EPP Seleccionados:</h4>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         {epiItems.map((item) => {
                           const itemName = item === 'HEAD_COVER' ? 'Casco' :
@@ -607,9 +608,9 @@ const App: React.FC = () => {
                           </div>
                         </div>
                         
-                        {/* Resumen por Elemento EPI */}
+                        {/* Resumen por Elemento EPP */}
                         <div className="bg-gray-50 rounded-xl p-4">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Elementos EPI Seleccionados:</h4>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Elementos EPP Seleccionados:</h4>
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             {epiItems.map((item) => {
                               const itemName = item === 'HEAD_COVER' ? 'Casco' :
@@ -708,7 +709,7 @@ const App: React.FC = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-medium text-gray-900">
-                          {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPI' :
+                          {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
                            analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
                            analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
                            analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
@@ -747,7 +748,8 @@ const App: React.FC = () => {
   return (
     <AuthWrapper>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
-      <ModernHeader 
+      <div className="flex justify-between items-center p-4 bg-white shadow-sm">
+        <ModernHeader 
         activeSection={activeSection} 
         onSectionChange={(section) => {
           // Evitar cambio accidental de sección durante análisis
@@ -768,7 +770,9 @@ const App: React.FC = () => {
           }
           resetToStart();
         }}
-      />
+        />
+        <UserMenu />
+      </div>
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderContent()}
@@ -789,7 +793,7 @@ const App: React.FC = () => {
               <div className="bg-gradient-to-r from-teal-50 to-cyan-50 px-6 py-4 border-b border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                   <span>🎥</span>
-                  <span>Video Procesado con Detección de EPI</span>
+                  <span>Video Procesado con Detección de EPP</span>
                 </h2>
               </div>
               <div className="p-6">
@@ -827,6 +831,9 @@ const App: React.FC = () => {
                 <span>Nuevo Análisis</span>
               </button>
             </div>
+            {results.aiSummary && (
+              <AISummary summary={results.aiSummary} />
+            )}
             <ImageComparison 
               results={results}
               imageUrl={imageUrl}

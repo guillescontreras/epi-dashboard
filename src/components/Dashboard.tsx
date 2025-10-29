@@ -11,7 +11,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory }) => {
     ? (analysisHistory.reduce((sum, a) => sum + (a.MinConfidence || 0), 0) / analysisHistory.length).toFixed(1)
     : 0;
 
-  // Calcular estadísticas de cumplimiento EPI
+  // Calcular estadísticas de cumplimiento EPP
   const ppeStats = analysisHistory
     .filter(a => a.DetectionType === 'ppe_detection' && a.Summary)
     .reduce((acc, a) => {
@@ -36,7 +36,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory }) => {
       textColor: 'text-blue-600'
     },
     { 
-      label: 'Análisis EPI', 
+      label: 'Análisis EPP', 
       value: ppeAnalysis, 
       icon: '🦺', 
       color: 'from-green-500 to-green-600',
@@ -44,7 +44,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory }) => {
       textColor: 'text-green-600'
     },
     { 
-      label: 'Cumplimiento EPI', 
+      label: 'Cumplimiento EPP', 
       value: `${complianceRate}%`, 
       icon: '✅', 
       color: 'from-emerald-500 to-emerald-600',
@@ -68,7 +68,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory }) => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-2">Dashboard de Análisis</h1>
-            <p className="text-blue-100">Monitoreo en tiempo real de detección de EPI y análisis facial</p>
+            <p className="text-blue-100">Monitoreo en tiempo real de detección de EPP y análisis facial</p>
           </div>
           <div className="text-6xl opacity-20">📈</div>
         </div>
@@ -121,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory }) => {
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">
-                          {analysis.DetectionType === 'ppe_detection' ? 'Análisis EPI' :
+                          {analysis.DetectionType === 'ppe_detection' ? 'Análisis EPP' :
                            analysis.DetectionType === 'face_detection' ? 'Detección Rostros' :
                            'Análisis General'}
                         </p>
@@ -205,8 +205,8 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory }) => {
           ) : (
             <div className="text-center py-12">
               <div className="text-6xl mb-4 opacity-50">📈</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Sin datos de EPI</h3>
-              <p className="text-gray-500">Realiza análisis de EPI para ver las estadísticas</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Sin datos de EPP</h3>
+              <p className="text-gray-500">Realiza análisis de EPP para ver las estadísticas</p>
             </div>
           )}
         </div>

@@ -59,7 +59,7 @@ const CustomModelDetection: React.FC<CustomModelDetectionProps> = ({ onClose, ep
           const x = pred.x - pred.width / 2;
           const y = pred.y - pred.height / 2;
 
-          // Verde si es EPI requerido, rojo si no
+          // Verde si es EPP requerido, rojo si no
           const isRequired = epiItems.some(item => 
             pred.class.toUpperCase().includes(item.replace('_COVER', ''))
           );
@@ -99,7 +99,7 @@ const CustomModelDetection: React.FC<CustomModelDetectionProps> = ({ onClose, ep
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-white flex items-center space-x-2">
             <span>🎯</span>
-            <span>Detección Personalizada de EPIs</span>
+            <span>Detección Personalizada de EPPs</span>
           </h2>
           <button onClick={onClose} className="text-white hover:text-gray-200 text-2xl">×</button>
         </div>
@@ -108,7 +108,7 @@ const CustomModelDetection: React.FC<CustomModelDetectionProps> = ({ onClose, ep
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
             <h3 className="font-semibold text-blue-900 mb-2">⚙️ Configuración Requerida</h3>
             <div className="text-sm text-blue-800 space-y-2">
-              <p>Para usar detección personalizada de EPIs:</p>
+              <p>Para usar detección personalizada de EPPs:</p>
               <ol className="list-decimal list-inside space-y-1 ml-2">
                 <li>Entrena un modelo en <a href="https://roboflow.com" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Roboflow</a></li>
                 <li>Obtén tu API Key y URL del modelo</li>
