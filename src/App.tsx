@@ -439,7 +439,7 @@ const App: React.FC = () => {
             imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`
           });
           const summaryData = summaryResponse.data;
-          setResults(prev => ({ ...prev, aiSummary: summaryData.summary }));
+          setResults((prev: any) => ({ ...prev, aiSummary: summaryData.summary }));
         } catch (error) {
           console.error('Error generando resumen IA:', error);
         }
