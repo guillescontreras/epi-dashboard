@@ -13,6 +13,7 @@ import ImageComparison from './components/ImageComparison';
 import WelcomeModal from './components/WelcomeModal';
 import GuidedAnalysisWizard from './components/GuidedAnalysisWizard';
 import VideoProcessor from './components/VideoProcessor';
+import AISummary from './components/AISummary';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
@@ -430,6 +431,20 @@ const App: React.FC = () => {
 
       setProgress(100);
       
+      // Generar resumen IA
+      if (res.data.DetectionType === 'ppe_detection') {
+        try {
+          const summaryResponse = await axios.post('https://n2vmezhgo7.execute-api.us-east-1.amazonaws.com/prod', {
+            analysisResults: res.data,
+            imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`
+          });
+          const summaryData = summaryResponse.data;
+          setResults(prev => ({ ...prev, aiSummary: summaryData.summary }));
+        } catch (error) {
+          console.error('Error generando resumen IA:', error);
+        }
+      }
+      
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
       toast.error('Error en el proceso: ' + errorMessage);
@@ -522,6 +537,10 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              )}
+              
+              {results.aiSummary && (
+                <AISummary summary={results.aiSummary} />
               )}
               
               {imageUrl && (
