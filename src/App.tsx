@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Papa from 'papaparse';
 import './aws-config';
 import AuthWrapper from './components/AuthWrapper';
+import { getCurrentUser } from 'aws-amplify/auth';
 import ModernHeader from './components/ModernHeader';
 import UserMenu from './components/UserMenu';
 import ModernAnalysisPanel from './components/ModernAnalysisPanel';
@@ -36,17 +37,24 @@ const App: React.FC = () => {
   const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(0);
   
   React.useEffect(() => {
-    const fetchAnalysisCount = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
-        const data = await response.json();
-        setTotalAnalysisCount(data.count || 0);
+        // Contador global
+        const countResponse = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
+        const countData = await countResponse.json();
+        setTotalAnalysisCount(countData.count || 0);
+        
+        // Historial personal
+        const user = await getCurrentUser();
+        const historyResponse = await fetch(`https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod?userId=${user.userId}`);
+        const historyData = await historyResponse.json();
+        setAnalysisHistory(historyData.history?.map(item => item.analysisData) || []);
       } catch (error) {
-        console.error('Error contando análisis:', error);
+        console.error('Error cargando datos:', error);
         setTotalAnalysisCount(0);
       }
     };
-    fetchAnalysisCount();
+    fetchData();
   }, []);
   
   const incrementAnalysisCount = () => {
@@ -283,6 +291,18 @@ const App: React.FC = () => {
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
+      
+      // Guardar en DynamoDB
+      try {
+        const user = await getCurrentUser();
+        await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+          userId: user.userId,
+          analysisData: analysisResult
+        });
+      } catch (error) {
+        console.error('Error guardando análisis:', error);
+      }
+      
       setProgress(70);
 
       if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
