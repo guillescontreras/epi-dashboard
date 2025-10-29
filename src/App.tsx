@@ -48,7 +48,7 @@ const App: React.FC = () => {
         const user = await getCurrentUser();
         const historyResponse = await fetch(`https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod?userId=${user.userId}`);
         const historyData = await historyResponse.json();
-        setAnalysisHistory(historyData.history?.map(item => item.analysisData) || []);
+        setAnalysisHistory(historyData.history?.map((item: any) => item.analysisData) || []);
       } catch (error) {
         console.error('Error cargando datos:', error);
         setTotalAnalysisCount(0);
