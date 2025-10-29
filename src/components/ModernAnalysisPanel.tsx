@@ -114,12 +114,20 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
                     Arrastra tu imagen aquí
                   </p>
                   <p className="text-gray-500 mb-4">o haz clic para seleccionar</p>
-                  <button
-                    onClick={() => document.getElementById('file-input')?.click()}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    Seleccionar Archivo
-                  </button>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => document.getElementById('file-input')?.click()}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      Seleccionar Archivo
+                    </button>
+                    <button
+                      onClick={() => document.getElementById('camera-input')?.click()}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      📷 Tomar Foto
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -143,6 +151,22 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
                     setFiles(Array.from(e.target.files));
                   } else {
                     setFile(selectedFile);
+                  }
+                }
+              }}
+              className="hidden"
+            />
+            <input
+              id="camera-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0];
+                if (selectedFile) {
+                  setFile(selectedFile);
+                  if (detectionType === 'ppe_video_detection') {
+                    setDetectionType('ppe_detection');
                   }
                 }
               }}
