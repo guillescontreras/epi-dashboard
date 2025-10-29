@@ -39,7 +39,7 @@ const App: React.FC = () => {
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        // Contador global
+        // Contador global desde S3
         const countResponse = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
         const countData = await countResponse.json();
         setTotalAnalysisCount(countData.count || 0);
@@ -444,6 +444,18 @@ const App: React.FC = () => {
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
+      
+      // Guardar en DynamoDB
+      try {
+        const user = await getCurrentUser();
+        await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+          userId: user.userId,
+          analysisData: analysisResult
+        });
+      } catch (error) {
+        console.error('Error guardando análisis:', error);
+      }
+      
       setProgress(70);
 
       if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
