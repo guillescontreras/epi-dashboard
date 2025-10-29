@@ -47,18 +47,18 @@ const UserMenu: React.FC = () => {
       <div className="relative">
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className="flex items-center space-x-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl px-4 py-2 shadow-lg hover:shadow-xl transition-all"
+          className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm border-2 border-white/20 hover:border-white/40 hover:bg-white/20 rounded-lg px-3 py-2 shadow-sm hover:shadow-md transition-all"
         >
-          <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
             <span className="text-white text-sm font-bold">
               {userEmail.charAt(0).toUpperCase()}
             </span>
           </div>
           <div className="hidden sm:block text-left">
-            <p className="text-sm font-medium">{userEmail.split('@')[0]}</p>
-            <p className="text-xs opacity-80">Mi Cuenta</p>
+            <p className="text-sm font-medium text-white">{userEmail.split('@')[0]}</p>
+            <p className="text-xs text-white/70">Mi Cuenta</p>
           </div>
-          <span className="text-white opacity-70">⚙️</span>
+          <span className="text-white/70">⚙️</span>
         </button>
 
         {showMenu && (

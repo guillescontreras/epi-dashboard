@@ -4,9 +4,10 @@ interface ModernHeaderProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
   onGuidedMode?: () => void;
+  userMenu?: React.ReactNode;
 }
 
-const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionChange, onGuidedMode }) => {
+const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionChange, onGuidedMode, userMenu }) => {
   const sections = [
     { id: 'analysis', name: 'Análisis', icon: '🔬' },
     { id: 'dashboard', name: 'Dashboard', icon: '📊' },
@@ -14,8 +15,8 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
   ];
 
   return (
-    <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl w-full">
+      <div className="px-4 sm:px-6 lg:px-8">
         {/* Header Principal */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 space-y-4 sm:space-y-0">
           {/* Logo y Título */}
@@ -32,7 +33,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
             </div>
           </div>
           
-          {/* Status Indicator - Solo en desktop */}
+          {/* Status Indicator y UserMenu - Solo en desktop */}
           <div className="hidden lg:flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-green-400">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -47,6 +48,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
                 <span>Inicio</span>
               </button>
             )}
+            {userMenu}
           </div>
         </div>
         
@@ -69,15 +71,18 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
                 </button>
               ))}
             </div>
-            {onGuidedMode && (
-              <button
-                onClick={onGuidedMode}
-                className="lg:hidden ml-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm flex items-center space-x-1 text-sm"
-              >
-                <span>🏠</span>
-                <span>Inicio</span>
-              </button>
-            )}
+            <div className="lg:hidden flex items-center space-x-2">
+              {onGuidedMode && (
+                <button
+                  onClick={onGuidedMode}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm flex items-center space-x-1 text-sm"
+                >
+                  <span>🏠</span>
+                  <span>Inicio</span>
+                </button>
+              )}
+              {userMenu}
+            </div>
           </nav>
         </div>
       </div>

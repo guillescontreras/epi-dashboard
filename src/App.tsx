@@ -40,14 +40,20 @@ const App: React.FC = () => {
     const fetchData = async () => {
       try {
         // Contador global desde S3
+        console.log('Obteniendo contador...');
         const countResponse = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
         const countData = await countResponse.json();
+        console.log('Contador recibido:', countData);
         setTotalAnalysisCount(countData.count || 0);
         
         // Historial personal
         const user = await getCurrentUser();
-        const historyResponse = await fetch(`https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod?userId=${user.userId}`);
+        console.log('Usuario actual:', user);
+        const historyUrl = `https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod?userId=${user.username}`;
+        console.log('URL historial:', historyUrl);
+        const historyResponse = await fetch(historyUrl);
         const historyData = await historyResponse.json();
+        console.log('Historial recibido:', historyData);
         setAnalysisHistory(historyData.history?.map((item: any) => item.analysisData) || []);
       } catch (error) {
         console.error('Error cargando datos:', error);
@@ -296,7 +302,7 @@ const App: React.FC = () => {
       try {
         const user = await getCurrentUser();
         await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
-          userId: user.userId,
+          userId: user.username,
           analysisData: analysisResult
         });
       } catch (error) {
@@ -307,6 +313,35 @@ const App: React.FC = () => {
 
       if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
         toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPP`);
+      }
+
+      // Generar resumen IA
+      if (res.data.DetectionType === 'ppe_detection') {
+        try {
+          console.log('Generando resumen IA...');
+          console.log('Datos para resumen:', { analysisResults: res.data, imageUrl });
+          setProgress(85);
+          const summaryResponse = await axios.post('https://n2vmezhgo7.execute-api.us-east-1.amazonaws.com/prod', {
+            analysisResults: res.data,
+            imageUrl: imageUrl
+          });
+          const summaryData = summaryResponse.data;
+          console.log('Resumen IA recibido:', summaryData);
+          if (summaryData.summary) {
+            console.log('Actualizando results con resumen IA...');
+            setResults((prev: any) => {
+              const updated = { ...prev, aiSummary: summaryData.summary };
+              console.log('Results actualizados:', updated);
+              return updated;
+            });
+            console.log('✅ Resumen IA agregado exitosamente');
+            toast.success('Resumen IA generado exitosamente');
+          } else {
+            console.log('❌ No se recibió summary en la respuesta');
+          }
+        } catch (error) {
+          console.error('❌ Error generando resumen IA:', error);
+        }
       }
 
       setProgress(100);
@@ -449,7 +484,7 @@ const App: React.FC = () => {
       try {
         const user = await getCurrentUser();
         await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
-          userId: user.userId,
+          userId: user.username,
           analysisData: analysisResult
         });
       } catch (error) {
@@ -462,21 +497,28 @@ const App: React.FC = () => {
         toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPP`);
       }
 
-      setProgress(100);
-      
       // Generar resumen IA
       if (res.data.DetectionType === 'ppe_detection') {
         try {
+          console.log('Generando resumen IA (guided mode)...');
+          setProgress(85);
           const summaryResponse = await axios.post('https://n2vmezhgo7.execute-api.us-east-1.amazonaws.com/prod', {
             analysisResults: res.data,
             imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`
           });
           const summaryData = summaryResponse.data;
-          setResults((prev: any) => ({ ...prev, aiSummary: summaryData.summary }));
+          console.log('Resumen IA recibido (guided):', summaryData);
+          if (summaryData.summary) {
+            setResults((prev: any) => ({ ...prev, aiSummary: summaryData.summary }));
+            console.log('✅ Resumen IA agregado (guided)');
+            toast.success('Resumen IA generado exitosamente');
+          }
         } catch (error) {
-          console.error('Error generando resumen IA:', error);
+          console.error('❌ Error generando resumen IA (guided):', error);
         }
       }
+      
+      setProgress(100);
       
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Intenta de nuevo';
@@ -780,8 +822,7 @@ const App: React.FC = () => {
   return (
     <AuthWrapper>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
-      <div className="flex justify-between items-center p-4 bg-white shadow-sm">
-        <ModernHeader 
+      <ModernHeader 
         activeSection={activeSection} 
         onSectionChange={(section) => {
           // Evitar cambio accidental de sección durante análisis
@@ -802,11 +843,10 @@ const App: React.FC = () => {
           }
           resetToStart();
         }}
-        />
-        <UserMenu />
-      </div>
+        userMenu={<UserMenu />}
+      />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {renderContent()}
         
         {/* Visualización de Video Procesado */}
