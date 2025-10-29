@@ -3,6 +3,8 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Papa from 'papaparse';
+import './aws-config';
+import AuthWrapper from './components/AuthWrapper';
 import ModernHeader from './components/ModernHeader';
 import ModernAnalysisPanel from './components/ModernAnalysisPanel';
 import Dashboard from './components/Dashboard';
@@ -724,7 +726,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <AuthWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       <ModernHeader 
         activeSection={activeSection} 
         onSectionChange={(section) => {
@@ -933,7 +936,8 @@ const App: React.FC = () => {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </AuthWrapper>
   );
 };
 
