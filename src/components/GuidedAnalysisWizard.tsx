@@ -133,7 +133,10 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
               <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <span className="text-3xl">📹</span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Tiempo Real</h3>
+              <div className="flex items-center space-x-2 mb-2">
+                <h3 className="text-xl font-bold text-gray-900">Tiempo Real</h3>
+                <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-2 py-1 rounded">BETA</span>
+              </div>
               <p className="text-gray-600 mb-4">Usa tu cámara o sube un video para detección instantánea</p>
               <div className="flex items-center text-pink-600 font-semibold">
                 <span>Seleccionar</span>

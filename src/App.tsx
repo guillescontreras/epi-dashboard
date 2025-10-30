@@ -914,6 +914,70 @@ const App: React.FC = () => {
       case 'dashboard':
         return <Dashboard analysisHistory={analysisHistory} />;
       case 'history':
+        // Si hay un resultado seleccionado, mostrar informe completo
+        if (results && activeSection === 'history') {
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">📊 Informe de Análisis</h2>
+                <button
+                  onClick={() => setResults(null)}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all"
+                >
+                  ← Volver al Historial
+                </button>
+              </div>
+              
+              {/* Resumen del Análisis */}
+              {results.DetectionType === 'ppe_detection' && (
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+                    <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                      <span>📊</span>
+                      <span>Resumen del Análisis</span>
+                    </h2>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
+                        <p className="text-3xl font-bold">{results.Summary?.totalPersons || 0}</p>
+                        <p className="text-sm opacity-90">Personas Detectadas</p>
+                      </div>
+                      <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
+                        <p className="text-3xl font-bold">{results.Summary?.compliant || 0}</p>
+                        <p className="text-sm opacity-90">Cumplientes</p>
+                      </div>
+                      <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
+                        <p className="text-3xl font-bold">{results.MinConfidence}%</p>
+                        <p className="text-sm opacity-90">Confianza Mínima</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <p>📅 Fecha: {new Date(results.timestamp).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Resumen Inteligente */}
+              {results.aiSummary && (
+                <AISummary summary={results.aiSummary} />
+              )}
+              
+              {/* Comparación de Imágenes */}
+              {results.imageUrl && (
+                <ImageComparison 
+                  results={results}
+                  imageUrl={results.imageUrl}
+                  minConfidence={results.MinConfidence || 75}
+                  epiItems={epiItems}
+                />
+              )}
+            </div>
+          );
+        }
+        
+        // Vista de lista de historial
         return (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -958,7 +1022,7 @@ const App: React.FC = () => {
                       <div className="mt-3 flex gap-2">
                         <button
                           onClick={() => {
-                            // Cargar análisis completo
+                            // Cargar análisis completo en vista de historial
                             setResults(analysis);
                             setImageUrl(analysis.imageUrl || '');
                             setMinConfidence(analysis.MinConfidence || 75);
@@ -974,15 +1038,9 @@ const App: React.FC = () => {
                               });
                               setEpiItems(Array.from(detectedTypes));
                             }
-                            setActiveSection('analysis');
-                            setUseGuidedMode(false);
+                            // Mantener en sección historial
                             setTimeout(() => {
-                              const analysisElement = document.querySelector('[data-analysis-summary]');
-                              if (analysisElement) {
-                                analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                              } else {
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
                             }, 100);
                           }}
                           className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
