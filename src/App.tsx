@@ -20,6 +20,8 @@ import { APP_VERSION } from './version';
 import { generateAnalysisPDF } from './utils/pdfGenerator';
 import UserProfileModal from './components/UserProfileModal';
 import ConfirmModal from './components/ConfirmModal';
+import FAQ from './components/FAQ';
+import FeedbackModal from './components/FeedbackModal';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
@@ -44,6 +46,9 @@ const App: React.FC = () => {
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [analysisToDelete, setAnalysisToDelete] = useState<any>(null);
+  const [showFAQ, setShowFAQ] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackAnalysisId, setFeedbackAnalysisId] = useState<string>('');
   
   const fetchAnalysisData = async () => {
     try {
@@ -1181,6 +1186,33 @@ const App: React.FC = () => {
     }
   };
 
+  // Si está mostrando FAQ, renderizar solo FAQ
+  if (showFAQ) {
+    return (
+      <AuthWrapper>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+          <ModernHeader 
+            activeSection="faq" 
+            onSectionChange={() => setShowFAQ(false)}
+            onGuidedMode={() => {
+              setShowFAQ(false);
+              resetToStart();
+            }}
+            userMenu={<UserMenu onEditProfile={() => setShowProfileModal(true)} />}
+          />
+          <FAQ />
+          <button
+            onClick={() => setShowFAQ(false)}
+            className="fixed bottom-8 right-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg flex items-center space-x-2 z-50"
+          >
+            <span>←</span>
+            <span>Volver</span>
+          </button>
+        </div>
+      </AuthWrapper>
+    );
+  }
+
   return (
     <AuthWrapper>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
@@ -1417,6 +1449,13 @@ const App: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 text-sm">
+              <button
+                onClick={() => setShowFAQ(true)}
+                className="flex items-center space-x-2 text-purple-200 hover:text-white transition-colors"
+              >
+                <span>❓</span>
+                <span>Preguntas Frecuentes</span>
+              </button>
               <a 
                 href="mailto:info@coirontech.com" 
                 className="flex items-center space-x-2 text-purple-200 hover:text-white transition-colors"
@@ -1445,6 +1484,12 @@ const App: React.FC = () => {
           </div>
         </div>
       </footer>
+      
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        analysisId={feedbackAnalysisId}
+      />
       </div>
     </AuthWrapper>
   );
