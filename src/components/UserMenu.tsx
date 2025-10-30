@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { signOut, getCurrentUser, updatePassword } from 'aws-amplify/auth';
 import { toast } from 'react-toastify';
 
-const UserMenu: React.FC = () => {
+interface UserMenuProps {
+  onEditProfile?: () => void;
+}
+
+const UserMenu: React.FC<UserMenuProps> = ({ onEditProfile }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
@@ -68,6 +72,16 @@ const UserMenu: React.FC = () => {
               <p className="text-xs text-gray-600 truncate">{userEmail}</p>
             </div>
             <div className="p-2">
+              <button
+                onClick={() => {
+                  if (onEditProfile) onEditProfile();
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <span>👤</span>
+                <span>Editar Perfil</span>
+              </button>
               <button
                 onClick={() => {
                   setShowChangePassword(true);

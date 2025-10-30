@@ -62,8 +62,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ userId, onClose, on
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-8">
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-6 rounded-t-2xl">
-          <h2 className="text-2xl font-bold text-white">Completar Perfil</h2>
-          <p className="text-blue-100 text-sm mt-1">Ingresa tus datos personales para los informes</p>
+          <h2 className="text-2xl font-bold text-white">{initialData ? 'Editar Perfil' : 'Completar Perfil'}</h2>
+          <p className="text-blue-100 text-sm mt-1">{initialData ? 'Actualiza tus datos personales' : 'Ingresa tus datos personales para los informes'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6">
