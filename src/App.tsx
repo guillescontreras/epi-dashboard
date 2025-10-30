@@ -464,7 +464,8 @@ const App: React.FC = () => {
           setProgress(85);
           const summaryResponse = await axios.post('https://n2vmezhgo7.execute-api.us-east-1.amazonaws.com/prod', {
             analysisResults: res.data,
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
+            requiredEPPs: epiItems
           });
           const summaryData = summaryResponse.data;
           console.log('Resumen IA recibido:', summaryData);
@@ -646,7 +647,8 @@ const App: React.FC = () => {
           setProgress(85);
           const summaryResponse = await axios.post('https://n2vmezhgo7.execute-api.us-east-1.amazonaws.com/prod', {
             analysisResults: res.data,
-            imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`
+            imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`,
+            requiredEPPs: uploadEpiItems
           });
           const summaryData = summaryResponse.data;
           console.log('Resumen IA recibido (guided):', summaryData);
