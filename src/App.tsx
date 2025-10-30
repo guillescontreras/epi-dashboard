@@ -432,7 +432,7 @@ const App: React.FC = () => {
 
       // Obtener el JSON usando la presigned URL
       const res = await axios.get(jsonPresignedUrl);
-      const analysisResult = { ...res.data, timestamp: Date.now() };
+      const analysisResult = { ...res.data, timestamp: Date.now(), imageUrl: imageUrl };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
@@ -611,7 +611,7 @@ const App: React.FC = () => {
 
       const jsonPresignedUrl = responseData.presignedUrl;
       const res = await axios.get(jsonPresignedUrl);
-      const analysisResult = { ...res.data, timestamp: Date.now() };
+      const analysisResult = { ...res.data, timestamp: Date.now(), imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}` };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
@@ -698,7 +698,7 @@ const App: React.FC = () => {
               </div>
               
               {results.DetectionType === 'ppe_detection' && (
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
+                <div data-analysis-summary className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
                   <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
                     <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                       <span>📊</span>
@@ -958,11 +958,31 @@ const App: React.FC = () => {
                       <div className="mt-3 flex gap-2">
                         <button
                           onClick={() => {
+                            // Cargar análisis completo
                             setResults(analysis);
+                            setImageUrl(analysis.imageUrl || '');
+                            setMinConfidence(analysis.MinConfidence || 75);
+                            // Extraer epiItems del análisis si existen
+                            if (analysis.ProtectiveEquipment && analysis.ProtectiveEquipment.length > 0) {
+                              const detectedTypes = new Set<string>();
+                              analysis.ProtectiveEquipment.forEach((person: any) => {
+                                person.BodyParts?.forEach((part: any) => {
+                                  part.EquipmentDetections?.forEach((eq: any) => {
+                                    detectedTypes.add(eq.Type);
+                                  });
+                                });
+                              });
+                              setEpiItems(Array.from(detectedTypes));
+                            }
                             setActiveSection('analysis');
                             setUseGuidedMode(false);
                             setTimeout(() => {
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              const analysisElement = document.querySelector('[data-analysis-summary]');
+                              if (analysisElement) {
+                                analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              } else {
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }
                             }, 100);
                           }}
                           className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
@@ -1115,10 +1135,10 @@ const App: React.FC = () => {
             <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-2xl p-4 cursor-pointer hover:scale-105 transition-transform"
                  onClick={() => {
                    setProgress(0);
-                   // Scroll al resumen de IA
-                   const summaryElement = document.querySelector('[data-summary-section]');
-                   if (summaryElement) {
-                     summaryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                   // Scroll al resumen del análisis
+                   const analysisElement = document.querySelector('[data-analysis-summary]');
+                   if (analysisElement) {
+                     analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                    } else {
                      window.scrollTo({ top: 0, behavior: 'smooth' });
                    }

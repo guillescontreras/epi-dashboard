@@ -17,37 +17,70 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => {
         </div>
 
         <div className="p-6">
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200 text-center">
-              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-3 mx-auto">
-                <span className="text-2xl">🦺</span>
+          {/* Funcionalidad Principal - EPP */}
+          <div className="mb-6">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-300 shadow-lg">
+              <div className="flex items-start space-x-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <span className="text-3xl">🦺</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">⭐ Detección de EPP con IA Avanzada</h3>
+                  <p className="text-sm text-gray-700 mb-3">Análisis inteligente de Equipos de Protección Personal con tecnología de visión artificial y modelos de IA generativa</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center space-x-2 text-xs text-gray-600">
+                      <span className="text-green-600">✓</span>
+                      <span>Etiquetado automático</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-xs text-gray-600">
+                      <span className="text-green-600">✓</span>
+                      <span>Resúmenes con IA</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-xs text-gray-600">
+                      <span className="text-green-600">✓</span>
+                      <span>Reportes profesionales</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-xs text-gray-600">
+                      <span className="text-green-600">✓</span>
+                      <span>Normas OSHA/ISO 45001</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">Detección EPP</h3>
-              <p className="text-xs text-gray-600">Cascos, guantes, mascarillas</p>
             </div>
+          </div>
 
-            <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl p-4 border border-pink-200 text-center">
-              <div className="w-12 h-12 bg-pink-500 rounded-xl flex items-center justify-center mb-3 mx-auto">
-                <span className="text-2xl">📹</span>
+          {/* Funcionalidades Adicionales */}
+          <div className="mb-6">
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-3 font-semibold">Funcionalidades adicionales</p>
+            <div className="grid grid-cols-4 gap-3">
+              <div className="text-center">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-2 mx-auto">
+                  <span className="text-lg">👤</span>
+                </div>
+                <p className="text-xs text-gray-600">Detección facial</p>
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">Tiempo Real</h3>
-              <p className="text-xs text-gray-600">Análisis desde cámara</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200 text-center">
-              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-3 mx-auto">
-                <span className="text-2xl">📊</span>
+              <div className="text-center">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-2 mx-auto">
+                  <span className="text-lg">🏷️</span>
+                </div>
+                <p className="text-xs text-gray-600">Objetos</p>
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">Reportes</h3>
-              <p className="text-xs text-gray-600">Exporta resultados CSV</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-4 border border-purple-200 text-center">
-              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-3 mx-auto">
-                <span className="text-2xl">🤖</span>
+              <div className="text-center">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-2 mx-auto">
+                  <span className="text-lg">📝</span>
+                </div>
+                <p className="text-xs text-gray-600">Texto</p>
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">IA Avanzada</h3>
-              <p className="text-xs text-gray-600">Visión Artificial + IA Generativa</p>
+              <div className="text-center">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-2 mx-auto">
+                  <span className="text-lg">📹</span>
+                </div>
+                <p className="text-xs text-gray-600 flex items-center justify-center">
+                  <span>Tiempo real</span>
+                  <span className="ml-1 text-[10px] bg-yellow-100 text-yellow-700 px-1 rounded">Beta</span>
+                </p>
+              </div>
             </div>
           </div>
 
