@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { Country, State, City } from 'country-state-city';
 
 interface UserProfileModalProps {
   userId: string;
@@ -23,11 +24,83 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ userId, onClose, on
   });
 
   const [loading, setLoading] = useState(false);
+  const [countries, setCountries] = useState<any[]>([]);
+  const [states, setStates] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
+  const [selectedCountryCode, setSelectedCountryCode] = useState('');
+  const [selectedStateCode, setSelectedStateCode] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    // Cargar países
+    const allCountries = Country.getAllCountries();
+    setCountries(allCountries);
+
+    // Si hay datos iniciales, cargar estados y ciudades
+    if (initialData?.country) {
+      const country = allCountries.find(c => c.name === initialData.country);
+      if (country) {
+        setSelectedCountryCode(country.isoCode);
+        const countryStates = State.getStatesOfCountry(country.isoCode);
+        setStates(countryStates);
+
+        if (initialData?.state) {
+          const state = countryStates.find(s => s.name === initialData.state);
+          if (state) {
+            setSelectedStateCode(state.isoCode);
+            const stateCities = City.getCitiesOfState(country.isoCode, state.isoCode);
+            setCities(stateCities);
+          }
+        }
+      }
+    }
+  }, [initialData]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
+    });
+  };
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const countryCode = e.target.value;
+    const country = countries.find(c => c.isoCode === countryCode);
+    
+    setSelectedCountryCode(countryCode);
+    setFormData({
+      ...formData,
+      country: country?.name || '',
+      state: '',
+      city: ''
+    });
+    
+    // Cargar estados del país seleccionado
+    const countryStates = State.getStatesOfCountry(countryCode);
+    setStates(countryStates);
+    setCities([]);
+    setSelectedStateCode('');
+  };
+
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const stateCode = e.target.value;
+    const state = states.find(s => s.isoCode === stateCode);
+    
+    setSelectedStateCode(stateCode);
+    setFormData({
+      ...formData,
+      state: state?.name || '',
+      city: ''
+    });
+    
+    // Cargar ciudades del estado seleccionado
+    const stateCities = City.getCitiesOfState(selectedCountryCode, stateCode);
+    setCities(stateCities);
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      city: e.target.value
     });
   };
 
@@ -134,14 +207,18 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ userId, onClose, on
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 País
               </label>
-              <input
-                type="text"
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
+              <select
+                value={selectedCountryCode}
+                onChange={handleCountryChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Argentina"
-              />
+              >
+                <option value="">Selecciona un país</option>
+                {countries.map((country) => (
+                  <option key={country.isoCode} value={country.isoCode}>
+                    {country.flag} {country.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Provincia/Estado */}
@@ -149,14 +226,19 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ userId, onClose, on
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Provincia/Estado
               </label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Buenos Aires"
-              />
+              <select
+                value={selectedStateCode}
+                onChange={handleStateChange}
+                disabled={!selectedCountryCode}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">Selecciona una provincia/estado</option>
+                {states.map((state) => (
+                  <option key={state.isoCode} value={state.isoCode}>
+                    {state.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Departamento */}
@@ -170,7 +252,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ userId, onClose, on
                 value={formData.department}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="La Plata"
+                placeholder="Opcional"
               />
             </div>
 
@@ -179,14 +261,19 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ userId, onClose, on
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Ciudad
               </label>
-              <input
-                type="text"
-                name="city"
+              <select
                 value={formData.city}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="La Plata"
-              />
+                onChange={handleCityChange}
+                disabled={!selectedStateCode}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">Selecciona una ciudad</option>
+                {cities.map((city) => (
+                  <option key={city.name} value={city.name}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Código Postal */}
