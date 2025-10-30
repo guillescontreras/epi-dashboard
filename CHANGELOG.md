@@ -7,6 +7,25 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [2.4.0] - 2024-10-31
+
+### Agregado
+- Dropdowns en cascada para ubicación geográfica en perfil de usuario
+- Selección de país con banderas usando country-state-city
+- Dropdown de provincias/estados que se carga según país seleccionado
+- Dropdown de ciudades que se carga según provincia seleccionada
+- Campos deshabilitados hasta que se complete la selección previa
+
+### Modificado
+- UserProfileModal ahora usa dropdowns en lugar de inputs de texto
+- Datos geográficos estandarizados sin errores de tipeo
+- Mejor UX con cascada automática de opciones
+
+### Dependencias
+- Agregada country-state-city@3.2.1
+
+---
+
 ## [2.3.3] - 2024-10-31
 
 ### Agregado
