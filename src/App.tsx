@@ -453,10 +453,6 @@ const App: React.FC = () => {
       
       setProgress(70);
 
-      if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
-        toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPP`);
-      }
-
       // Generar resumen IA
       if (res.data.DetectionType === 'ppe_detection') {
         try {
@@ -635,10 +631,6 @@ const App: React.FC = () => {
       }
       
       setProgress(70);
-
-      if (res.data.DetectionType === 'ppe_detection' && res.data.Summary.compliant < res.data.Summary.totalPersons) {
-        toast.error(`Alerta: ${res.data.Summary.compliant} de ${res.data.Summary.totalPersons} personas cumplen con EPP`);
-      }
 
       // Generar resumen IA
       if (res.data.DetectionType === 'ppe_detection') {
@@ -1096,7 +1088,7 @@ const App: React.FC = () => {
             <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-2xl p-4 animate-bounce cursor-pointer hover:scale-105 transition-transform"
                  onClick={() => {
                    setProgress(0);
-                   window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                   window.scrollTo({ top: 0, behavior: 'smooth' });
                  }}>
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center animate-pulse">
