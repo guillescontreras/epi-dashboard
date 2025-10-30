@@ -466,15 +466,43 @@ const App: React.FC = () => {
           const summaryData = summaryResponse.data;
           console.log('Resumen IA recibido:', summaryData);
           if (summaryData.summary) {
-            setResults((prev: any) => ({ ...prev, aiSummary: summaryData.summary }));
+            const updatedResult = { ...analysisResult, aiSummary: summaryData.summary };
+            setResults(updatedResult);
             console.log('✅ Resumen IA (Bedrock) agregado exitosamente');
+            
+            // Actualizar en DynamoDB con el resumen IA
+            try {
+              const user = await getCurrentUser();
+              await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+                userId: user.username,
+                analysisData: updatedResult
+              });
+              console.log('✅ Análisis actualizado con resumen IA');
+            } catch (dbError) {
+              console.error('Error actualizando con resumen IA:', dbError);
+            }
+            
             toast.success('Resumen IA generado exitosamente');
           }
         } catch (error) {
           console.error('❌ Error con Bedrock, usando resumen local:', error);
           // Fallback: usar resumen local
           const localSummary = generateLocalAISummary(res.data);
-          setResults((prev: any) => ({ ...prev, aiSummary: localSummary }));
+          const updatedResult = { ...analysisResult, aiSummary: localSummary };
+          setResults(updatedResult);
+          
+          // Actualizar en DynamoDB con resumen local
+          try {
+            const user = await getCurrentUser();
+            await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+              userId: user.username,
+              analysisData: updatedResult
+            });
+            console.log('✅ Análisis actualizado con resumen local');
+          } catch (dbError) {
+            console.error('Error actualizando con resumen local:', dbError);
+          }
+          
           console.log('✅ Resumen IA local generado');
           toast.success('Resumen de análisis generado');
         }
@@ -645,15 +673,43 @@ const App: React.FC = () => {
           const summaryData = summaryResponse.data;
           console.log('Resumen IA recibido (guided):', summaryData);
           if (summaryData.summary) {
-            setResults((prev: any) => ({ ...prev, aiSummary: summaryData.summary }));
+            const updatedResult = { ...analysisResult, aiSummary: summaryData.summary };
+            setResults(updatedResult);
             console.log('✅ Resumen IA (Bedrock) agregado (guided)');
+            
+            // Actualizar en DynamoDB con el resumen IA
+            try {
+              const user = await getCurrentUser();
+              await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+                userId: user.username,
+                analysisData: updatedResult
+              });
+              console.log('✅ Análisis actualizado con resumen IA (guided)');
+            } catch (dbError) {
+              console.error('Error actualizando con resumen IA:', dbError);
+            }
+            
             toast.success('Resumen IA generado exitosamente');
           }
         } catch (error) {
           console.error('❌ Error con Bedrock (guided), usando resumen local:', error);
           // Fallback: usar resumen local
           const localSummary = generateLocalAISummary(res.data);
-          setResults((prev: any) => ({ ...prev, aiSummary: localSummary }));
+          const updatedResult = { ...analysisResult, aiSummary: localSummary };
+          setResults(updatedResult);
+          
+          // Actualizar en DynamoDB con resumen local
+          try {
+            const user = await getCurrentUser();
+            await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+              userId: user.username,
+              analysisData: updatedResult
+            });
+            console.log('✅ Análisis actualizado con resumen local (guided)');
+          } catch (dbError) {
+            console.error('Error actualizando con resumen local:', dbError);
+          }
+          
           console.log('✅ Resumen IA local generado (guided)');
           toast.success('Resumen de análisis generado');
         }
