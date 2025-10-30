@@ -156,6 +156,9 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
   pdf.setTextColor(107, 114, 128);
   pdf.text('Informe generado por CoironTech - Normas OSHA e ISO 45001', pageWidth / 2, footerY, { align: 'center' });
 
-  const fileName = `Informe_EPP_${date.toISOString().split('T')[0]}.pdf`;
+  // Generar nombre único: Informe-EPP-{Inspector}-{YYYY-MM-DD-HHmm}.pdf
+  const inspectorName = userName.replace(/\s+/g, '-');
+  const dateStr = date.toISOString().slice(0, 16).replace('T', '-').replace(':', '');
+  const fileName = `Informe-EPP-${inspectorName}-${dateStr}.pdf`;
   pdf.save(fileName);
 };

@@ -765,16 +765,18 @@ const App: React.FC = () => {
           {results && useGuidedMode && !showRealtimeDetection && !showVideoProcessor && (
             <div className="mt-8">
               <div className="mb-4 flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
-                    generateAnalysisPDF({ analysisData: results, imageUrl, epiItems, userName });
-                  }}
-                  className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
-                >
-                  <span>📝</span>
-                  <span>Descargar PDF</span>
-                </button>
+                {results.DetectionType === 'ppe_detection' && (
+                  <button
+                    onClick={() => {
+                      const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
+                      generateAnalysisPDF({ analysisData: results, imageUrl, epiItems, userName });
+                    }}
+                    className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
+                  >
+                    <span>📝</span>
+                    <span>Descargar PDF</span>
+                  </button>
+                )}
                 <button
                   onClick={resetToStart}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
@@ -1008,16 +1010,18 @@ const App: React.FC = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">📊 Informe de Análisis</h2>
                 <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
-                      generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems, userName });
-                    }}
-                    className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
-                  >
-                    <span>📝</span>
-                    <span>Descargar PDF</span>
-                  </button>
+                  {results.DetectionType === 'ppe_detection' && (
+                    <button
+                      onClick={() => {
+                        const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
+                        generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems, userName });
+                      }}
+                      className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+                    >
+                      <span>📝</span>
+                      <span>Descargar PDF</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => setResults(null)}
                     className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all"
@@ -1145,6 +1149,27 @@ const App: React.FC = () => {
                           className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
                         >
                           📊 Ver Informe Completo
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm('¿Estás seguro de que deseas eliminar este análisis? Esta acción no se puede deshacer.')) {
+                              return;
+                            }
+                            try {
+                              const user = await getCurrentUser();
+                              await axios.delete(`https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod/delete?userId=${user.username}&timestamp=${analysis.timestamp}`);
+                              toast.success('Análisis eliminado exitosamente');
+                              // Recargar historial
+                              fetchAnalysisData();
+                            } catch (error) {
+                              console.error('Error eliminando análisis:', error);
+                              toast.error('Error al eliminar el análisis');
+                            }
+                          }}
+                          className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center space-x-1"
+                        >
+                          <span>🗑️</span>
+                          <span>Eliminar</span>
                         </button>
                       </div>
                     </div>
