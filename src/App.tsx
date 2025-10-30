@@ -18,6 +18,8 @@ import VideoProcessor from './components/VideoProcessor';
 import AISummary from './components/AISummary';
 import { APP_VERSION } from './version';
 import { generateAnalysisPDF } from './utils/pdfGenerator';
+import UserProfileModal from './components/UserProfileModal';
+import axios from 'axios';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
@@ -37,6 +39,9 @@ const App: React.FC = () => {
   const [showVideoProcessor, setShowVideoProcessor] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(0);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
   
   const fetchAnalysisData = async () => {
     try {
@@ -50,12 +55,28 @@ const App: React.FC = () => {
       // Historial personal
       const user = await getCurrentUser();
       console.log('Usuario actual:', user);
+      setCurrentUserId(user.username);
+      
       const historyUrl = `https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod?userId=${user.username}`;
       console.log('URL historial:', historyUrl);
       const historyResponse = await fetch(historyUrl);
       const historyData = await historyResponse.json();
       console.log('Historial recibido:', historyData);
       setAnalysisHistory(historyData.history?.map((item: any) => item.analysisData) || []);
+      
+      // Verificar si tiene perfil
+      try {
+        const profileResponse = await axios.get(`https://f2sv201866.execute-api.us-east-1.amazonaws.com?userId=${user.username}`);
+        if (profileResponse.data.profile) {
+          setUserProfile(profileResponse.data.profile);
+        } else {
+          // No tiene perfil, mostrar modal
+          setShowProfileModal(true);
+        }
+      } catch (profileError) {
+        console.log('No se encontró perfil, mostrar modal');
+        setShowProfileModal(true);
+      }
     } catch (error) {
       console.error('Error cargando datos:', error);
       setTotalAnalysisCount(0);
@@ -746,7 +767,10 @@ const App: React.FC = () => {
             <div className="mt-8">
               <div className="mb-4 flex justify-end gap-3">
                 <button
-                  onClick={() => generateAnalysisPDF({ analysisData: results, imageUrl, epiItems })}
+                  onClick={() => {
+                    const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
+                    generateAnalysisPDF({ analysisData: results, imageUrl, epiItems, userName });
+                  }}
                   className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
                 >
                   <span>📝</span>
@@ -986,7 +1010,10 @@ const App: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">📊 Informe de Análisis</h2>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems })}
+                    onClick={() => {
+                      const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
+                      generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems, userName });
+                    }}
                     className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
                   >
                     <span>📝</span>
@@ -1316,6 +1343,18 @@ const App: React.FC = () => {
             setUseGuidedMode(true);
           }}
           minConfidence={minConfidence}
+        />
+      )}
+      
+      {showProfileModal && currentUserId && (
+        <UserProfileModal
+          userId={currentUserId}
+          initialData={userProfile}
+          onClose={() => setShowProfileModal(false)}
+          onSave={(profile) => {
+            setUserProfile(profile);
+            setShowProfileModal(false);
+          }}
         />
       )}
       
