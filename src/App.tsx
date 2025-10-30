@@ -19,7 +19,6 @@ import AISummary from './components/AISummary';
 import { APP_VERSION } from './version';
 import { generateAnalysisPDF } from './utils/pdfGenerator';
 import UserProfileModal from './components/UserProfileModal';
-import axios from 'axios';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
