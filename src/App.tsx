@@ -17,6 +17,7 @@ import GuidedAnalysisWizard from './components/GuidedAnalysisWizard';
 import VideoProcessor from './components/VideoProcessor';
 import AISummary from './components/AISummary';
 import { APP_VERSION } from './version';
+import { generateAnalysisPDF } from './utils/pdfGenerator';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
@@ -743,7 +744,14 @@ const App: React.FC = () => {
           {/* Resultados en el asistente */}
           {results && useGuidedMode && !showRealtimeDetection && !showVideoProcessor && (
             <div className="mt-8">
-              <div className="mb-4 flex justify-end">
+              <div className="mb-4 flex justify-end gap-3">
+                <button
+                  onClick={() => generateAnalysisPDF({ analysisData: results, imageUrl, epiItems })}
+                  className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
+                >
+                  <span>📝</span>
+                  <span>Descargar PDF</span>
+                </button>
                 <button
                   onClick={resetToStart}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
@@ -976,12 +984,21 @@ const App: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">📊 Informe de Análisis</h2>
-                <button
-                  onClick={() => setResults(null)}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all"
-                >
-                  ← Volver al Historial
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems })}
+                    className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+                  >
+                    <span>📝</span>
+                    <span>Descargar PDF</span>
+                  </button>
+                  <button
+                    onClick={() => setResults(null)}
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all"
+                  >
+                    ← Volver al Historial
+                  </button>
+                </div>
               </div>
               
               {/* Resumen del Análisis */}
