@@ -16,6 +16,7 @@ import WelcomeModal from './components/WelcomeModal';
 import GuidedAnalysisWizard from './components/GuidedAnalysisWizard';
 import VideoProcessor from './components/VideoProcessor';
 import AISummary from './components/AISummary';
+import { APP_VERSION } from './version';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
@@ -36,35 +37,173 @@ const App: React.FC = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(0);
   
+  const fetchAnalysisData = async () => {
+    try {
+      // Contador global desde S3
+      console.log('Obteniendo contador...');
+      const countResponse = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
+      const countData = await countResponse.json();
+      console.log('Contador recibido:', countData);
+      setTotalAnalysisCount(countData.count || 0);
+      
+      // Historial personal
+      const user = await getCurrentUser();
+      console.log('Usuario actual:', user);
+      const historyUrl = `https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod?userId=${user.username}`;
+      console.log('URL historial:', historyUrl);
+      const historyResponse = await fetch(historyUrl);
+      const historyData = await historyResponse.json();
+      console.log('Historial recibido:', historyData);
+      setAnalysisHistory(historyData.history?.map((item: any) => item.analysisData) || []);
+    } catch (error) {
+      console.error('Error cargando datos:', error);
+      setTotalAnalysisCount(0);
+    }
+  };
+  
   React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Contador global desde S3
-        console.log('Obteniendo contador...');
-        const countResponse = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
-        const countData = await countResponse.json();
-        console.log('Contador recibido:', countData);
-        setTotalAnalysisCount(countData.count || 0);
-        
-        // Historial personal
-        const user = await getCurrentUser();
-        console.log('Usuario actual:', user);
-        const historyUrl = `https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod?userId=${user.username}`;
-        console.log('URL historial:', historyUrl);
-        const historyResponse = await fetch(historyUrl);
-        const historyData = await historyResponse.json();
-        console.log('Historial recibido:', historyData);
-        setAnalysisHistory(historyData.history?.map((item: any) => item.analysisData) || []);
-      } catch (error) {
-        console.error('Error cargando datos:', error);
-        setTotalAnalysisCount(0);
-      }
-    };
-    fetchData();
+    fetchAnalysisData();
   }, []);
+  
+  // Refrescar datos cuando cambia la sección activa
+  React.useEffect(() => {
+    if (activeSection === 'dashboard' || activeSection === 'history') {
+      fetchAnalysisData();
+    }
+  }, [activeSection]);
   
   const incrementAnalysisCount = () => {
     setTotalAnalysisCount(prev => prev + 1);
+  };
+  
+  const generateLocalAISummary = (analysisData: any) => {
+    console.log('🔍 Generando resumen local con datos:', analysisData);
+    const { Summary, ProtectiveEquipment, MinConfidence } = analysisData;
+    const totalPersons = Summary?.totalPersons || 0;
+    
+    // Obtener EPPs requeridos del análisis
+    const requiredEPPs = epiItems; // Los EPPs que el usuario seleccionó
+    console.log('📋 EPPs requeridos:', requiredEPPs);
+    
+    // Calcular cumplimiento real: persona cumple si tiene TODOS los EPPs requeridos
+    let compliantPersons = 0;
+    let partialCompliantPersons = 0;
+    let totalEPPsDetected = 0;
+    let totalEPPsRequired = requiredEPPs.length * totalPersons;
+    
+    if (ProtectiveEquipment && ProtectiveEquipment.length > 0) {
+      ProtectiveEquipment.forEach((person: any) => {
+        const personEPPs = new Set<string>();
+        person.BodyParts?.forEach((part: any) => {
+          part.EquipmentDetections?.forEach((eq: any) => {
+            if (eq.Confidence >= (MinConfidence || 75)) {
+              personEPPs.add(eq.Type);
+            }
+          });
+        });
+        
+        // Contar cuántos EPPs requeridos tiene esta persona
+        const personRequiredEPPs = requiredEPPs.filter((epp: string) => personEPPs.has(epp)).length;
+        totalEPPsDetected += personRequiredEPPs;
+        
+        // Verificar si tiene TODOS los EPPs requeridos
+        const hasAllRequired = requiredEPPs.every((epp: string) => personEPPs.has(epp));
+        const hasSomeRequired = requiredEPPs.some((epp: string) => personEPPs.has(epp));
+        
+        if (hasAllRequired) {
+          compliantPersons++;
+        } else if (hasSomeRequired) {
+          partialCompliantPersons++;
+        }
+      });
+    }
+    
+    const compliant = compliantPersons;
+    const partial = partialCompliantPersons;
+    const nonCompliant = totalPersons - compliant - partial;
+    const compliancePercent = totalEPPsRequired > 0 ? Math.round((totalEPPsDetected / totalEPPsRequired) * 100) : 0;
+    
+    console.log('📊 Stats (recalculados):', { 
+      totalPersons, 
+      compliant, 
+      partial, 
+      nonCompliant, 
+      requiredEPPs: requiredEPPs.length,
+      totalEPPsDetected,
+      totalEPPsRequired,
+      compliancePercent
+    });
+    
+    // Analizar detecciones de EPP
+    let totalDetections = 0;
+    let detectedItems: string[] = [];
+    
+    if (ProtectiveEquipment && ProtectiveEquipment.length > 0) {
+      console.log('🔎 Analizando ProtectiveEquipment:', ProtectiveEquipment);
+      ProtectiveEquipment.forEach((person: any, idx: number) => {
+        console.log(`👤 Persona ${idx}:`, person);
+        person.BodyParts?.forEach((part: any) => {
+          part.EquipmentDetections?.forEach((eq: any) => {
+            console.log(`  🛡️ Equipo detectado: ${eq.Type} - ${eq.Confidence}%`);
+            if (eq.Confidence >= (MinConfidence || 75)) {
+              totalDetections++;
+              if (!detectedItems.includes(eq.Type)) {
+                detectedItems.push(eq.Type);
+              }
+            }
+          });
+        });
+      });
+    }
+    
+    console.log('✅ Detecciones totales:', totalDetections);
+    console.log('✅ Items detectados:', detectedItems);
+    
+    let summary = `**Resumen del Análisis de Seguridad Industrial**\n\n`;
+    
+    if (totalPersons === 0) {
+      summary += `No se detectaron personas en la imagen analizada. Verifique que la imagen contenga trabajadores y que la calidad sea adecuada para el análisis.`;
+    } else {
+      summary += `Se detectaron **${totalPersons} persona${totalPersons > 1 ? 's' : ''}** en el área de trabajo.\n\n`;
+      
+      // Mostrar EPP detectados
+      if (detectedItems.length > 0) {
+        const itemNames: any = {
+          'HEAD_COVER': 'Casco',
+          'EYE_COVER': 'Gafas de seguridad',
+          'HAND_COVER': 'Guantes',
+          'FOOT_COVER': 'Calzado de seguridad',
+          'FACE_COVER': 'Mascarilla',
+          'EAR_COVER': 'Protección auditiva'
+        };
+        const detectedNames = detectedItems.map(item => itemNames[item] || item).join(', ');
+        summary += `**EPP detectados**: ${detectedNames}\n\n`;
+      }
+      
+      if (compliant === totalPersons && compliant > 0) {
+        summary += `✅ **Cumplimiento total** (${compliancePercent}%): Todas las personas (${totalPersons}) cumplen con los ${requiredEPPs.length} elementos de EPP requeridos.\n\n`;
+        summary += `**Recomendaciones:**\n- Mantener este nivel de cumplimiento\n- Realizar inspecciones periódicas\n- Reforzar la cultura de seguridad`;
+      } else if (compliant > 0 || partial > 0) {
+        summary += `⚠️ **Cumplimiento parcial** (${compliancePercent}% de EPPs detectados): \n\n`;
+        summary += `**Situación detectada:**\n`;
+        if (compliant > 0) {
+          summary += `- ${compliant} persona${compliant > 1 ? 's' : ''} con TODOS los EPP (${requiredEPPs.length}/${requiredEPPs.length})\n`;
+        }
+        if (partial > 0) {
+          const avgEPPs = Math.round(totalEPPsDetected / (compliant + partial));
+          summary += `- ${partial} persona${partial > 1 ? 's' : ''} con EPP incompleto (~${avgEPPs}/${requiredEPPs.length})\n`;
+        }
+        if (nonCompliant > 0) {
+          summary += `- ${nonCompliant} persona${nonCompliant > 1 ? 's' : ''} sin EPP detectado (0/${requiredEPPs.length})\n`;
+        }
+        summary += `\n**Acciones recomendadas:**\n- Verificar EPP faltante en personal no conforme\n- Proporcionar todos los elementos de protección requeridos\n- Reforzar capacitación sobre uso correcto\n- Implementar supervisión continua`;
+      } else {
+        summary += `❌ **Incumplimiento** (${compliancePercent}%): Ninguna persona cumple con todos los ${requiredEPPs.length} elementos de EPP requeridos.\n\n`;
+        summary += `**ACCIÓN REQUERIDA:**\n- Suspender actividades hasta corregir\n- Proporcionar EPP completo a todo el personal\n- Capacitar sobre uso correcto de EPP\n- Implementar controles de verificación\n- Revisar procedimientos de seguridad`;
+      }
+    }
+    
+    return summary;
   };
 
   const handleUpload = async () => {
@@ -319,7 +458,6 @@ const App: React.FC = () => {
       if (res.data.DetectionType === 'ppe_detection') {
         try {
           console.log('Generando resumen IA...');
-          console.log('Datos para resumen:', { analysisResults: res.data, imageUrl });
           setProgress(85);
           const summaryResponse = await axios.post('https://n2vmezhgo7.execute-api.us-east-1.amazonaws.com/prod', {
             analysisResults: res.data,
@@ -328,19 +466,17 @@ const App: React.FC = () => {
           const summaryData = summaryResponse.data;
           console.log('Resumen IA recibido:', summaryData);
           if (summaryData.summary) {
-            console.log('Actualizando results con resumen IA...');
-            setResults((prev: any) => {
-              const updated = { ...prev, aiSummary: summaryData.summary };
-              console.log('Results actualizados:', updated);
-              return updated;
-            });
-            console.log('✅ Resumen IA agregado exitosamente');
+            setResults((prev: any) => ({ ...prev, aiSummary: summaryData.summary }));
+            console.log('✅ Resumen IA (Bedrock) agregado exitosamente');
             toast.success('Resumen IA generado exitosamente');
-          } else {
-            console.log('❌ No se recibió summary en la respuesta');
           }
         } catch (error) {
-          console.error('❌ Error generando resumen IA:', error);
+          console.error('❌ Error con Bedrock, usando resumen local:', error);
+          // Fallback: usar resumen local
+          const localSummary = generateLocalAISummary(res.data);
+          setResults((prev: any) => ({ ...prev, aiSummary: localSummary }));
+          console.log('✅ Resumen IA local generado');
+          toast.success('Resumen de análisis generado');
         }
       }
 
@@ -510,11 +646,16 @@ const App: React.FC = () => {
           console.log('Resumen IA recibido (guided):', summaryData);
           if (summaryData.summary) {
             setResults((prev: any) => ({ ...prev, aiSummary: summaryData.summary }));
-            console.log('✅ Resumen IA agregado (guided)');
+            console.log('✅ Resumen IA (Bedrock) agregado (guided)');
             toast.success('Resumen IA generado exitosamente');
           }
         } catch (error) {
-          console.error('❌ Error generando resumen IA (guided):', error);
+          console.error('❌ Error con Bedrock (guided), usando resumen local:', error);
+          // Fallback: usar resumen local
+          const localSummary = generateLocalAISummary(res.data);
+          setResults((prev: any) => ({ ...prev, aiSummary: localSummary }));
+          console.log('✅ Resumen IA local generado (guided)');
+          toast.success('Resumen de análisis generado');
         }
       }
       
@@ -832,6 +973,9 @@ const App: React.FC = () => {
           // Cambiar a modo avanzado si se selecciona dashboard o historial
           if (section === 'dashboard' || section === 'history') {
             setUseGuidedMode(false);
+          } else if (section === 'analysis') {
+            // Al hacer click en Análisis, ir al asistente
+            setUseGuidedMode(true);
           }
           setActiveSection(section);
         }}
@@ -992,7 +1136,7 @@ const App: React.FC = () => {
       )}
       
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 text-white py-6 mt-12">
+      <footer className="bg-gradient-to-r from-[#8B9A9F] via-[#7A9B76] to-[#5B8FA3] text-white py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-3">
@@ -1028,7 +1172,7 @@ const App: React.FC = () => {
               </div>
               <div className="flex items-center space-x-2 text-purple-200">
                 <span>🏷️</span>
-                <span>v1.0.0</span>
+                <span>v{APP_VERSION}</span>
               </div>
             </div>
           </div>

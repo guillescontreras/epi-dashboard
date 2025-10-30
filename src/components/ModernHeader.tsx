@@ -15,7 +15,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionCha
   ];
 
   return (
-    <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl w-full">
+    <div className="bg-gradient-to-r from-[#8B9A9F] via-[#7A9B76] to-[#5B8FA3] shadow-2xl w-full">
       <div className="px-4 sm:px-6 lg:px-8">
         {/* Header Principal */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 space-y-4 sm:space-y-0">

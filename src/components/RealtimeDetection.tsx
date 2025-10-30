@@ -101,8 +101,8 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
     setDetections(prev => [...prev.slice(-50), ...newDetections]);
     setStats({ total: personCount, compliant: compliantCount, nonCompliant: personCount - compliantCount });
 
-    // Limitar a ~2 FPS para no sobrecargar el dispositivo
-    setTimeout(detectFrame, 500);
+    // Limitar a ~7 FPS
+    setTimeout(detectFrame, 143);
   };
 
   useEffect(() => {
@@ -205,46 +205,28 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
 
             <div className="space-y-4">
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
-                <h3 className="font-semibold text-gray-900 mb-3">📊 Estadísticas</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">📊 Estadísticas en Vivo</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Personas:</span>
+                    <span className="text-sm text-gray-600">Personas detectadas:</span>
                     <span className="text-2xl font-bold text-blue-600">{stats.total}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Detecciones:</span>
-                    <span className="text-2xl font-bold text-purple-600">{detections.length}</span>
-                  </div>
                   <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                    ⏱️ Análisis: ~2 FPS (optimizado para dispositivos)
+                    ⏱️ Análisis: ~7 FPS
                   </div>
                 </div>
               </div>
 
-              {!showSummary ? (
-                <div className="bg-gray-50 rounded-xl p-4 max-h-96 overflow-y-auto">
-                  <h3 className="font-semibold text-gray-900 mb-3">🔍 Detecciones Recientes</h3>
-                  <div className="space-y-2">
-                    {detections.slice(-10).reverse().map((det, idx) => (
-                      <div key={idx} className="bg-white rounded-lg p-2 text-xs border border-gray-200">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-900">{det.class}</span>
-                          <span className="text-green-600 font-bold">{det.score.toFixed(1)}%</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
+              {showSummary && (
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                  <h3 className="font-semibold text-gray-900 mb-3">🎯 Resumen Final</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">🎯 Resumen de Sesión</h3>
                   <div className="space-y-3">
                     <div className="bg-white rounded-lg p-3">
-                      <p className="text-sm text-gray-600 mb-1">Total de Detecciones</p>
-                      <p className="text-3xl font-bold text-green-600">{detections.length}</p>
+                      <p className="text-sm text-gray-600 mb-1">Personas detectadas</p>
+                      <p className="text-3xl font-bold text-green-600">{stats.total}</p>
                     </div>
                     <div className="bg-white rounded-lg p-3 max-h-48 overflow-y-auto">
-                      <p className="text-sm font-semibold text-gray-900 mb-2">Objetos Detectados:</p>
+                      <p className="text-sm font-semibold text-gray-900 mb-2">Objetos identificados:</p>
                       {Object.entries(detectionSummary)
                         .sort(([, a]: any, [, b]: any) => b - a)
                         .map(([obj, count]: any) => (

@@ -17,7 +17,11 @@ const AISummary: React.FC<AISummaryProps> = ({ summary }) => {
         </div>
       </div>
       <div className="bg-white rounded-lg p-4 border border-purple-100">
-        <p className="text-gray-800 leading-relaxed">{summary}</p>
+        <div className="text-gray-800 leading-relaxed whitespace-pre-line">
+          {summary.split('**').map((part, index) => 
+            index % 2 === 1 ? <strong key={index}>{part}</strong> : part
+          )}
+        </div>
       </div>
     </div>
   );

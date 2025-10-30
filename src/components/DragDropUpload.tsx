@@ -3,9 +3,11 @@ import React, { useCallback, useState } from 'react';
 interface DragDropUploadProps {
   onFileSelect: (file: File) => void;
   selectedFile: File | null;
+  acceptVideo?: boolean;
 }
 
-const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedFile }) => {
+const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedFile, acceptVideo = false }) => {
+  const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -45,11 +47,40 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validFormats = ['image/jpeg', 'image/jpg', 'image/png'];
-      if (validFormats.includes(file.type)) {
+      const validImageFormats = ['image/jpeg', 'image/jpg', 'image/png'];
+      const validVideoFormats = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime'];
+      
+      if (validImageFormats.includes(file.type) || (acceptVideo && validVideoFormats.includes(file.type))) {
         onFileSelect(file);
+        
+        // Generar miniatura para video
+        if (acceptVideo && validVideoFormats.includes(file.type)) {
+          generateVideoThumbnail(file);
+        }
       }
     }
+  };
+  
+  const generateVideoThumbnail = (file: File) => {
+    const video = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    video.preload = 'metadata';
+    video.src = URL.createObjectURL(file);
+    
+    video.onloadeddata = () => {
+      video.currentTime = 1; // Capturar frame en segundo 1
+    };
+    
+    video.onseeked = () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const thumbnail = canvas.toDataURL('image/jpeg');
+      setVideoThumbnail(thumbnail);
+      URL.revokeObjectURL(video.src);
+    };
   };
 
   const handleMobileCamera = () => {
@@ -202,12 +233,31 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
       >
         {selectedFile ? (
           <div className="space-y-4">
-            <div className="w-32 h-32 mx-auto bg-gray-100 rounded-lg overflow-hidden">
-              <img
-                src={URL.createObjectURL(selectedFile)}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
+            <div className="w-32 h-32 mx-auto bg-gray-100 rounded-lg overflow-hidden relative">
+              {selectedFile.type.startsWith('video/') ? (
+                videoThumbnail ? (
+                  <>
+                    <img
+                      src={videoThumbnail}
+                      alt="Video preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                      <span className="text-white text-4xl">▶️</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-4xl">🎥</span>
+                  </div>
+                )
+              ) : (
+                <img
+                  src={URL.createObjectURL(selectedFile)}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
             <div>
               <p className="font-medium text-gray-900">{selectedFile.name}</p>
@@ -261,7 +311,7 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({ onFileSelect, selectedF
         <input
           id="file-input"
           type="file"
-          accept="image/jpeg,image/jpg,image/png"
+          accept={acceptVideo ? "image/jpeg,image/jpg,image/png,video/mp4,video/avi,video/mov" : "image/jpeg,image/jpg,image/png"}
           onChange={handleFileInput}
           className="hidden"
         />
