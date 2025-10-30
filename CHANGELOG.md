@@ -11,18 +11,22 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 - Botón para eliminar análisis del historial con confirmación
+- Componente ConfirmModal personalizado con diseño de la app
 - Lambda function delete-analysis para eliminar de DynamoDB
 - API Gateway endpoint DELETE /delete
-- Permisos IAM para DeleteItem en AnalysisHistory
+- Permisos IAM para DeleteItem en epi-user-analysis
 
 ### Modificado
 - Nombres de PDFs ahora incluyen inspector y timestamp único
 - Formato: `Informe-EPP-{Inspector}-{YYYY-MM-DD-HHmm}.pdf`
 - Botón PDF solo visible para análisis de tipo EPP
+- Modal de confirmación personalizado reemplaza window.confirm
 
 ### Corregido
 - Confusión al descargar múltiples PDFs con mismo nombre
 - Botón PDF aparecía en análisis sin resumen IA
+- Error 500 al eliminar análisis (nombre de tabla incorrecto)
+- Modal de confirmación nativo del navegador sin estilo de la app
 
 ---
 
