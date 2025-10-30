@@ -22,6 +22,7 @@ import UserProfileModal from './components/UserProfileModal';
 import ConfirmModal from './components/ConfirmModal';
 import FAQ from './components/FAQ';
 import FeedbackModal from './components/FeedbackModal';
+import ContactModal from './components/ContactModal';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
@@ -49,6 +50,7 @@ const App: React.FC = () => {
   const [showFAQ, setShowFAQ] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackAnalysisId, setFeedbackAnalysisId] = useState<string>('');
+  const [showContact, setShowContact] = useState(false);
   
   const fetchAnalysisData = async () => {
     try {
@@ -1198,7 +1200,7 @@ const App: React.FC = () => {
               setShowFAQ(false);
               resetToStart();
             }}
-            userMenu={<UserMenu onEditProfile={() => setShowProfileModal(true)} />}
+            userMenu={<UserMenu onEditProfile={() => setShowProfileModal(true)} onContact={() => setShowContact(true)} />}
           />
           <FAQ />
           <button
@@ -1240,7 +1242,7 @@ const App: React.FC = () => {
           }
           resetToStart();
         }}
-        userMenu={<UserMenu onEditProfile={() => setShowProfileModal(true)} />}
+        userMenu={<UserMenu onEditProfile={() => setShowProfileModal(true)} onContact={() => setShowContact(true)} />}
       />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -1456,13 +1458,13 @@ const App: React.FC = () => {
                 <span>❓</span>
                 <span>Preguntas Frecuentes</span>
               </button>
-              <a 
-                href="mailto:info@coirontech.com" 
+              <button
+                onClick={() => setShowContact(true)}
                 className="flex items-center space-x-2 text-purple-200 hover:text-white transition-colors"
               >
                 <span>✉️</span>
-                <span>info@coirontech.com</span>
-              </a>
+                <span>Contacto</span>
+              </button>
               <a 
                 href="https://www.coirontech.com" 
                 target="_blank" 
@@ -1490,6 +1492,10 @@ const App: React.FC = () => {
         onClose={() => setShowFeedback(false)}
         analysisId={feedbackAnalysisId}
       />
+      
+      {showContact && (
+        <ContactModal onClose={() => setShowContact(false)} />
+      )}
       </div>
     </AuthWrapper>
   );

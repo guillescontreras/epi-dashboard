@@ -1,8 +1,12 @@
 // Versión de la aplicación - Semantic Versioning
-export const APP_VERSION = '2.4.0';
+export const APP_VERSION = '2.5.0';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.5.0': 'Formulario de contacto con tabs + FAQ corregido',
+  '2.4.3': 'Sistema de feedback post-análisis',
+  '2.4.2': 'Sección FAQ con 12 preguntas frecuentes',
+  '2.4.1': 'Validación de seguridad en Lambdas + Rate limiting',
   '2.4.0': 'Listas geográficas en cascada para perfil de usuario',
   '2.3.3': 'Correcciones críticas: PDFs únicos, eliminar análisis, deshabilitar PDF no-EPP',
   '2.3.2': 'Edición de perfil desde menú usuario',

@@ -4,9 +4,10 @@ import { toast } from 'react-toastify';
 
 interface UserMenuProps {
   onEditProfile?: () => void;
+  onContact?: () => void;
 }
 
-const UserMenu: React.FC<UserMenuProps> = ({ onEditProfile }) => {
+const UserMenu: React.FC<UserMenuProps> = ({ onEditProfile, onContact }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
@@ -91,6 +92,16 @@ const UserMenu: React.FC<UserMenuProps> = ({ onEditProfile }) => {
               >
                 <span>🔑</span>
                 <span>Cambiar Contraseña</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (onContact) onContact();
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <span>📧</span>
+                <span>Contactar Soporte</span>
               </button>
               <button
                 onClick={handleSignOut}

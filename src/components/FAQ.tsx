@@ -15,7 +15,7 @@ const FAQ: React.FC = () => {
     },
     {
       question: '¿Cómo funciona la detección de EPP?',
-      answer: 'Nuestro sistema utiliza Amazon Rekognition, un servicio de inteligencia artificial que analiza imágenes y videos para detectar personas y el equipo de protección que están usando. El sistema identifica automáticamente cascos, gafas, guantes, calzado de seguridad, mascarillas y protección auditiva con un nivel de confianza configurable.'
+      answer: 'Nuestro sistema utiliza tecnología de inteligencia artificial con el soporte de AWS para analizar imágenes y videos, detectando personas y el equipo de protección que están usando. El sistema identifica automáticamente cascos, gafas, guantes, calzado de seguridad, mascarillas y protección auditiva con un nivel de confianza configurable. Trabajamos día a día mejorando nuestros modelos de detección para ofrecer resultados cada vez más precisos.'
     },
     {
       question: '¿Qué normas de seguridad se utilizan?',
