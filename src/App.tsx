@@ -915,44 +915,71 @@ const App: React.FC = () => {
         return <Dashboard analysisHistory={analysisHistory} />;
       case 'history':
         return (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">📋 Historial de Análisis</h2>
-            {analysisHistory.length > 0 ? (
-              <div className="space-y-4">
-                {analysisHistory.map((analysis, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium text-gray-900">
-                          {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
-                           analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
-                           analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
-                           analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
-                           '🔍 Análisis General'}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {new Date(analysis.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">Confianza: {analysis.MinConfidence}%</p>
-                        {analysis.Summary && (
-                          <p className="text-sm text-gray-600">
-                            {analysis.DetectionType === 'ppe_detection' && 
-                              `${analysis.Summary.compliant}/${analysis.Summary.totalPersons} cumplientes`}
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">📋 Historial de Análisis</h2>
+              {analysisHistory.length > 0 ? (
+                <div className="space-y-4">
+                  {analysisHistory.map((analysis, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
+                             analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
+                             analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
+                             analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
+                             '🔍 Análisis General'}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {new Date(analysis.timestamp).toLocaleString()}
                           </p>
-                        )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">Confianza: {analysis.MinConfidence}%</p>
+                          {analysis.Summary && (
+                            <p className="text-sm text-gray-600">
+                              {analysis.DetectionType === 'ppe_detection' && 
+                                `${analysis.Summary.compliant}/${analysis.Summary.totalPersons} cumplientes`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Resumen de IA si existe */}
+                      {analysis.aiSummary && (
+                        <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                          <p className="text-xs font-semibold text-purple-700 mb-1">🤖 Resumen IA:</p>
+                          <p className="text-sm text-gray-700 line-clamp-3">{analysis.aiSummary}</p>
+                        </div>
+                      )}
+                      
+                      {/* Botones de acción */}
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={() => {
+                            setResults(analysis);
+                            setActiveSection('analysis');
+                            setUseGuidedMode(false);
+                            setTimeout(() => {
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }, 100);
+                          }}
+                          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
+                        >
+                          📊 Ver Informe Completo
+                        </button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-6xl mb-4">📋</div>
-                <p className="text-gray-500">No hay análisis en el historial</p>
-              </div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">📋</div>
+                  <p className="text-gray-500">No hay análisis en el historial</p>
+                </div>
+              )}
+            </div>
           </div>
         );
       default:
@@ -1064,7 +1091,7 @@ const App: React.FC = () => {
       
       {/* Indicador de progreso flotante */}
       {progress > 0 && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-md">
+        <div className="fixed top-20 right-4 z-50 w-96 max-w-md">
           {progress < 100 ? (
             <div className="bg-white rounded-2xl shadow-2xl border-2 border-blue-500 p-4 animate-pulse">
               <div className="flex items-center space-x-3 mb-2">
@@ -1085,10 +1112,16 @@ const App: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-2xl p-4 animate-bounce cursor-pointer hover:scale-105 transition-transform"
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-2xl p-4 cursor-pointer hover:scale-105 transition-transform"
                  onClick={() => {
                    setProgress(0);
-                   window.scrollTo({ top: 0, behavior: 'smooth' });
+                   // Scroll al resumen de IA
+                   const summaryElement = document.querySelector('[data-summary-section]');
+                   if (summaryElement) {
+                     summaryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                   } else {
+                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                   }
                  }}>
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center animate-pulse">
@@ -1096,9 +1129,9 @@ const App: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-white">¡Análisis completado!</p>
-                  <p className="text-sm text-green-100">Haz clic aquí para ver los resultados ↓</p>
+                  <p className="text-sm text-green-100">Haz clic para ver el resumen</p>
                 </div>
-                <span className="text-white text-2xl animate-bounce">↓</span>
+                <span className="text-white text-2xl">📊</span>
               </div>
             </div>
           )}
