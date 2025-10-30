@@ -19,6 +19,7 @@ import AISummary from './components/AISummary';
 import { APP_VERSION } from './version';
 import { generateAnalysisPDF } from './utils/pdfGenerator';
 import UserProfileModal from './components/UserProfileModal';
+import ConfirmModal from './components/ConfirmModal';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
@@ -41,6 +42,8 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [analysisToDelete, setAnalysisToDelete] = useState<any>(null);
   
   const fetchAnalysisData = async () => {
     try {
@@ -1151,20 +1154,9 @@ const App: React.FC = () => {
                           📊 Ver Informe Completo
                         </button>
                         <button
-                          onClick={async () => {
-                            if (!window.confirm('¿Estás seguro de que deseas eliminar este análisis? Esta acción no se puede deshacer.')) {
-                              return;
-                            }
-                            try {
-                              const user = await getCurrentUser();
-                              await axios.delete(`https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod/delete?userId=${user.username}&timestamp=${analysis.timestamp}`);
-                              toast.success('Análisis eliminado exitosamente');
-                              // Recargar historial
-                              fetchAnalysisData();
-                            } catch (error) {
-                              console.error('Error eliminando análisis:', error);
-                              toast.error('Error al eliminar el análisis');
-                            }
+                          onClick={() => {
+                            setAnalysisToDelete(analysis);
+                            setShowDeleteConfirm(true);
                           }}
                           className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center space-x-1"
                         >
@@ -1381,6 +1373,34 @@ const App: React.FC = () => {
           }}
         />
       )}
+      
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Eliminar Análisis"
+        message="¿Estás seguro de que deseas eliminar este análisis? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+        onConfirm={async () => {
+          try {
+            const user = await getCurrentUser();
+            await axios.delete(`https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod/delete?userId=${user.username}&timestamp=${analysisToDelete.timestamp}`);
+            toast.success('Análisis eliminado exitosamente');
+            setShowDeleteConfirm(false);
+            setAnalysisToDelete(null);
+            // Recargar historial
+            fetchAnalysisData();
+          } catch (error) {
+            console.error('Error eliminando análisis:', error);
+            toast.error('Error al eliminar el análisis');
+            setShowDeleteConfirm(false);
+          }
+        }}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setAnalysisToDelete(null);
+        }}
+      />
       
       {/* Footer */}
       <footer className="bg-gradient-to-r from-[#8B9A9F] via-[#7A9B76] to-[#5B8FA3] text-white py-6 mt-12">
