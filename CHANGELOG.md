@@ -7,6 +7,25 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [2.3.3] - 2024-10-31
+
+### Agregado
+- Botón para eliminar análisis del historial con confirmación
+- Lambda function delete-analysis para eliminar de DynamoDB
+- API Gateway endpoint DELETE /delete
+- Permisos IAM para DeleteItem en AnalysisHistory
+
+### Modificado
+- Nombres de PDFs ahora incluyen inspector y timestamp único
+- Formato: `Informe-EPP-{Inspector}-{YYYY-MM-DD-HHmm}.pdf`
+- Botón PDF solo visible para análisis de tipo EPP
+
+### Corregido
+- Confusión al descargar múltiples PDFs con mismo nombre
+- Botón PDF aparecía en análisis sin resumen IA
+
+---
+
 ## [2.3.2] - 2024-10-30
 
 ### Agregado

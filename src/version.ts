@@ -1,8 +1,9 @@
 // Versión de la aplicación - Semantic Versioning
-export const APP_VERSION = '2.3.2';
+export const APP_VERSION = '2.3.3';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.3.3': 'Correcciones críticas: PDFs únicos, eliminar análisis, deshabilitar PDF no-EPP',
   '2.3.2': 'Edición de perfil desde menú usuario',
   '2.3.1': 'Correcciones API Gateway y permisos IAM',
   '2.3.0': 'Resúmenes IA con Claude 3 Haiku y exportación PDF',
