@@ -440,10 +440,13 @@ const App: React.FC = () => {
       // Guardar en DynamoDB
       try {
         const user = await getCurrentUser();
-        await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+        console.log("💾 Guardando análisis en DynamoDB...");
+        console.log("User ID:", user.username);
+        const saveResponse = await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
           userId: user.username,
           analysisData: analysisResult
         });
+        console.log("✅ Análisis guardado:", saveResponse.data);
       } catch (error) {
         console.error('Error guardando análisis:', error);
       }
@@ -619,10 +622,13 @@ const App: React.FC = () => {
       // Guardar en DynamoDB
       try {
         const user = await getCurrentUser();
-        await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+        console.log("💾 Guardando análisis (guided)...");
+        console.log("User ID:", user.username);
+        const saveResponse = await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
           userId: user.username,
           analysisData: analysisResult
         });
+        console.log("✅ Análisis guardado (guided):", saveResponse.data);
       } catch (error) {
         console.error('Error guardando análisis:', error);
       }
