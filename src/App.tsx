@@ -65,7 +65,7 @@ const App: React.FC = () => {
       
       // Verificar si tiene perfil
       try {
-        const profileResponse = await axios.get(`https://f2sv201866.execute-api.us-east-1.amazonaws.com?userId=${user.username}`);
+        const profileResponse = await axios.get(`https://22ieg9wnd8.execute-api.us-east-1.amazonaws.com/prod?userId=${user.username}`);
         if (profileResponse.data.profile) {
           setUserProfile(profileResponse.data.profile);
         } else {

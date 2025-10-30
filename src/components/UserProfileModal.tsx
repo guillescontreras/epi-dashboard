@@ -42,7 +42,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ userId, onClose, on
     setLoading(true);
 
     try {
-      const response = await axios.post('https://f2sv201866.execute-api.us-east-1.amazonaws.com', {
+      const response = await axios.post('https://22ieg9wnd8.execute-api.us-east-1.amazonaws.com/prod', {
         userId,
         profileData: formData
       });
