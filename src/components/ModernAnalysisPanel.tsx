@@ -15,11 +15,12 @@ interface ModernAnalysisPanelProps {
   setStrictMode: (mode: boolean) => void;
   handleUpload: () => void;
   progress: number;
+  hasResults?: boolean;
 }
 
 const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
   file, setFile, files = [], setFiles = () => {}, detectionType, setDetectionType, minConfidence, setMinConfidence,
-  epiItems, handleEpiItemChange, strictMode, setStrictMode, handleUpload, progress
+  epiItems, handleEpiItemChange, strictMode, setStrictMode, handleUpload, progress, hasResults = false
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -97,12 +98,19 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
                   <p className="font-semibold text-gray-900">{file.name}</p>
                   <p className="text-sm text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
-                <button
-                  onClick={() => document.getElementById('file-input')?.click()}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium underline"
-                >
-                  Cambiar imagen
-                </button>
+                {!hasResults && (
+                  <button
+                    onClick={() => document.getElementById('file-input')?.click()}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium underline"
+                  >
+                    Cambiar imagen
+                  </button>
+                )}
+                {hasResults && (
+                  <p className="text-sm text-gray-500 italic">
+                    Para analizar otra imagen, haz clic en "Nuevo Análisis"
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-4">

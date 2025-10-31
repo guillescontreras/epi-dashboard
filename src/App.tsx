@@ -112,20 +112,34 @@ const App: React.FC = () => {
     const { Summary, ProtectiveEquipment, MinConfidence } = analysisData;
     const totalPersons = Summary?.totalPersons || 0;
     
+    // Mapeo de partes del cuerpo a EPPs
+    const bodyPartToEPP: any = {
+      'HEAD': 'HEAD_COVER',
+      'FACE': ['FACE_COVER', 'EYE_COVER'],
+      'LEFT_HAND': 'HAND_COVER',
+      'RIGHT_HAND': 'HAND_COVER',
+      'FOOT': 'FOOT_COVER'
+    };
+    
     // Obtener EPPs requeridos del análisis
-    const requiredEPPs = epiItems; // Los EPPs que el usuario seleccionó
+    const requiredEPPs = epiItems;
     console.log('📋 EPPs requeridos:', requiredEPPs);
     
-    // Calcular cumplimiento real: persona cumple si tiene TODOS los EPPs requeridos
+    // Calcular cumplimiento real considerando solo partes visibles
     let compliantPersons = 0;
     let partialCompliantPersons = 0;
     let totalEPPsDetected = 0;
-    let totalEPPsRequired = requiredEPPs.length * totalPersons;
+    let totalEPPsEvaluable = 0;
+    let personsWithMissingParts = 0;
     
     if (ProtectiveEquipment && ProtectiveEquipment.length > 0) {
       ProtectiveEquipment.forEach((person: any) => {
         const personEPPs = new Set<string>();
+        const visibleBodyParts = new Set<string>();
+        
+        // Detectar qué partes del cuerpo están visibles
         person.BodyParts?.forEach((part: any) => {
+          visibleBodyParts.add(part.Name);
           part.EquipmentDetections?.forEach((eq: any) => {
             if (eq.Confidence >= (MinConfidence || 75)) {
               personEPPs.add(eq.Type);
@@ -133,18 +147,41 @@ const App: React.FC = () => {
           });
         });
         
-        // Contar cuántos EPPs requeridos tiene esta persona
-        const personRequiredEPPs = requiredEPPs.filter((epp: string) => personEPPs.has(epp)).length;
-        totalEPPsDetected += personRequiredEPPs;
+        // Determinar qué EPPs son evaluables según partes visibles
+        const evaluableEPPs = requiredEPPs.filter((epp: string) => {
+          // HEAD_COVER requiere HEAD visible
+          if (epp === 'HEAD_COVER') return visibleBodyParts.has('HEAD');
+          // EYE_COVER y FACE_COVER requieren FACE visible
+          if (epp === 'EYE_COVER' || epp === 'FACE_COVER') return visibleBodyParts.has('FACE');
+          // HAND_COVER requiere al menos una mano visible
+          if (epp === 'HAND_COVER') return visibleBodyParts.has('LEFT_HAND') || visibleBodyParts.has('RIGHT_HAND');
+          // FOOT_COVER requiere pies visibles
+          if (epp === 'FOOT_COVER') return visibleBodyParts.has('FOOT');
+          // EAR_COVER es difícil de evaluar, asumimos evaluable si HEAD visible
+          if (epp === 'EAR_COVER') return visibleBodyParts.has('HEAD');
+          return true;
+        });
         
-        // Verificar si tiene TODOS los EPPs requeridos
-        const hasAllRequired = requiredEPPs.every((epp: string) => personEPPs.has(epp));
-        const hasSomeRequired = requiredEPPs.some((epp: string) => personEPPs.has(epp));
+        if (evaluableEPPs.length < requiredEPPs.length) {
+          personsWithMissingParts++;
+        }
         
-        if (hasAllRequired) {
-          compliantPersons++;
-        } else if (hasSomeRequired) {
-          partialCompliantPersons++;
+        totalEPPsEvaluable += evaluableEPPs.length;
+        
+        // Contar cuántos EPPs evaluables tiene esta persona
+        const personDetectedEPPs = evaluableEPPs.filter((epp: string) => personEPPs.has(epp)).length;
+        totalEPPsDetected += personDetectedEPPs;
+        
+        // Verificar cumplimiento solo de EPPs evaluables
+        const hasAllEvaluable = evaluableEPPs.every((epp: string) => personEPPs.has(epp));
+        const hasSomeEvaluable = evaluableEPPs.some((epp: string) => personEPPs.has(epp));
+        
+        if (evaluableEPPs.length > 0) {
+          if (hasAllEvaluable) {
+            compliantPersons++;
+          } else if (hasSomeEvaluable) {
+            partialCompliantPersons++;
+          }
         }
       });
     }
@@ -152,16 +189,17 @@ const App: React.FC = () => {
     const compliant = compliantPersons;
     const partial = partialCompliantPersons;
     const nonCompliant = totalPersons - compliant - partial;
-    const compliancePercent = totalEPPsRequired > 0 ? Math.round((totalEPPsDetected / totalEPPsRequired) * 100) : 0;
+    const compliancePercent = totalEPPsEvaluable > 0 ? Math.round((totalEPPsDetected / totalEPPsEvaluable) * 100) : 0;
     
-    console.log('📊 Stats (recalculados):', { 
+    console.log('📊 Stats (recalculados con partes visibles):', { 
       totalPersons, 
       compliant, 
       partial, 
       nonCompliant, 
       requiredEPPs: requiredEPPs.length,
       totalEPPsDetected,
-      totalEPPsRequired,
+      totalEPPsEvaluable,
+      personsWithMissingParts,
       compliancePercent
     });
     
@@ -196,6 +234,11 @@ const App: React.FC = () => {
       summary += `No se detectaron personas en la imagen analizada. Verifique que la imagen contenga trabajadores y que la calidad sea adecuada para el análisis.`;
     } else {
       summary += `Se detectaron **${totalPersons} persona${totalPersons > 1 ? 's' : ''}** en el área de trabajo.\n\n`;
+      
+      // Advertencia sobre partes no visibles
+      if (personsWithMissingParts > 0) {
+        summary += `⚠️ **Nota importante**: En ${personsWithMissingParts} persona${personsWithMissingParts > 1 ? 's' : ''}, algunas partes del cuerpo no son visibles en la imagen. La evaluación se realiza únicamente sobre los EPP que pueden verificarse visualmente.\n\n`;
+      }
       
       // Mostrar EPP detectados
       if (detectedItems.length > 0) {
@@ -892,6 +935,7 @@ const App: React.FC = () => {
                 setStrictMode={setStrictMode}
                 handleUpload={handleUpload}
                 progress={progress}
+                hasResults={results !== null}
               />
             </div>
             <div className="space-y-6">
@@ -1340,18 +1384,17 @@ const App: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-2xl p-4 cursor-pointer hover:scale-105 transition-transform"
-                 onClick={() => {
-                   setProgress(0);
-                   // Scroll al resumen del análisis
-                   const analysisElement = document.querySelector('[data-analysis-summary]');
-                   if (analysisElement) {
-                     analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                   } else {
-                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                   }
-                 }}>
-              <div className="flex items-center space-x-3">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-2xl p-4">
+              <div className="flex items-center space-x-3 mb-3 cursor-pointer hover:opacity-90 transition-opacity"
+                   onClick={() => {
+                     setProgress(0);
+                     const analysisElement = document.querySelector('[data-analysis-summary]');
+                     if (analysisElement) {
+                       analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                     } else {
+                       window.scrollTo({ top: 0, behavior: 'smooth' });
+                     }
+                   }}>
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center animate-pulse">
                   <span className="text-green-500 text-2xl">✓</span>
                 </div>
@@ -1361,6 +1404,19 @@ const App: React.FC = () => {
                 </div>
                 <span className="text-white text-2xl">📊</span>
               </div>
+              {results && results.DetectionType === 'ppe_detection' && (
+                <button
+                  onClick={() => {
+                    setFeedbackAnalysisId(results.timestamp?.toString() || Date.now().toString());
+                    setShowFeedback(true);
+                    setProgress(0);
+                  }}
+                  className="w-full bg-white text-green-600 py-2 px-4 rounded-lg font-semibold hover:bg-green-50 transition-all flex items-center justify-center space-x-2"
+                >
+                  <span>⭐</span>
+                  <span>Dar Feedback</span>
+                </button>
+              )}
             </div>
           )}
         </div>

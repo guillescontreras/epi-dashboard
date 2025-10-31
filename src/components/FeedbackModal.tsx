@@ -36,12 +36,10 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, analysis
         rating,
         aiAccurate,
         comments,
-        timestamp: Date.now(),
-        createdAt: new Date().toISOString()
+        timestamp: new Date().toISOString()
       };
 
-      // Por ahora solo mostramos éxito, en v2.4.4 agregaremos la Lambda
-      console.log('Feedback data:', feedbackData);
+      await axios.post('https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod/feedback', feedbackData);
       
       toast.success('¡Gracias por tu feedback!');
       onClose();
