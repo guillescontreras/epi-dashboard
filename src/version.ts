@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.5.9';
+export const APP_VERSION = '2.6.0';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.6.0': 'PDF completo: logo, imágenes comparativas, footer corporativo',
   '2.5.9': 'Correcciones UX: EPPs en historial, timing resultados, feedback reposicionado',
   '2.5.8': 'EPPs seleccionados en historial/PDF + botón reportar errores',
   '2.5.7': 'Evaluación parcial: persona evaluable si tiene AL MENOS UNA parte visible',

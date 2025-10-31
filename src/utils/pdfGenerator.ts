@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { imageUrlToBase64, getLogoBase64 } from './imageToBase64';
 
 interface PDFGeneratorOptions {
   analysisData: any;
@@ -15,21 +16,31 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
   const pageHeight = pdf.internal.pageSize.getHeight();
   let yPosition = 20;
 
-  // Header
+  // Header con logo
   pdf.setFillColor(139, 154, 159);
-  pdf.rect(0, 0, pageWidth, 40, 'F');
+  pdf.rect(0, 0, pageWidth, 45, 'F');
+  
+  // Intentar cargar logo
+  try {
+    const logoBase64 = await getLogoBase64();
+    if (logoBase64) {
+      pdf.addImage(logoBase64, 'JPEG', 15, 10, 25, 25);
+    }
+  } catch (error) {
+    console.log('Logo no disponible en PDF');
+  }
   
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(24);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('CoironTech', 20, 20);
+  pdf.text('CoironTech', 45, 22);
   
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Informe de Análisis de EPP', 20, 30);
+  pdf.text('Informe de Análisis de EPP', 45, 32);
 
   // Información
-  yPosition = 50;
+  yPosition = 55;
   pdf.setTextColor(0, 0, 0);
   pdf.setFontSize(10);
   
@@ -180,10 +191,10 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
     });
   }
 
-  // Imagen anotada (si existe)
+  // Imágenes (original y anotada)
   if (imageUrl) {
     try {
-      if (yPosition > pageHeight - 80) {
+      if (yPosition > pageHeight - 100) {
         pdf.addPage();
         yPosition = 20;
       }
@@ -191,25 +202,62 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(37, 99, 235);
-      pdf.text('Imagen Analizada', 20, yPosition);
-      yPosition += 8;
+      pdf.text('Comparativa Visual', 20, yPosition);
+      yPosition += 10;
       
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 100, 100);
-      pdf.text('Nota: La imagen con anotaciones está disponible en el historial de análisis', 20, yPosition);
-      yPosition += 6;
-      pdf.text(`URL: ${imageUrl.substring(0, 60)}...`, 20, yPosition);
+      // Intentar cargar imagen anotada
+      const outputImageUrl = imageUrl.replace('/input/', '/output/');
+      
+      try {
+        const imageBase64 = await imageUrlToBase64(outputImageUrl);
+        const imgWidth = (pageWidth - 40) / 2 - 5;
+        const imgHeight = 60;
+        
+        // Imagen original
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('Imagen Original', 20, yPosition);
+        yPosition += 5;
+        
+        const originalBase64 = await imageUrlToBase64(imageUrl);
+        pdf.addImage(originalBase64, 'JPEG', 20, yPosition, imgWidth, imgHeight);
+        
+        // Imagen anotada
+        pdf.text('Imagen con Detecciones', pageWidth / 2 + 5, yPosition - 5);
+        pdf.addImage(imageBase64, 'JPEG', pageWidth / 2 + 5, yPosition, imgWidth, imgHeight);
+        
+        yPosition += imgHeight + 10;
+      } catch (imgError) {
+        console.log('No se pudieron cargar imágenes:', imgError);
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('Las imágenes están disponibles en el historial de análisis', 20, yPosition);
+        yPosition += 10;
+      }
     } catch (error) {
-      console.log('No se pudo incluir imagen en PDF');
+      console.log('Error procesando imágenes:', error);
     }
   }
 
-  // Footer
-  const footerY = pageHeight - 15;
+  // Footer corporativo
+  const footerY = pageHeight - 20;
+  pdf.setFillColor(139, 154, 159);
+  pdf.rect(0, footerY - 5, pageWidth, 25, 'F');
+  
   pdf.setFontSize(8);
-  pdf.setTextColor(107, 114, 128);
-  pdf.text('Informe generado por CoironTech - Normas OSHA e ISO 45001', pageWidth / 2, footerY, { align: 'center' });
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('CoironTech - Soluciones de IA para la Industria', pageWidth / 2, footerY + 2, { align: 'center' });
+  
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(7);
+  pdf.text('www.coirontech.com | contacto@coirontech.com | +54 9 11 XXXX-XXXX', pageWidth / 2, footerY + 7, { align: 'center' });
+  
+  pdf.setFontSize(6);
+  pdf.setTextColor(200, 200, 200);
+  pdf.text('Informe generado conforme a normas OSHA e ISO 45001', pageWidth / 2, footerY + 12, { align: 'center' });
 
   // Generar nombre único: Informe-EPP-{Inspector}-{YYYY-MM-DD-HHmm}.pdf
   const inspectorName = userName.replace(/\s+/g, '-');
