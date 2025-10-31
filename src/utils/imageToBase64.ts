@@ -52,7 +52,20 @@ export const imageUrlToBase64 = (url: string): Promise<string> => {
 };
 
 export const getLogoBase64 = async (): Promise<string> => {
-  // El logo no está disponible en la app, retornar vacío
-  // Para agregar logo, subir imagen a /public y actualizar esta ruta
-  return '';
+  try {
+    const logoPath = '/coirontech-logo.jpeg';
+    const response = await fetch(logoPath);
+    if (!response.ok) throw new Error('Logo no encontrado');
+    
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.log('Logo no disponible:', error);
+    return '';
+  }
 };
