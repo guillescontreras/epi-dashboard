@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { imageUrlToBase64, getLogoBase64 } from './imageToBase64';
+import { getLogoBase64 } from './imageToBase64';
 
 interface PDFGeneratorOptions {
   analysisData: any;
@@ -210,11 +210,24 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       // Por ahora solo mostramos la imagen original
       
       try {
-        const originalBase64 = await imageUrlToBase64(imageUrl);
+        // Usar fetch para obtener la imagen como blob y convertir a base64
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const reader = new FileReader();
+        
+        const base64 = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
         
         // Crear imagen temporal para obtener dimensiones reales
         const img = new Image();
-        img.src = originalBase64;
+        img.src = base64;
         
         await new Promise((resolve) => {
           img.onload = resolve;
@@ -240,14 +253,14 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
         pdf.text('Imagen Original del Análisis', 20, yPosition);
         yPosition += 5;
         
-        pdf.addImage(originalBase64, 'JPEG', 20, yPosition, imgWidth, imgHeight);
+        pdf.addImage(base64, 'JPEG', 20, yPosition, imgWidth, imgHeight);
         yPosition += imgHeight + 10;
       } catch (imgError) {
         console.error('Error cargando imagen en PDF:', imgError);
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(200, 0, 0);
-        pdf.text('Error: No se pudo cargar la imagen. Verifique CORS en S3.', 20, yPosition);
+        pdf.text('No se pudo cargar la imagen en el PDF.', 20, yPosition);
         yPosition += 10;
       }
     } catch (error) {
