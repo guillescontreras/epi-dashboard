@@ -208,32 +208,38 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       // Intentar cargar imagen anotada
       const outputImageUrl = imageUrl.replace('/input/', '/output/');
       
+      // Intentar cargar imágenes con mejor manejo de errores
+      const imgWidth = (pageWidth - 40) / 2 - 5;
+      const imgHeight = 60;
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      
+      let imagesLoaded = false;
+      
       try {
-        const imageBase64 = await imageUrlToBase64(outputImageUrl);
-        const imgWidth = (pageWidth - 40) / 2 - 5;
-        const imgHeight = 60;
+        // Cargar ambas imágenes
+        const originalBase64 = await imageUrlToBase64(imageUrl);
+        const outputBase64 = await imageUrlToBase64(outputImageUrl);
         
         // Imagen original
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(0, 0, 0);
         pdf.text('Imagen Original', 20, yPosition);
         yPosition += 5;
-        
-        const originalBase64 = await imageUrlToBase64(imageUrl);
         pdf.addImage(originalBase64, 'JPEG', 20, yPosition, imgWidth, imgHeight);
         
         // Imagen anotada
         pdf.text('Imagen con Detecciones', pageWidth / 2 + 5, yPosition - 5);
-        pdf.addImage(imageBase64, 'JPEG', pageWidth / 2 + 5, yPosition, imgWidth, imgHeight);
+        pdf.addImage(outputBase64, 'JPEG', pageWidth / 2 + 5, yPosition, imgWidth, imgHeight);
         
         yPosition += imgHeight + 10;
+        imagesLoaded = true;
       } catch (imgError) {
-        console.log('No se pudieron cargar imágenes:', imgError);
+        console.error('Error cargando imágenes en PDF:', imgError);
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(100, 100, 100);
-        pdf.text('Las imágenes están disponibles en el historial de análisis', 20, yPosition);
+        pdf.setTextColor(200, 0, 0);
+        pdf.text('Error: No se pudieron cargar las imágenes. Verifique CORS en S3.', 20, yPosition);
         yPosition += 10;
       }
     } catch (error) {
@@ -253,7 +259,7 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
   
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(7);
-  pdf.text('www.coirontech.com | contacto@coirontech.com | +54 9 11 XXXX-XXXX', pageWidth / 2, footerY + 7, { align: 'center' });
+  pdf.text('www.coirontech.com | contacto@coirontech.com', pageWidth / 2, footerY + 7, { align: 'center' });
   
   pdf.setFontSize(6);
   pdf.setTextColor(200, 200, 200);

@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.6.0';
+export const APP_VERSION = '2.6.1';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.6.1': 'Fix: Footer PDF sin teléfono, EPPs en informe historial, mejor carga imágenes',
   '2.6.0': 'PDF completo: logo, imágenes comparativas, footer corporativo',
   '2.5.9': 'Correcciones UX: EPPs en historial, timing resultados, feedback reposicionado',
   '2.5.8': 'EPPs seleccionados en historial/PDF + botón reportar errores',

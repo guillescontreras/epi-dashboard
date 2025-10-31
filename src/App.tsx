@@ -1201,9 +1201,33 @@ const App: React.FC = () => {
                         <p className="text-sm opacity-90">Confianza Mínima</p>
                       </div>
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 mb-4">
                       <p>📅 Fecha: {new Date(results.timestamp).toLocaleString()}</p>
                     </div>
+                    
+                    {/* EPPs Evaluados */}
+                    {results.selectedEPPs && results.selectedEPPs.length > 0 && (
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">EPPs Evaluados en este Análisis:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {results.selectedEPPs.map((epp: string) => {
+                            const eppNames: any = {
+                              'HEAD_COVER': 'Casco',
+                              'EYE_COVER': 'Gafas de seguridad',
+                              'HAND_COVER': 'Guantes',
+                              'FOOT_COVER': 'Calzado de seguridad',
+                              'FACE_COVER': 'Mascarilla',
+                              'EAR_COVER': 'Protección auditiva'
+                            };
+                            return (
+                              <span key={epp} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm font-medium">
+                                {eppNames[epp] || epp}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
