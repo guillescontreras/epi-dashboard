@@ -3,18 +3,20 @@ import { getCurrentUser } from 'aws-amplify/auth';
 
 interface ContactModalProps {
   onClose: () => void;
+  initialTab?: TabType;
+  initialMessage?: string;
 }
 
 type TabType = 'contact' | 'feature' | 'bug';
 type MessageType = 'Contacto General' | 'Solicitud de Característica' | 'Reporte de Bug';
 
-const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('contact');
+const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'contact', initialMessage = '' }) => {
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
-    message: ''
+    message: initialMessage
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');

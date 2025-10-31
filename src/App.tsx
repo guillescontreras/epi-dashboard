@@ -557,7 +557,7 @@ const App: React.FC = () => {
 
       // Obtener el JSON usando la presigned URL
       const res = await axios.get(jsonPresignedUrl);
-      const analysisResult = { ...res.data, timestamp: Date.now(), imageUrl: imageUrl };
+      const analysisResult = { ...res.data, timestamp: Date.now(), imageUrl: imageUrl, selectedEPPs: epiItems };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
@@ -764,7 +764,7 @@ const App: React.FC = () => {
 
       const jsonPresignedUrl = responseData.presignedUrl;
       const res = await axios.get(jsonPresignedUrl);
-      const analysisResult = { ...res.data, timestamp: Date.now(), imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}` };
+      const analysisResult = { ...res.data, timestamp: Date.now(), imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`, selectedEPPs: uploadEpiItems };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
@@ -867,16 +867,35 @@ const App: React.FC = () => {
             <div className="mt-8">
               <div className="mb-4 flex justify-end gap-3">
                 {results.DetectionType === 'ppe_detection' && (
-                  <button
-                    onClick={() => {
-                      const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
-                      generateAnalysisPDF({ analysisData: results, imageUrl, epiItems, userName });
-                    }}
-                    className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
-                  >
-                    <span>📝</span>
-                    <span>Descargar PDF</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
+                        generateAnalysisPDF({ analysisData: results, imageUrl, epiItems: results.selectedEPPs || epiItems, userName });
+                      }}
+                      className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
+                    >
+                      <span>📝</span>
+                      <span>Descargar PDF</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        const analysisInfo = `Reporte de error en análisis:\n- ID: ${results.timestamp}\n- Fecha: ${new Date(results.timestamp).toLocaleString()}\n- EPPs evaluados: ${(results.selectedEPPs || epiItems).map((e: string) => e.replace('_COVER', '')).join(', ')}\n\nDescripción del problema:\n`;
+                        setShowContact(true);
+                        // Pasar initialTab y initialMessage via state temporal
+                        setTimeout(() => {
+                          const modal = document.querySelector('[data-contact-modal]');
+                          if (modal) {
+                            // Trigger tab change and message
+                          }
+                        }, 100);
+                      }}
+                      className="bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
+                    >
+                      <span>🚨</span>
+                      <span>Reportar Error</span>
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={resetToStart}
@@ -1113,16 +1132,25 @@ const App: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">📊 Informe de Análisis</h2>
                 <div className="flex gap-3">
                   {results.DetectionType === 'ppe_detection' && (
-                    <button
-                      onClick={() => {
-                        const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
-                        generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems, userName });
-                      }}
-                      className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
-                    >
-                      <span>📝</span>
-                      <span>Descargar PDF</span>
-                    </button>
+                    <>
+                      <button
+                        onClick={() => {
+                          const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
+                          generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems: results.selectedEPPs || epiItems, userName });
+                        }}
+                        className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+                      >
+                        <span>📝</span>
+                        <span>Descargar PDF</span>
+                      </button>
+                      <button
+                        onClick={() => setShowContact(true)}
+                        className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-4 py-2 rounded-lg font-medium hover:from-orange-700 hover:to-red-700 transition-all flex items-center space-x-2"
+                      >
+                        <span>🚨</span>
+                        <span>Reportar Error</span>
+                      </button>
+                    </>
                   )}
                   <button
                     onClick={() => setResults(null)}

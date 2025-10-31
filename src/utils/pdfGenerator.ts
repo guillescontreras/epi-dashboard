@@ -41,6 +41,36 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
   pdf.text(`Confianza Mínima: ${analysisData.MinConfidence}%`, 20, yPosition);
   yPosition += 10;
 
+  // EPPs Evaluados
+  if (epiItems && epiItems.length > 0) {
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(37, 99, 235);
+    pdf.text('EPPs Evaluados:', 20, yPosition);
+    yPosition += 6;
+    
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(0, 0, 0);
+    
+    const eppNames: any = {
+      'HEAD_COVER': 'Casco',
+      'EYE_COVER': 'Gafas de seguridad',
+      'HAND_COVER': 'Guantes',
+      'FOOT_COVER': 'Calzado de seguridad',
+      'FACE_COVER': 'Mascarilla',
+      'EAR_COVER': 'Protección auditiva'
+    };
+    
+    const eppList = epiItems.map((item: string) => eppNames[item] || item).join(', ');
+    const eppLines = pdf.splitTextToSize(eppList, pageWidth - 40);
+    eppLines.forEach((line: string) => {
+      pdf.text(line, 20, yPosition);
+      yPosition += 5;
+    });
+    yPosition += 5;
+  }
+
   // Resumen
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
@@ -148,6 +178,31 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
         });
       });
     });
+  }
+
+  // Imagen anotada (si existe)
+  if (imageUrl) {
+    try {
+      if (yPosition > pageHeight - 80) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(37, 99, 235);
+      pdf.text('Imagen Analizada', 20, yPosition);
+      yPosition += 8;
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Nota: La imagen con anotaciones está disponible en el historial de análisis', 20, yPosition);
+      yPosition += 6;
+      pdf.text(`URL: ${imageUrl.substring(0, 60)}...`, 20, yPosition);
+    } catch (error) {
+      console.log('No se pudo incluir imagen en PDF');
+    }
   }
 
   // Footer
