@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.6.8';
+export const APP_VERSION = '2.6.9';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.6.9': 'Fix: CORS S3 configurado correctamente para epi.coirontech.com + logo deshabilitado',
   '2.6.8': 'Fix: Carga de imagen en PDF usando fetch en lugar de canvas (evita CORS)',
   '2.6.7': 'Fix: Mejorada carga de imágenes en PDF con timeout y mejor manejo de errores',
   '2.6.6': 'Fix: Imagen en PDF ahora mantiene aspect ratio correcto (no se estira)',

@@ -52,10 +52,7 @@ export const imageUrlToBase64 = (url: string): Promise<string> => {
 };
 
 export const getLogoBase64 = async (): Promise<string> => {
-  try {
-    return await imageUrlToBase64('/CoironTech-logo1.jpeg');
-  } catch (error) {
-    console.error('Error cargando logo:', error);
-    return '';
-  }
+  // El logo no está disponible en la app, retornar vacío
+  // Para agregar logo, subir imagen a /public y actualizar esta ruta
+  return '';
 };
