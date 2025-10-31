@@ -583,43 +583,9 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {(() => {
-                    // FILTRAR PERSONAS EVALUABLES
-                    // Filtrado dinámico según EPPs seleccionados
-                    const evaluablePersons = results.ProtectiveEquipment.filter((person: any) => {
-                      const visibleParts = new Set<string>();
-                      person.BodyParts?.forEach((part: any) => visibleParts.add(part.Name));
-                      
-                      const eppToParts: any = {
-                        'HEAD_COVER': ['HEAD'], 'EYE_COVER': ['FACE'], 'FACE_COVER': ['FACE'],
-                        'HAND_COVER': ['LEFT_HAND', 'RIGHT_HAND'], 'FOOT_COVER': ['FOOT'], 'EAR_COVER': ['HEAD']
-                      };
-                      
-                      for (const epp of epiItems) {
-                        const requiredParts = eppToParts[epp] || [];
-                        if (!requiredParts.some((part: string) => visibleParts.has(part))) {
-                          return false;
-                        }
-                      }
-                      return true;
-                    });
-                    
-                    // Validar coherencia EPP-BodyPart
-                    const validateEPP = (eppType: string, bodyPart: string) => {
-                      const valid: any = {
-                        'HEAD_COVER': ['HEAD'], 'EYE_COVER': ['FACE', 'HEAD'], 'FACE_COVER': ['FACE'],
-                        'HAND_COVER': ['LEFT_HAND', 'RIGHT_HAND'], 'FOOT_COVER': ['FOOT'], 'EAR_COVER': ['HEAD']
-                      };
-                      return valid[eppType]?.includes(bodyPart) || false;
-                    };
-                    
-                    return evaluablePersons.flatMap((person: any, i: number) =>
-                      person.BodyParts?.flatMap((bodyPart: any) =>
-                        bodyPart.EquipmentDetections?.filter((equipment: any) => {
-                          const isSelected = epiItems.length === 0 || epiItems.includes(equipment.Type);
-                          const isValid = validateEPP(equipment.Type, bodyPart.Name);
-                          return isSelected && isValid;
-                        }).map((equipment: any, j: number) => (
+                  {results.ProtectiveEquipment.flatMap((person: any, i: number) =>
+                    person.BodyParts?.flatMap((bodyPart: any) =>
+                      bodyPart.EquipmentDetections?.map((equipment: any, j: number) => (
                         <tr key={`${i}-${bodyPart.Name}-${j}-${equipment.Type}`} className="hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm font-medium text-gray-900">Persona {i + 1}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{bodyPart.Name}</td>
@@ -642,10 +608,9 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                             </span>
                           </td>
                         </tr>
-                        )) || []
-                      ) || []
-                    );
-                  })()}
+                      )) || []
+                    ) || []
+                  )
                 </tbody>
               </table>
             </div>
