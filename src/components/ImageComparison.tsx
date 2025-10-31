@@ -610,7 +610,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                         </tr>
                       )) || []
                     ) || []
-                  )
+                  )}
                 </tbody>
               </table>
             </div>
