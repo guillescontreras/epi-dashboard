@@ -607,7 +607,7 @@ const App: React.FC = () => {
               console.error('Error actualizando con resumen IA:', dbError);
             }
             
-            toast.success('Resumen IA generado exitosamente');
+            // toast.success('Resumen IA generado exitosamente'); // Eliminado: redundante
           }
         } catch (error) {
           console.error('❌ Error con Bedrock, usando resumen local:', error);
@@ -629,7 +629,7 @@ const App: React.FC = () => {
           }
           
           console.log('✅ Resumen IA local generado');
-          toast.success('Resumen de análisis generado');
+          // toast.success('Resumen de análisis generado'); // Eliminado: redundante
         }
       }
 
@@ -814,7 +814,7 @@ const App: React.FC = () => {
               console.error('Error actualizando con resumen IA:', dbError);
             }
             
-            toast.success('Resumen IA generado exitosamente');
+            // toast.success('Resumen IA generado exitosamente'); // Eliminado: redundante
           }
         } catch (error) {
           console.error('❌ Error con Bedrock (guided), usando resumen local:', error);
@@ -836,7 +836,7 @@ const App: React.FC = () => {
           }
           
           console.log('✅ Resumen IA local generado (guided)');
-          toast.success('Resumen de análisis generado');
+          // toast.success('Resumen de análisis generado'); // Eliminado: redundante
         }
       }
       
@@ -863,7 +863,7 @@ const App: React.FC = () => {
           <GuidedAnalysisWizard key={wizardKey} onComplete={handleGuidedComplete} />
           
           {/* Resultados en el asistente */}
-          {results && useGuidedMode && !showRealtimeDetection && !showVideoProcessor && (
+          {results && useGuidedMode && !showRealtimeDetection && !showVideoProcessor && progress === 0 && (
             <div className="mt-8">
               <div className="mb-4 flex justify-end gap-3">
                 {results.DetectionType === 'ppe_detection' && (
@@ -975,6 +975,22 @@ const App: React.FC = () => {
                   minConfidence={minConfidence}
                   epiItems={epiItems}
                 />
+              )}
+              
+              {/* Botón Feedback al final del informe */}
+              {results.DetectionType === 'ppe_detection' && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    onClick={() => {
+                      setFeedbackAnalysisId(results.timestamp?.toString() || Date.now().toString());
+                      setShowFeedback(true);
+                    }}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center space-x-2"
+                  >
+                    <span>⭐</span>
+                    <span>Dar Feedback sobre este Análisis</span>
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -1206,6 +1222,22 @@ const App: React.FC = () => {
                   epiItems={epiItems}
                 />
               )}
+              
+              {/* Botón Feedback al final del informe */}
+              {results.DetectionType === 'ppe_detection' && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    onClick={() => {
+                      setFeedbackAnalysisId(results.timestamp?.toString() || Date.now().toString());
+                      setShowFeedback(true);
+                    }}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center space-x-2"
+                  >
+                    <span>⭐</span>
+                    <span>Dar Feedback sobre este Análisis</span>
+                  </button>
+                </div>
+              )}
             </div>
           );
         }
@@ -1220,7 +1252,7 @@ const App: React.FC = () => {
                   {analysisHistory.map((analysis, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-3">
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-medium text-gray-900">
                             {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
                              analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
@@ -1231,6 +1263,25 @@ const App: React.FC = () => {
                           <p className="text-sm text-gray-500">
                             {new Date(analysis.timestamp).toLocaleString()}
                           </p>
+                          {analysis.selectedEPPs && analysis.selectedEPPs.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {analysis.selectedEPPs.map((epp: string) => {
+                                const eppNames: any = {
+                                  'HEAD_COVER': 'Casco',
+                                  'EYE_COVER': 'Gafas',
+                                  'HAND_COVER': 'Guantes',
+                                  'FOOT_COVER': 'Calzado',
+                                  'FACE_COVER': 'Mascarilla',
+                                  'EAR_COVER': 'Orejeras'
+                                };
+                                return (
+                                  <span key={epp} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                    {eppNames[epp] || epp}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium">Confianza: {analysis.MinConfidence}%</p>
@@ -1480,19 +1531,7 @@ const App: React.FC = () => {
                 </div>
                 <span className="text-white text-2xl">📊</span>
               </div>
-              {results && results.DetectionType === 'ppe_detection' && (
-                <button
-                  onClick={() => {
-                    setFeedbackAnalysisId(results.timestamp?.toString() || Date.now().toString());
-                    setShowFeedback(true);
-                    setProgress(0);
-                  }}
-                  className="w-full bg-white text-green-600 py-2 px-4 rounded-lg font-semibold hover:bg-green-50 transition-all flex items-center justify-center space-x-2"
-                >
-                  <span>⭐</span>
-                  <span>Dar Feedback</span>
-                </button>
-              )}
+              {/* Botón Feedback movido al final del informe */}
             </div>
           )}
         </div>
