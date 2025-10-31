@@ -863,7 +863,7 @@ const App: React.FC = () => {
           <GuidedAnalysisWizard key={wizardKey} onComplete={handleGuidedComplete} />
           
           {/* Resultados en el asistente */}
-          {results && useGuidedMode && !showRealtimeDetection && !showVideoProcessor && progress === 0 && (
+          {results && useGuidedMode && !showRealtimeDetection && !showVideoProcessor && (
             <div className="mt-8">
               <div className="mb-4 flex justify-end gap-3">
                 {results.DetectionType === 'ppe_detection' && (

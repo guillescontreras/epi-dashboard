@@ -191,7 +191,7 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
     });
   }
 
-  // Imágenes (original y anotada)
+  // Imagen original (solo una imagen hasta que se implemente generación de imagen anotada)
   if (imageUrl) {
     try {
       if (yPosition > pageHeight - 100) {
@@ -202,49 +202,37 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(37, 99, 235);
-      pdf.text('Comparativa Visual', 20, yPosition);
+      pdf.text('Imagen Analizada', 20, yPosition);
       yPosition += 10;
       
-      // La imagen anotada NO existe en /output/, solo hay /input/
+      // NOTA: La imagen anotada con boxes NO existe en S3 /output/
+      // Lambda de análisis NO genera imágenes con anotaciones dibujadas
       // Por ahora solo mostramos la imagen original
-      const outputImageUrl = imageUrl; // Misma imagen por ahora
       
-      // Intentar cargar imágenes con mejor manejo de errores
-      const imgWidth = (pageWidth - 40) / 2 - 5;
-      const imgHeight = 60;
-      
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 0, 0);
-      
-      let imagesLoaded = false;
+      const imgWidth = pageWidth - 40;
+      const imgHeight = 100;
       
       try {
-        // Cargar ambas imágenes
         const originalBase64 = await imageUrlToBase64(imageUrl);
-        const outputBase64 = await imageUrlToBase64(outputImageUrl);
         
-        // Imagen original
-        pdf.text('Imagen Original', 20, yPosition);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('Imagen Original del Análisis', 20, yPosition);
         yPosition += 5;
+        
         pdf.addImage(originalBase64, 'JPEG', 20, yPosition, imgWidth, imgHeight);
-        
-        // Imagen anotada
-        pdf.text('Imagen con Detecciones', pageWidth / 2 + 5, yPosition - 5);
-        pdf.addImage(outputBase64, 'JPEG', pageWidth / 2 + 5, yPosition, imgWidth, imgHeight);
-        
         yPosition += imgHeight + 10;
-        imagesLoaded = true;
       } catch (imgError) {
-        console.error('Error cargando imágenes en PDF:', imgError);
+        console.error('Error cargando imagen en PDF:', imgError);
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(200, 0, 0);
-        pdf.text('Error: No se pudieron cargar las imágenes. Verifique CORS en S3.', 20, yPosition);
+        pdf.text('Error: No se pudo cargar la imagen. Verifique CORS en S3.', 20, yPosition);
         yPosition += 10;
       }
     } catch (error) {
-      console.log('Error procesando imágenes:', error);
+      console.log('Error procesando imagen:', error);
     }
   }
 
