@@ -209,11 +209,30 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       // Lambda de análisis NO genera imágenes con anotaciones dibujadas
       // Por ahora solo mostramos la imagen original
       
-      const imgWidth = pageWidth - 40;
-      const imgHeight = 100;
-      
       try {
         const originalBase64 = await imageUrlToBase64(imageUrl);
+        
+        // Crear imagen temporal para obtener dimensiones reales
+        const img = new Image();
+        img.src = originalBase64;
+        
+        await new Promise((resolve) => {
+          img.onload = resolve;
+        });
+        
+        // Calcular dimensiones manteniendo aspect ratio
+        const maxWidth = pageWidth - 40;
+        const maxHeight = 120;
+        let imgWidth = img.width;
+        let imgHeight = img.height;
+        
+        // Escalar proporcionalmente
+        const widthRatio = maxWidth / imgWidth;
+        const heightRatio = maxHeight / imgHeight;
+        const ratio = Math.min(widthRatio, heightRatio);
+        
+        imgWidth = imgWidth * ratio;
+        imgHeight = imgHeight * ratio;
         
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');

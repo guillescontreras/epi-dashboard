@@ -1,7 +1,9 @@
-export const APP_VERSION = '2.6.5';
+export const APP_VERSION = '2.6.7';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.6.7': 'Fix: Mejorada carga de imágenes en PDF con timeout y mejor manejo de errores',
+  '2.6.6': 'Fix: Imagen en PDF ahora mantiene aspect ratio correcto (no se estira)',
   '2.6.5': 'Fix crítico: Tabla EPP ahora muestra todas las detecciones sin filtros restrictivos',
   '2.6.4': 'Fix crítico: Tabla EPP visible inmediatamente después del análisis, PDF con imagen única',
   '2.6.3': 'Fix: Tabla EPP visible después de análisis, imagen única en PDF',
@@ -35,4 +37,4 @@ export const VERSION_HISTORY = {
 };
 
 // Fecha de última actualización
-export const LAST_UPDATE = '2024-10-31';
+export const LAST_UPDATE = '2024-11-01';
