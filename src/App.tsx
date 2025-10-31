@@ -968,12 +968,12 @@ const App: React.FC = () => {
                 <AISummary summary={results.aiSummary} />
               )}
               
-              {imageUrl && (
+              {results.imageUrl && (
                 <ImageComparison 
                   results={results}
-                  imageUrl={imageUrl}
+                  imageUrl={results.imageUrl}
                   minConfidence={minConfidence}
-                  epiItems={epiItems}
+                  epiItems={results.selectedEPPs || epiItems}
                 />
               )}
               

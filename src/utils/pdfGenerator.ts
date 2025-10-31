@@ -205,8 +205,9 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       pdf.text('Comparativa Visual', 20, yPosition);
       yPosition += 10;
       
-      // Intentar cargar imagen anotada
-      const outputImageUrl = imageUrl.replace('/input/', '/output/');
+      // La imagen anotada NO existe en /output/, solo hay /input/
+      // Por ahora solo mostramos la imagen original
+      const outputImageUrl = imageUrl; // Misma imagen por ahora
       
       // Intentar cargar imágenes con mejor manejo de errores
       const imgWidth = (pageWidth - 40) / 2 - 5;

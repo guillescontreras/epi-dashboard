@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.6.2';
+export const APP_VERSION = '2.6.3';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.6.3': 'Fix: Tabla EPP visible después de análisis, imagen única en PDF',
   '2.6.2': 'Fix: Imágenes en PDF funcionando - acceso público S3 output',
   '2.6.1': 'Fix: Footer PDF sin teléfono, EPPs en informe historial, mejor carga imágenes',
   '2.6.0': 'PDF completo: logo, imágenes comparativas, footer corporativo',
