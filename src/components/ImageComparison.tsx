@@ -585,11 +585,23 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                 <tbody className="bg-white divide-y divide-gray-200">
                   {(() => {
                     // FILTRAR PERSONAS EVALUABLES
-                    // CRITERIO ESTRICTO: Solo personas con FOOT visible
+                    // Filtrado dinámico según EPPs seleccionados
                     const evaluablePersons = results.ProtectiveEquipment.filter((person: any) => {
                       const visibleParts = new Set<string>();
                       person.BodyParts?.forEach((part: any) => visibleParts.add(part.Name));
-                      return visibleParts.has('FOOT');
+                      
+                      const eppToParts: any = {
+                        'HEAD_COVER': ['HEAD'], 'EYE_COVER': ['FACE'], 'FACE_COVER': ['FACE'],
+                        'HAND_COVER': ['LEFT_HAND', 'RIGHT_HAND'], 'FOOT_COVER': ['FOOT'], 'EAR_COVER': ['HEAD']
+                      };
+                      
+                      for (const epp of epiItems) {
+                        const requiredParts = eppToParts[epp] || [];
+                        if (!requiredParts.some((part: string) => visibleParts.has(part))) {
+                          return false;
+                        }
+                      }
+                      return true;
                     });
                     
                     // Validar coherencia EPP-BodyPart

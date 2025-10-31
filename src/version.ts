@@ -1,8 +1,9 @@
-export const APP_VERSION = '2.5.5';
-  '2.5.5': 'Filtrado ESTRICTO: solo personas con FOOT visible (cuerpo completo)',
+export const APP_VERSION = '2.5.6';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.5.6': 'Filtrado dinámico correcto: evalúa según EPPs requeridos',
+  '2.5.5': 'Filtrado ESTRICTO: solo personas con FOOT visible (cuerpo completo)',
   '2.5.4': 'Filtrado completo: Lambda Bedrock + tabla detalles EPP',
   '2.5.3': 'Filtrado inteligente de personas: solo evalúa personas con partes visibles',
   '2.5.2': 'Modo avanzado deshabilitado temporalmente (inconsistencias en historial)',

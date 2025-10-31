@@ -117,13 +117,39 @@ const App: React.FC = () => {
     console.log('📋 EPPs requeridos:', requiredEPPs);
     
     // FILTRAR PERSONAS EVALUABLES
-    // CRITERIO ESTRICTO: Solo personas con FOOT visible (cuerpo completo)
+    // Filtrado dinámico: persona debe tener visibles las partes necesarias para los EPPs requeridos
     const evaluablePersons = ProtectiveEquipment?.filter((person: any) => {
       const visibleParts = new Set<string>();
       person.BodyParts?.forEach((part: any) => {
         visibleParts.add(part.Name);
       });
-      return visibleParts.has('FOOT');
+      
+      // Mapeo de EPP a partes del cuerpo necesarias
+      const eppToParts: any = {
+        'HEAD_COVER': ['HEAD'],
+        'EYE_COVER': ['FACE'],
+        'FACE_COVER': ['FACE'],
+        'HAND_COVER': ['LEFT_HAND', 'RIGHT_HAND'],
+        'FOOT_COVER': ['FOOT'],
+        'EAR_COVER': ['HEAD']
+      };
+      
+      // Verificar que tenga las partes necesarias para TODOS los EPPs requeridos
+      for (const epp of requiredEPPs) {
+        const requiredParts = eppToParts[epp] || [];
+        // Para HAND_COVER, basta con tener al menos una mano
+        if (epp === 'HAND_COVER') {
+          if (!requiredParts.some((part: string) => visibleParts.has(part))) {
+            return false;
+          }
+        } else {
+          // Para otros EPPs, debe tener la parte específica
+          if (!requiredParts.some((part: string) => visibleParts.has(part))) {
+            return false;
+          }
+        }
+      }
+      return true;
     }) || [];
     
     const totalPersons = evaluablePersons.length;
