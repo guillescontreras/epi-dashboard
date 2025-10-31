@@ -585,11 +585,11 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                 <tbody className="bg-white divide-y divide-gray-200">
                   {(() => {
                     // FILTRAR PERSONAS EVALUABLES
+                    // CRITERIO ESTRICTO: Solo personas con FOOT visible
                     const evaluablePersons = results.ProtectiveEquipment.filter((person: any) => {
                       const visibleParts = new Set<string>();
                       person.BodyParts?.forEach((part: any) => visibleParts.add(part.Name));
-                      const relevantParts = ['HEAD', 'FACE', 'LEFT_HAND', 'RIGHT_HAND'];
-                      return visibleParts.size >= 2 && relevantParts.some(p => visibleParts.has(p));
+                      return visibleParts.has('FOOT');
                     });
                     
                     // Validar coherencia EPP-BodyPart

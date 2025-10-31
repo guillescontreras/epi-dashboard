@@ -1,5 +1,5 @@
-// Versión de la aplicación - Semantic Versioning
-export const APP_VERSION = '2.5.4';
+export const APP_VERSION = '2.5.5';
+  '2.5.5': 'Filtrado ESTRICTO: solo personas con FOOT visible (cuerpo completo)',
 
 // Historial de versiones
 export const VERSION_HISTORY = {
