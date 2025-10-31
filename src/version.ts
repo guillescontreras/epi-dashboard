@@ -1,8 +1,9 @@
 // Versión de la aplicación - Semantic Versioning
-export const APP_VERSION = '2.5.2';
+export const APP_VERSION = '2.5.3';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.5.3': 'Filtrado inteligente de personas: solo evalúa personas con partes visibles',
   '2.5.2': 'Modo avanzado deshabilitado temporalmente (inconsistencias en historial)',
   '2.5.1': 'Correcciones críticas: modo avanzado, evaluación inteligente EPP, modal feedback',
   '2.5.0': 'Formulario de contacto con tabs + FAQ corregido',

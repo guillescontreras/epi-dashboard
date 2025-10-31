@@ -110,20 +110,31 @@ const App: React.FC = () => {
   const generateLocalAISummary = (analysisData: any) => {
     console.log('🔍 Generando resumen local con datos:', analysisData);
     const { Summary, ProtectiveEquipment, MinConfidence } = analysisData;
-    const totalPersons = Summary?.totalPersons || 0;
-    
-    // Mapeo de partes del cuerpo a EPPs
-    const bodyPartToEPP: any = {
-      'HEAD': 'HEAD_COVER',
-      'FACE': ['FACE_COVER', 'EYE_COVER'],
-      'LEFT_HAND': 'HAND_COVER',
-      'RIGHT_HAND': 'HAND_COVER',
-      'FOOT': 'FOOT_COVER'
-    };
+    const totalPersonsDetected = Summary?.totalPersons || 0;
     
     // Obtener EPPs requeridos del análisis
     const requiredEPPs = epiItems;
     console.log('📋 EPPs requeridos:', requiredEPPs);
+    
+    // FILTRAR PERSONAS EVALUABLES
+    // Solo considerar personas con suficientes partes del cuerpo visibles
+    const evaluablePersons = ProtectiveEquipment?.filter((person: any) => {
+      const visibleParts = new Set<string>();
+      person.BodyParts?.forEach((part: any) => {
+        visibleParts.add(part.Name);
+      });
+      
+      // Criterios: al menos 2 partes visibles Y al menos una parte relevante
+      const relevantParts = ['HEAD', 'FACE', 'LEFT_HAND', 'RIGHT_HAND'];
+      const hasRelevantPart = relevantParts.some(p => visibleParts.has(p));
+      
+      return visibleParts.size >= 2 && hasRelevantPart;
+    }) || [];
+    
+    const totalPersons = evaluablePersons.length;
+    const filteredPersons = totalPersonsDetected - totalPersons;
+    
+    console.log(`👥 Personas: ${totalPersonsDetected} detectadas, ${totalPersons} evaluables, ${filteredPersons} filtradas`);
     
     // Calcular cumplimiento real considerando solo partes visibles
     let compliantPersons = 0;
@@ -132,16 +143,30 @@ const App: React.FC = () => {
     let totalEPPsEvaluable = 0;
     let personsWithMissingParts = 0;
     
-    if (ProtectiveEquipment && ProtectiveEquipment.length > 0) {
-      ProtectiveEquipment.forEach((person: any) => {
+    // Función para validar que EPP corresponde a la parte del cuerpo
+    const validateEPPForBodyPart = (eppType: string, bodyPart: string): boolean => {
+      const validCombinations: any = {
+        'HEAD_COVER': ['HEAD'],
+        'EYE_COVER': ['FACE', 'HEAD'],
+        'FACE_COVER': ['FACE'],
+        'HAND_COVER': ['LEFT_HAND', 'RIGHT_HAND'],
+        'FOOT_COVER': ['FOOT'],
+        'EAR_COVER': ['HEAD']
+      };
+      return validCombinations[eppType]?.includes(bodyPart) || false;
+    };
+    
+    if (evaluablePersons && evaluablePersons.length > 0) {
+      evaluablePersons.forEach((person: any) => {
         const personEPPs = new Set<string>();
         const visibleBodyParts = new Set<string>();
         
-        // Detectar qué partes del cuerpo están visibles
+        // Detectar qué partes del cuerpo están visibles Y validar EPPs
         person.BodyParts?.forEach((part: any) => {
           visibleBodyParts.add(part.Name);
           part.EquipmentDetections?.forEach((eq: any) => {
-            if (eq.Confidence >= (MinConfidence || 75)) {
+            // VALIDAR: Solo contar EPP si corresponde a esta parte del cuerpo
+            if (eq.Confidence >= (MinConfidence || 75) && validateEPPForBodyPart(eq.Type, part.Name)) {
               personEPPs.add(eq.Type);
             }
           });
@@ -191,8 +216,10 @@ const App: React.FC = () => {
     const nonCompliant = totalPersons - compliant - partial;
     const compliancePercent = totalEPPsEvaluable > 0 ? Math.round((totalEPPsDetected / totalEPPsEvaluable) * 100) : 0;
     
-    console.log('📊 Stats (recalculados con partes visibles):', { 
+    console.log('📊 Stats (recalculados con personas evaluables):', { 
+      totalPersonsDetected,
       totalPersons, 
+      filteredPersons,
       compliant, 
       partial, 
       nonCompliant, 
@@ -207,14 +234,14 @@ const App: React.FC = () => {
     let totalDetections = 0;
     let detectedItems: string[] = [];
     
-    if (ProtectiveEquipment && ProtectiveEquipment.length > 0) {
-      console.log('🔎 Analizando ProtectiveEquipment:', ProtectiveEquipment);
-      ProtectiveEquipment.forEach((person: any, idx: number) => {
-        console.log(`👤 Persona ${idx}:`, person);
+    if (evaluablePersons && evaluablePersons.length > 0) {
+      console.log('🔎 Analizando personas evaluables:', evaluablePersons.length);
+      evaluablePersons.forEach((person: any, idx: number) => {
+        console.log(`👤 Persona evaluable ${idx}:`, person);
         person.BodyParts?.forEach((part: any) => {
           part.EquipmentDetections?.forEach((eq: any) => {
             console.log(`  🛡️ Equipo detectado: ${eq.Type} - ${eq.Confidence}%`);
-            if (eq.Confidence >= (MinConfidence || 75)) {
+            if (eq.Confidence >= (MinConfidence || 75) && validateEPPForBodyPart(eq.Type, part.Name)) {
               totalDetections++;
               if (!detectedItems.includes(eq.Type)) {
                 detectedItems.push(eq.Type);
@@ -231,13 +258,24 @@ const App: React.FC = () => {
     let summary = `**Resumen del Análisis de Seguridad Industrial**\n\n`;
     
     if (totalPersons === 0) {
-      summary += `No se detectaron personas en la imagen analizada. Verifique que la imagen contenga trabajadores y que la calidad sea adecuada para el análisis.`;
+      if (totalPersonsDetected > 0) {
+        summary += `Se detectaron **${totalPersonsDetected} persona${totalPersonsDetected > 1 ? 's' : ''}** en la imagen, pero ninguna pudo ser evaluada completamente (personas muy lejos, parcialmente visibles o dentro de vehículos).\n\n`;
+        summary += `**Recomendación:** Tome una foto más cercana con las personas completamente visibles para un análisis preciso.`;
+      } else {
+        summary += `No se detectaron personas en la imagen analizada. Verifique que la imagen contenga trabajadores y que la calidad sea adecuada para el análisis.`;
+      }
     } else {
-      summary += `Se detectaron **${totalPersons} persona${totalPersons > 1 ? 's' : ''}** en el área de trabajo.\n\n`;
+      // Información sobre personas detectadas vs evaluables
+      if (filteredPersons > 0) {
+        summary += `Se detectaron **${totalPersonsDetected} persona${totalPersonsDetected > 1 ? 's' : ''}** en la imagen. **${totalPersons} persona${totalPersons > 1 ? 's' : ''}** pudieron ser evaluadas completamente.\n\n`;
+        summary += `⚠️ **${filteredPersons} persona${filteredPersons > 1 ? 's fueron excluidas' : ' fue excluida'}** del análisis por estar parcialmente visible${filteredPersons > 1 ? 's' : ''}, muy lejos de la cámara, o dentro de vehículos.\n\n`;
+      } else {
+        summary += `Se detectaron y evaluaron **${totalPersons} persona${totalPersons > 1 ? 's' : ''}** en el área de trabajo.\n\n`;
+      }
       
-      // Advertencia sobre partes no visibles
+      // Advertencia sobre partes no visibles en personas evaluables
       if (personsWithMissingParts > 0) {
-        summary += `⚠️ **Nota importante**: En ${personsWithMissingParts} persona${personsWithMissingParts > 1 ? 's' : ''}, algunas partes del cuerpo no son visibles en la imagen. La evaluación se realiza únicamente sobre los EPP que pueden verificarse visualmente.\n\n`;
+        summary += `⚠️ **Nota adicional**: En ${personsWithMissingParts} de las personas evaluables, algunas partes del cuerpo no son completamente visibles. La evaluación se realiza únicamente sobre los EPP que pueden verificarse visualmente.\n\n`;
       }
       
       // Mostrar EPP detectados
