@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.5.6';
+export const APP_VERSION = '2.5.7';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.5.7': 'Evaluación parcial: persona evaluable si tiene AL MENOS UNA parte visible',
   '2.5.6': 'Filtrado dinámico correcto: evalúa según EPPs requeridos',
   '2.5.5': 'Filtrado ESTRICTO: solo personas con FOOT visible (cuerpo completo)',
   '2.5.4': 'Filtrado completo: Lambda Bedrock + tabla detalles EPP',

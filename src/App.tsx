@@ -117,7 +117,7 @@ const App: React.FC = () => {
     console.log('📋 EPPs requeridos:', requiredEPPs);
     
     // FILTRAR PERSONAS EVALUABLES
-    // Filtrado dinámico: persona debe tener visibles las partes necesarias para los EPPs requeridos
+    // Persona es evaluable si tiene AL MENOS UNA parte visible de los EPPs requeridos
     const evaluablePersons = ProtectiveEquipment?.filter((person: any) => {
       const visibleParts = new Set<string>();
       person.BodyParts?.forEach((part: any) => {
@@ -134,22 +134,14 @@ const App: React.FC = () => {
         'EAR_COVER': ['HEAD']
       };
       
-      // Verificar que tenga las partes necesarias para TODOS los EPPs requeridos
+      // Verificar que tenga AL MENOS UNA parte necesaria para ALGUNO de los EPPs requeridos
       for (const epp of requiredEPPs) {
         const requiredParts = eppToParts[epp] || [];
-        // Para HAND_COVER, basta con tener al menos una mano
-        if (epp === 'HAND_COVER') {
-          if (!requiredParts.some((part: string) => visibleParts.has(part))) {
-            return false;
-          }
-        } else {
-          // Para otros EPPs, debe tener la parte específica
-          if (!requiredParts.some((part: string) => visibleParts.has(part))) {
-            return false;
-          }
+        if (requiredParts.some((part: string) => visibleParts.has(part))) {
+          return true;
         }
       }
-      return true;
+      return false;
     }) || [];
     
     const totalPersons = evaluablePersons.length;
