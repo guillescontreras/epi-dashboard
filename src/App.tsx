@@ -805,12 +805,9 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Asistente de Análisis</h1>
-            <button
-              onClick={() => setUseGuidedMode(false)}
-              className="text-sm sm:text-base bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all shadow-md"
-            >
-              ⚙️ Modo Avanzado
-            </button>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500 bg-yellow-100 px-2 py-1 rounded">⚠️ Modo Avanzado temporalmente deshabilitado</span>
+            </div>
           </div>
           <GuidedAnalysisWizard key={wizardKey} onComplete={handleGuidedComplete} />
           
