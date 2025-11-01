@@ -101,6 +101,13 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               <span>50%</span>
               <span>100%</span>
             </div>
+            <div className="mt-3 p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-800">
+                <span className="font-semibold">ℹ️ Cómo funciona:</span> El sistema detecta todos los EPPs con confianza ≥50%. 
+                Este umbral solo determina el <strong>estado visual</strong> (Cumple/No cumple). 
+                Ejemplo: Si configuras 75%, un calzado detectado al 69% se mostrará como "No cumple 69%" en rojo.
+              </p>
+            </div>
           </div>
         </div>
       </div>

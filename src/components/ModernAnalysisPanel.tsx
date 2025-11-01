@@ -281,6 +281,13 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
             <span>50% - Media</span>
             <span>100% - Alta</span>
           </div>
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-800">
+              <span className="font-semibold">ℹ️ Cómo funciona:</span> El sistema detecta todos los EPPs con confianza ≥50%. 
+              Este umbral solo determina el <strong>estado visual</strong> (Cumple/No cumple). 
+              Ejemplo: Si configuras 75%, un calzado detectado al 69% se mostrará como "No cumple 69%" en rojo.
+            </p>
+          </div>
         </div>
       </div>
 
