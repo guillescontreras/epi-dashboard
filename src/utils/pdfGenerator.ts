@@ -51,6 +51,10 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
   yPosition += 6;
   pdf.text(`Inspector: ${userName}`, 20, yPosition);
   yPosition += 6;
+  if (analysisData.analysisId) {
+    pdf.text(`ID de Análisis: ${analysisData.analysisId}`, 20, yPosition);
+    yPosition += 6;
+  }
   pdf.text(`Confianza Mínima: ${analysisData.MinConfidence}%`, 20, yPosition);
   yPosition += 10;
 

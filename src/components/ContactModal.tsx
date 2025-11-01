@@ -5,19 +5,30 @@ interface ContactModalProps {
   onClose: () => void;
   initialTab?: TabType;
   initialMessage?: string;
+  userProfile?: any;
 }
 
 type TabType = 'contact' | 'feature' | 'bug';
 type MessageType = 'Contacto General' | 'Solicitud de Característica' | 'Reporte de Bug';
 
-const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'contact', initialMessage = '' }) => {
+const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'contact', initialMessage = '', userProfile }) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : '',
+    email: userProfile?.email || '',
     subject: '',
     message: initialMessage
   });
+
+  React.useEffect(() => {
+    if (userProfile) {
+      setFormData(prev => ({
+        ...prev,
+        name: `${userProfile.firstName} ${userProfile.lastName}`,
+        email: userProfile.email || ''
+      }));
+    }
+  }, [userProfile]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 

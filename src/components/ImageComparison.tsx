@@ -689,16 +689,16 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                                 ⚠️ No evaluable
                               </span>
                             ) : !detectedEPP ? (
-                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                              <span className="inline-flex px-2 py-1 text-xs font-bold rounded-full bg-red-500 text-white">
                                 ❌ No detectado
                               </span>
                             ) : eppConfidence >= minConfidence ? (
-                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                              <span className="inline-flex px-2 py-1 text-xs font-bold rounded-full bg-green-500 text-white">
                                 ✅ Cumple {eppConfidence.toFixed(0)}%
                               </span>
                             ) : (
-                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                                ❌ No cumple {eppConfidence.toFixed(0)}%
+                              <span className="inline-flex px-2 py-1 text-xs font-bold rounded-full bg-yellow-500 text-white">
+                                ⚠️ Bajo umbral {eppConfidence.toFixed(0)}%
                               </span>
                             )}
                           </td>

@@ -17,6 +17,7 @@ import GuidedAnalysisWizard from './components/GuidedAnalysisWizard';
 import VideoProcessor from './components/VideoProcessor';
 import AISummary from './components/AISummary';
 import { APP_VERSION } from './version';
+import { v4 as uuidv4 } from 'uuid';
 import { generateAnalysisPDF } from './utils/pdfGenerator';
 import UserProfileModal from './components/UserProfileModal';
 import ConfirmModal from './components/ConfirmModal';
@@ -599,7 +600,8 @@ const App: React.FC = () => {
 
       // Obtener el JSON usando la presigned URL
       const res = await axios.get(jsonPresignedUrl);
-      const analysisResult = { ...res.data, timestamp: Date.now(), imageUrl: imageUrl, selectedEPPs: epiItems };
+      const analysisId = uuidv4();
+      const analysisResult = { ...res.data, analysisId, timestamp: Date.now(), imageUrl: imageUrl, selectedEPPs: epiItems };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
@@ -806,7 +808,8 @@ const App: React.FC = () => {
 
       const jsonPresignedUrl = responseData.presignedUrl;
       const res = await axios.get(jsonPresignedUrl);
-      const analysisResult = { ...res.data, timestamp: Date.now(), imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`, selectedEPPs: uploadEpiItems };
+      const analysisId = uuidv4();
+      const analysisResult = { ...res.data, analysisId, timestamp: Date.now(), imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`, selectedEPPs: uploadEpiItems };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
@@ -1221,7 +1224,7 @@ const App: React.FC = () => {
               
               {/* Resumen del Análisis */}
               {results.DetectionType === 'ppe_detection' && (
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
+                <div data-analysis-summary className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
                   <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
                     <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                       <span>📊</span>
@@ -1229,6 +1232,12 @@ const App: React.FC = () => {
                     </h2>
                   </div>
                   <div className="p-6">
+                    {results.analysisId && (
+                      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs font-semibold text-blue-700 mb-1">🎯 ID de Análisis:</p>
+                        <p className="text-sm font-mono text-blue-900">{results.analysisId}</p>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
                         <p className="text-3xl font-bold">{results.Summary?.totalPersons || 0}</p>
@@ -1243,8 +1252,11 @@ const App: React.FC = () => {
                         <p className="text-sm opacity-90">Confianza Mínima</p>
                       </div>
                     </div>
-                    <div className="text-sm text-gray-500 mb-4">
+                    <div className="text-sm text-gray-500 mb-4 space-y-1">
                       <p>📅 Fecha: {new Date(results.timestamp).toLocaleString()}</p>
+                      {results.analysisId && (
+                        <p className="font-mono text-xs">🎯 ID: {results.analysisId}</p>
+                      )}
                     </div>
                     
                     {/* EPPs Evaluados */}
@@ -1731,7 +1743,7 @@ const App: React.FC = () => {
       />
       
       {showContact && (
-        <ContactModal onClose={() => setShowContact(false)} />
+        <ContactModal onClose={() => setShowContact(false)} userProfile={userProfile} />
       )}
       </div>
     </AuthWrapper>

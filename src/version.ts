@@ -1,7 +1,10 @@
-export const APP_VERSION = '2.7.5';
+export const APP_VERSION = '2.8.0';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.0': 'Mejoras UX: Badges colores EPP (verde/amarillo/rojo), analysisId UUID visible, formulario contacto autocompletado',
+  '2.7.7': 'Fix definitivo: Verificación espacial correcta (centro del EPP dentro de persona)',
+  '2.7.6': 'Fix crítico: Eliminar lógica IoU - restaurar comportamiento anterior que funcionaba',
   '2.7.5': 'Fix: Priorizar labels con instancias (Shoe sobre Footwear)',
   '2.7.4': 'Fix: Búsqueda exacta de labels (Shoe, Footwear, Glasses)',
   '2.7.3': 'Fix crítico: Detección espacial IoU - EPPs híbridos solo se agregan a personas con solapamiento',
@@ -54,4 +57,4 @@ export const VERSION_HISTORY = {
 };
 
 // Fecha de última actualización
-export const LAST_UPDATE = '2024-11-02';
+export const LAST_UPDATE = '2024-11-03';
