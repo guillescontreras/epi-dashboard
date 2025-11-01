@@ -1269,7 +1269,7 @@ const App: React.FC = () => {
                   results={results}
                   imageUrl={results.imageUrl}
                   minConfidence={results.MinConfidence || 75}
-                  epiItems={epiItems}
+                  epiItems={results.selectedEPPs || epiItems}
                 />
               )}
               
