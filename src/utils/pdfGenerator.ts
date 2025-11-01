@@ -16,9 +16,11 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
   const pageHeight = pdf.internal.pageSize.getHeight();
   let yPosition = 20;
 
-  // Header con logo
-  pdf.setFillColor(139, 154, 159);
+  // Header con logo - Gradiente simulado con dos rectángulos
+  pdf.setFillColor(102, 126, 234);
   pdf.rect(0, 0, pageWidth, 45, 'F');
+  pdf.setFillColor(59, 130, 246);
+  pdf.rect(0, 0, pageWidth / 2, 45, 'F');
   
   // Intentar cargar logo
   try {
@@ -82,28 +84,52 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
     yPosition += 5;
   }
 
-  // Resumen
+  // Resumen con tarjetas modernas
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(37, 99, 235);
   pdf.text('Resumen del Análisis', 20, yPosition);
-  yPosition += 8;
-
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(0, 0, 0);
+  yPosition += 10;
   
   if (analysisData.Summary) {
-    pdf.text(`Personas Detectadas: ${analysisData.Summary.totalPersons || 0}`, 20, yPosition);
-    yPosition += 6;
-    pdf.text(`Personas Cumplientes: ${analysisData.Summary.compliant || 0}`, 20, yPosition);
-    yPosition += 6;
-    
     const compliancePercent = analysisData.Summary.totalPersons > 0 
       ? Math.round((analysisData.Summary.compliant / analysisData.Summary.totalPersons) * 100)
       : 0;
-    pdf.text(`Porcentaje de Cumplimiento: ${compliancePercent}%`, 20, yPosition);
-    yPosition += 10;
+
+    // Tarjeta 1: Personas Detectadas
+    pdf.setFillColor(59, 130, 246);
+    pdf.roundedRect(20, yPosition, 50, 20, 3, 3, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`${analysisData.Summary.totalPersons || 0}`, 45, yPosition + 10, { align: 'center' });
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Personas', 45, yPosition + 16, { align: 'center' });
+
+    // Tarjeta 2: Cumplientes
+    pdf.setFillColor(34, 197, 94);
+    pdf.roundedRect(75, yPosition, 50, 20, 3, 3, 'F');
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`${analysisData.Summary.compliant || 0}`, 100, yPosition + 10, { align: 'center' });
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Cumplientes', 100, yPosition + 16, { align: 'center' });
+
+    // Tarjeta 3: Porcentaje
+    pdf.setFillColor(compliancePercent >= 80 ? 34 : compliancePercent >= 50 ? 251 : 239, 
+                     compliancePercent >= 80 ? 197 : compliancePercent >= 50 ? 146 : 68, 
+                     compliancePercent >= 80 ? 94 : compliancePercent >= 50 ? 60 : 68);
+    pdf.roundedRect(130, yPosition, 50, 20, 3, 3, 'F');
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`${compliancePercent}%`, 155, yPosition + 10, { align: 'center' });
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Cumplimiento', 155, yPosition + 16, { align: 'center' });
+
+    yPosition += 26;
   }
 
   // Resumen IA
@@ -132,8 +158,8 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
     yPosition += 5;
   }
 
-  // Tabla EPP
-  if (analysisData.ProtectiveEquipment && analysisData.ProtectiveEquipment.length > 0) {
+  // Tabla Mejorada de Análisis por Persona
+  if (analysisData.ProtectiveEquipment && analysisData.ProtectiveEquipment.length > 0 && epiItems && epiItems.length > 0) {
     if (yPosition > pageHeight - 60) {
       pdf.addPage();
       yPosition = 20;
@@ -142,23 +168,10 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(34, 197, 94);
-    pdf.text('Detalle de EPP Detectado', 20, yPosition);
+    pdf.text('Análisis Detallado por Persona', 20, yPosition);
     yPosition += 8;
 
-    pdf.setFillColor(229, 231, 235);
-    pdf.rect(20, yPosition - 5, pageWidth - 40, 8, 'F');
-    
-    pdf.setFontSize(9);
-    pdf.text('Persona', 22, yPosition);
-    pdf.text('Equipo', 70, yPosition);
-    pdf.text('Confianza', 120, yPosition);
-    pdf.text('Estado', 160, yPosition);
-    yPosition += 8;
-
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
-
-    const epiNames: any = {
+    const eppNames: any = {
       'HEAD_COVER': 'Casco',
       'EYE_COVER': 'Gafas',
       'HAND_COVER': 'Guantes',
@@ -167,28 +180,137 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       'EAR_COVER': 'Orejeras'
     };
 
-    analysisData.ProtectiveEquipment.forEach((person: any, personIndex: number) => {
-      person.BodyParts?.forEach((part: any) => {
-        part.EquipmentDetections?.forEach((eq: any) => {
-          if (yPosition > pageHeight - 20) {
-            pdf.addPage();
-            yPosition = 20;
-          }
+    const eppToParts: any = {
+      'HEAD_COVER': ['HEAD'],
+      'EYE_COVER': ['FACE'],
+      'FACE_COVER': ['FACE'],
+      'HAND_COVER': ['LEFT_HAND', 'RIGHT_HAND'],
+      'FOOT_COVER': ['FOOT'],
+      'EAR_COVER': ['HEAD']
+    };
 
-          const complies = eq.Confidence >= (analysisData.MinConfidence || 75);
-          
-          pdf.text(`Persona ${personIndex + 1}`, 22, yPosition);
-          pdf.text(epiNames[eq.Type] || eq.Type, 70, yPosition);
-          pdf.text(`${eq.Confidence.toFixed(1)}%`, 120, yPosition);
-          
-          pdf.setTextColor(complies ? 34 : 239, complies ? 197 : 68, complies ? 94 : 68);
-          pdf.text(complies ? 'Cumple' : 'No Cumple', 160, yPosition);
-          pdf.setTextColor(0, 0, 0);
-          
-          yPosition += 6;
-        });
+    analysisData.ProtectiveEquipment.forEach((person: any, personIdx: number) => {
+      const visibleParts = new Set(person.BodyParts?.map((bp: any) => bp.Name) || []);
+      const isEvaluable = epiItems.some((epp: string) => {
+        const requiredParts = eppToParts[epp] || [];
+        return requiredParts.some((part: string) => visibleParts.has(part));
       });
+
+      // Header de persona
+      if (yPosition > pageHeight - 40) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+
+      pdf.setFillColor(59, 130, 246);
+      pdf.rect(20, yPosition - 3, pageWidth - 40, 10, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`Persona ${personIdx + 1} - ${person.Confidence?.toFixed(1)}%`, 22, yPosition + 3);
+      pdf.text(isEvaluable ? 'EVALUABLE' : 'NO EVALUABLE', pageWidth - 45, yPosition + 3);
+      yPosition += 12;
+
+      // Tabla de EPPs para esta persona
+      pdf.setFillColor(229, 231, 235);
+      pdf.rect(20, yPosition - 3, pageWidth - 40, 7, 'F');
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('EPP Requerido', 22, yPosition);
+      pdf.text('Parte Necesaria', 70, yPosition);
+      pdf.text('Detectada', 110, yPosition);
+      pdf.text('EPP %', 140, yPosition);
+      pdf.text('Estado', 165, yPosition);
+      yPosition += 8;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+
+      epiItems.forEach((requiredEPP: string) => {
+        if (yPosition > pageHeight - 25) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+
+        const requiredParts = eppToParts[requiredEPP] || [];
+        const hasRequiredPart = requiredParts.some((part: string) => visibleParts.has(part));
+        const detectedPart = requiredParts.find((part: string) => visibleParts.has(part));
+
+        let detectedEPP = null;
+        let eppConfidence = 0;
+
+        if (hasRequiredPart) {
+          person.BodyParts?.forEach((bp: any) => {
+            if (requiredParts.includes(bp.Name)) {
+              bp.EquipmentDetections?.forEach((eq: any) => {
+                if (eq.Type === requiredEPP && eq.Confidence > eppConfidence) {
+                  detectedEPP = eq;
+                  eppConfidence = eq.Confidence;
+                }
+              });
+            }
+          });
+        }
+
+        // Fila de datos
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(eppNames[requiredEPP] || requiredEPP, 22, yPosition);
+        pdf.text(requiredParts.join(' o '), 70, yPosition);
+        
+        if (hasRequiredPart) {
+          pdf.setTextColor(34, 197, 94);
+          pdf.text(`Si (${detectedPart})`, 110, yPosition);
+        } else {
+          pdf.setTextColor(156, 163, 175);
+          pdf.text('No visible', 110, yPosition);
+        }
+
+        if (detectedEPP) {
+          pdf.setTextColor(34, 197, 94);
+          pdf.text(`${eppConfidence.toFixed(1)}%`, 140, yPosition);
+        } else {
+          pdf.setTextColor(156, 163, 175);
+          pdf.text('-', 140, yPosition);
+        }
+
+        if (!hasRequiredPart) {
+          pdf.setTextColor(156, 163, 175);
+          pdf.text('No evaluable', 165, yPosition);
+        } else if (detectedEPP && eppConfidence >= (analysisData.MinConfidence || 75)) {
+          pdf.setTextColor(34, 197, 94);
+          pdf.text('Cumple', 165, yPosition);
+        } else {
+          pdf.setTextColor(239, 68, 68);
+          pdf.text('No cumple', 165, yPosition);
+        }
+
+        yPosition += 6;
+      });
+
+      yPosition += 4;
     });
+
+    // Nota explicativa
+    if (yPosition > pageHeight - 30) {
+      pdf.addPage();
+      yPosition = 20;
+    }
+    pdf.setFillColor(254, 243, 199);
+    pdf.rect(20, yPosition - 3, pageWidth - 40, 18, 'F');
+    pdf.setTextColor(146, 64, 14);
+    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Nota:', 22, yPosition);
+    pdf.setFont('helvetica', 'normal');
+    const noteText = 'Un EPP solo es evaluable si primero se detecta la parte del cuerpo necesaria. Por ejemplo, aunque un casco sea visible, si no se detecta la cabeza de la persona, ese EPP no puede ser evaluado.';
+    const noteLines = pdf.splitTextToSize(noteText, pageWidth - 48);
+    yPosition += 4;
+    noteLines.forEach((line: string) => {
+      pdf.text(line, 22, yPosition);
+      yPosition += 4;
+    });
+    yPosition += 6;
   }
 
   // Imagen original (solo una imagen hasta que se implemente generación de imagen anotada)
@@ -268,10 +390,12 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
     }
   }
 
-  // Footer corporativo
+  // Footer corporativo moderno
   const footerY = pageHeight - 20;
-  pdf.setFillColor(139, 154, 159);
+  pdf.setFillColor(59, 130, 246);
   pdf.rect(0, footerY - 5, pageWidth, 25, 'F');
+  pdf.setFillColor(102, 126, 234);
+  pdf.rect(pageWidth / 2, footerY - 5, pageWidth / 2, 25, 'F');
   
   pdf.setFontSize(8);
   pdf.setTextColor(255, 255, 255);
