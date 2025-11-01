@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.7.1';
+export const APP_VERSION = '2.7.2';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.7.2': 'Fix: Mapeo LEFT_FOOT/RIGHT_FOOT para mostrar calzado en tabla',
   '2.7.1': 'Fix: Crear BodyParts faltantes para EPPs detectados por labels (calzado ahora visible en tabla)',
   '2.7.0': 'Feature: Detección híbrida EPPs (nativa + labels) - gafas, calzado, orejeras detectables',
   '2.6.18': 'Fix definitivo: Lambda usa MinConfidence 50 fijo, todos los EPPs ≥50% llegan al frontend',

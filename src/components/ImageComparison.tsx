@@ -593,7 +593,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                       'EYE_COVER': ['FACE'],
                       'FACE_COVER': ['FACE'],
                       'HAND_COVER': ['LEFT_HAND', 'RIGHT_HAND'],
-                      'FOOT_COVER': ['FOOT'],
+                      'FOOT_COVER': ['FOOT', 'LEFT_FOOT', 'RIGHT_FOOT'],
                       'EAR_COVER': ['HEAD']
                     };
                     
