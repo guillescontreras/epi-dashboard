@@ -77,14 +77,15 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
           person.BodyParts.forEach((bodyPart: any) => {
             if (bodyPart.EquipmentDetections) {
               bodyPart.EquipmentDetections.forEach((equipment: any, j: number) => {
-                if (equipment.BoundingBox && equipment.Confidence >= minConfidence && 
-                    (epiItems.length === 0 || epiItems.includes(equipment.Type))) {
+                // Mostrar TODOS los EPPs detectados, sin filtrar por umbral
+                if (equipment.BoundingBox && (epiItems.length === 0 || epiItems.includes(equipment.Type))) {
                   const box = equipment.BoundingBox;
                   const x = box.Left * imageDimensions.width;
                   const y = box.Top * imageDimensions.height;
                   const w = box.Width * imageDimensions.width;
                   const h = box.Height * imageDimensions.height;
-                  const color = equipment.Confidence >= minConfidence ? '#10B981' : '#F59E0B';
+                  // Color verde si cumple, rojo si no cumple
+                  const color = equipment.Confidence >= minConfidence ? '#10B981' : '#EF4444';
                   
                   const equipmentName = equipment.Type === 'FACE_COVER' ? 'Mascarilla' :
                                      equipment.Type === 'HEAD_COVER' ? 'Casco' :
@@ -95,7 +96,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                   
                   // Usar color diferente para detecciones híbridas
                   const isHybrid = ['EYE_COVER', 'FOOT_COVER', 'EAR_COVER'].includes(equipment.Type);
-                  const hybridColor = isHybrid ? (equipment.Confidence >= minConfidence ? '#059669' : '#8B5CF6') : color;
+                  const hybridColor = isHybrid ? (equipment.Confidence >= minConfidence ? '#059669' : '#DC2626') : color;
                   
                   annotations.push(
                     <g key={`equipment-${i}-${bodyPart.Name}-${j}-${equipment.Type}`}>
@@ -321,7 +322,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                   <span>EPP Cumple</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-2 bg-yellow-500 rounded border-dashed border"></div>
+                  <div className="w-4 h-2 bg-red-500 rounded border-dashed border"></div>
                   <span>EPP No Cumple</span>
                 </div>
               </>
