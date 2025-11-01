@@ -272,8 +272,19 @@ const App: React.FC = () => {
     
     if (totalPersons === 0) {
       if (totalPersonsDetected > 0) {
-        summary += `Se detectaron **${totalPersonsDetected} persona${totalPersonsDetected > 1 ? 's' : ''}** en la imagen, pero ninguna pudo ser evaluada completamente (personas muy lejos, parcialmente visibles o dentro de vehículos).\n\n`;
-        summary += `**Recomendación:** Tome una foto más cercana con las personas completamente visibles para un análisis preciso.`;
+        summary += `Se detectaron **${totalPersonsDetected} persona${totalPersonsDetected > 1 ? 's' : ''}** en la imagen, pero ninguna pudo ser evaluada completamente.\n\n`;
+        summary += `**⚠️ Razón:** Para evaluar un EPP, primero debe detectarse la parte del cuerpo correspondiente. Por ejemplo:\n`;
+        summary += `- Para evaluar **casco**, se requiere detección de **cabeza**\n`;
+        summary += `- Para evaluar **guantes**, se requiere detección de **manos**\n`;
+        summary += `- Para evaluar **gafas/mascarilla**, se requiere detección de **rostro**\n\n`;
+        summary += `Aunque los EPP puedan ser visibles en la imagen, si las partes del cuerpo no son detectadas (personas muy lejos, parcialmente visibles, dentro de vehículos, o en ángulos difíciles), el sistema no puede validar el cumplimiento.\n\n`;
+        summary += `**📸 Recomendaciones para mejorar la detección:**\n`;
+        summary += `1. **Distancia:** Acérquese a 3-5 metros de las personas\n`;
+        summary += `2. **Ángulo:** Tome la foto de frente o con ángulo de 45° máximo\n`;
+        summary += `3. **Encuadre:** Asegúrese de capturar a las personas de cuerpo completo\n`;
+        summary += `4. **Iluminación:** Evite contraluz y sombras fuertes\n`;
+        summary += `5. **Enfoque:** Verifique que la imagen no esté borrosa\n`;
+        summary += `6. **Obstrucciones:** Evite que vehículos, equipos u objetos tapen a las personas`;
       } else {
         summary += `No se detectaron personas en la imagen analizada. Verifique que la imagen contenga trabajadores y que la calidad sea adecuada para el análisis.`;
       }
@@ -282,13 +293,28 @@ const App: React.FC = () => {
       if (filteredPersons > 0) {
         summary += `Se detectaron **${totalPersonsDetected} persona${totalPersonsDetected > 1 ? 's' : ''}** en la imagen. **${totalPersons} persona${totalPersons > 1 ? 's' : ''}** pudieron ser evaluadas completamente.\n\n`;
         summary += `⚠️ **${filteredPersons} persona${filteredPersons > 1 ? 's fueron excluidas' : ' fue excluida'}** del análisis por estar parcialmente visible${filteredPersons > 1 ? 's' : ''}, muy lejos de la cámara, o dentro de vehículos.\n\n`;
+        summary += `**📸 Para incluir a estas personas en el análisis:**\n`;
+        summary += `- Acérquese más (distancia recomendada: 3-5 metros)\n`;
+        summary += `- Cambie el ángulo de la toma para capturar mejor las partes del cuerpo\n`;
+        summary += `- Asegúrese de que las personas estén completamente visibles (no dentro de vehículos)\n`;
+        summary += `- Evite tomas desde muy arriba o muy abajo\n\n`;
       } else {
         summary += `Se detectaron y evaluaron **${totalPersons} persona${totalPersons > 1 ? 's' : ''}** en el área de trabajo.\n\n`;
       }
       
       // Advertencia sobre partes no visibles en personas evaluables
       if (personsWithMissingParts > 0) {
-        summary += `⚠️ **Nota adicional**: En ${personsWithMissingParts} de las personas evaluables, algunas partes del cuerpo no son completamente visibles. La evaluación se realiza únicamente sobre los EPP que pueden verificarse visualmente.\n\n`;
+        summary += `⚠️ **Importante - Evaluación Parcial**: En ${personsWithMissingParts} de las personas evaluables, algunas partes del cuerpo no son completamente visibles.\n\n`;
+        summary += `**🔍 Cómo funciona la evaluación:**\n`;
+        summary += `1. Primero se detecta la **parte del cuerpo** (cabeza, manos, rostro, etc.)\n`;
+        summary += `2. Luego se busca el **EPP correspondiente** en esa parte\n`;
+        summary += `3. Si la parte del cuerpo NO se detecta, el EPP **no puede evaluarse** aunque sea visible\n\n`;
+        summary += `Por ejemplo: Si se ve un casco pero no se detecta la cabeza de la persona (por distancia, ángulo o obstrucción), ese casco no cuenta como cumplimiento. La evaluación se realiza únicamente sobre los EPP cuyas partes del cuerpo asociadas fueron detectadas.\n\n`;
+        summary += `**📸 Recomendaciones para mejorar la detección:**\n`;
+        summary += `- Tome fotos más cercanas (3-5 metros de distancia)\n`;
+        summary += `- Use ángulos frontales o de 45° máximo\n`;
+        summary += `- Capture a las personas de cuerpo completo\n`;
+        summary += `- Evite obstrucciones (vehículos, equipos, objetos)\n\n`;
       }
       
       // Mostrar EPP detectados

@@ -562,13 +562,13 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
           </div>
         )}
 
-        {/* Detalles de EPP Detectado */}
+        {/* Detalles de EPP Detectado - TABLA MEJORADA */}
         {results.DetectionType === 'ppe_detection' && results.ProtectiveEquipment && (
           <div className="mt-6 bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="bg-green-50 px-4 py-3 border-b border-gray-200">
               <h4 className="text-md font-semibold text-gray-800 flex items-center space-x-2">
                 <span>🦺</span>
-                <span>Detalles de EPP Detectado</span>
+                <span>Análisis Detallado por Persona</span>
               </h4>
             </div>
             <div className="overflow-x-auto">
@@ -576,43 +576,151 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Persona</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parte del Cuerpo</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Equipo</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Confianza</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Evaluable</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">EPP Requerido</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parte Necesaria</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parte Detectada</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">EPP Detectado</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {results.ProtectiveEquipment.flatMap((person: any, i: number) =>
-                    person.BodyParts?.flatMap((bodyPart: any) =>
-                      bodyPart.EquipmentDetections?.map((equipment: any, j: number) => (
-                        <tr key={`${i}-${bodyPart.Name}-${j}-${equipment.Type}`} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">Persona {i + 1}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{bodyPart.Name}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {equipment.Type === 'FACE_COVER' ? '😷 Mascarilla' :
-                             equipment.Type === 'HEAD_COVER' ? '🪖 Casco' :
-                             equipment.Type === 'HAND_COVER' ? '🧤 Guantes' :
-                             equipment.Type === 'EYE_COVER' ? '🥽 Gafas' :
-                             equipment.Type === 'FOOT_COVER' ? '🥾 Calzado' :
-                             equipment.Type === 'EAR_COVER' ? '🎧 Orejeras' : equipment.Type}
+                  {results.ProtectiveEquipment.map((person: any, personIdx: number) => {
+                    const visibleParts = new Set(person.BodyParts?.map((bp: any) => bp.Name) || []);
+                    const eppToParts: any = {
+                      'HEAD_COVER': ['HEAD'],
+                      'EYE_COVER': ['FACE'],
+                      'FACE_COVER': ['FACE'],
+                      'HAND_COVER': ['LEFT_HAND', 'RIGHT_HAND'],
+                      'FOOT_COVER': ['FOOT'],
+                      'EAR_COVER': ['HEAD']
+                    };
+                    
+                    return epiItems.map((requiredEPP: string, eppIdx: number) => {
+                      const requiredParts = eppToParts[requiredEPP] || [];
+                      const hasRequiredPart = requiredParts.some((part: string) => visibleParts.has(part));
+                      const detectedPart = requiredParts.find((part: string) => visibleParts.has(part));
+                      
+                      let detectedEPP = null;
+                      let eppConfidence = 0;
+                      
+                      if (hasRequiredPart) {
+                        person.BodyParts?.forEach((bp: any) => {
+                          if (requiredParts.includes(bp.Name)) {
+                            bp.EquipmentDetections?.forEach((eq: any) => {
+                              if (eq.Type === requiredEPP && eq.Confidence > eppConfidence) {
+                                detectedEPP = eq;
+                                eppConfidence = eq.Confidence;
+                              }
+                            });
+                          }
+                        });
+                      }
+                      
+                      const eppNames: any = {
+                        'HEAD_COVER': '🪖 Casco',
+                        'EYE_COVER': '🥽 Gafas',
+                        'HAND_COVER': '🧤 Guantes',
+                        'FOOT_COVER': '🥾 Calzado',
+                        'FACE_COVER': '😷 Mascarilla',
+                        'EAR_COVER': '🎧 Orejeras'
+                      };
+                      
+                      return (
+                        <tr key={`${personIdx}-${eppIdx}`} className="hover:bg-gray-50">
+                          {eppIdx === 0 && (
+                            <td rowSpan={epiItems.length} className="px-4 py-3 text-sm font-bold text-gray-900 border-r border-gray-200 bg-gray-50">
+                              <div className="flex flex-col items-center">
+                                <span className="text-lg">👤</span>
+                                <span>Persona {personIdx + 1}</span>
+                                <span className="text-xs text-gray-500 mt-1">{person.Confidence?.toFixed(1)}%</span>
+                              </div>
+                            </td>
+                          )}
+                          {eppIdx === 0 && (
+                            <td rowSpan={epiItems.length} className="px-4 py-3 text-center border-r border-gray-200">
+                              {epiItems.some((epp: string) => {
+                                const parts = eppToParts[epp] || [];
+                                return parts.some((p: string) => visibleParts.has(p));
+                              }) ? (
+                                <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800">
+                                  ✅ SÍ
+                                </span>
+                              ) : (
+                                <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800">
+                                  ❌ NO
+                                </span>
+                              )}
+                            </td>
+                          )}
+                          <td className="px-4 py-3 text-sm font-medium text-gray-700">
+                            {eppNames[requiredEPP]}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{equipment.Confidence?.toFixed(1)}%</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {requiredParts.join(' o ')}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {hasRequiredPart ? (
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
+                                ✓ {detectedPart}
+                              </span>
+                            ) : (
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-600">
+                                ✗ No visible
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {detectedEPP ? (
+                              <span className="text-green-700 font-medium">
+                                {eppConfidence.toFixed(1)}%
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
                           <td className="px-4 py-3">
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              equipment.Confidence >= minConfidence 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {equipment.Confidence >= minConfidence ? '✅ Cumple' : '❌ No cumple'}
-                            </span>
+                            {!hasRequiredPart ? (
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                                ⚠️ No evaluable
+                              </span>
+                            ) : detectedEPP && eppConfidence >= minConfidence ? (
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                ✅ Cumple
+                              </span>
+                            ) : (
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                                ❌ No cumple
+                              </span>
+                            )}
                           </td>
                         </tr>
-                      )) || []
-                    ) || []
-                  )}
+                      );
+                    });
+                  })}
                 </tbody>
               </table>
+            </div>
+            <div className="bg-blue-50 px-4 py-3 border-t border-blue-200">
+              <div className="space-y-2">
+                <p className="text-xs text-blue-900 font-semibold">
+                  🔍 <strong>Cómo funciona la evaluación:</strong>
+                </p>
+                <p className="text-xs text-blue-800">
+                  Un EPP solo es evaluable si primero se detecta la parte del cuerpo necesaria. 
+                  Por ejemplo, aunque un casco sea visible, si no se detecta la cabeza de la persona, ese EPP no puede ser evaluado.
+                </p>
+                <p className="text-xs text-blue-900 font-semibold mt-2">
+                  📸 <strong>Recomendaciones para mejorar la detección:</strong>
+                </p>
+                <ul className="text-xs text-blue-800 list-disc list-inside space-y-1">
+                  <li>Tome fotos a 3-5 metros de distancia</li>
+                  <li>Use ángulos frontales o de 45° máximo</li>
+                  <li>Capture personas de cuerpo completo</li>
+                  <li>Evite obstrucciones (vehículos, equipos)</li>
+                  <li>Asegúrese de buena iluminación y enfoque</li>
+                </ul>
+              </div>
             </div>
           </div>
         )}

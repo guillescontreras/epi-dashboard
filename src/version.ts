@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.6.10';
+export const APP_VERSION = '2.6.11';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.6.11': 'Mejora: Tabla detallada por persona con evaluabilidad + explicación EPP vs parte del cuerpo',
   '2.6.10': 'Fix: Logo de CoironTech restaurado en PDF usando fetch desde /public',
   '2.6.9': 'Fix: CORS S3 configurado correctamente para epi.coirontech.com + logo deshabilitado',
   '2.6.8': 'Fix: Carga de imagen en PDF usando fetch en lugar de canvas (evita CORS)',
