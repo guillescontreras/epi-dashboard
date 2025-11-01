@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.7.4';
+export const APP_VERSION = '2.7.5';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.7.5': 'Fix: Priorizar labels con instancias (Shoe sobre Footwear)',
   '2.7.4': 'Fix: Búsqueda exacta de labels (Shoe, Footwear, Glasses)',
   '2.7.3': 'Fix crítico: Detección espacial IoU - EPPs híbridos solo se agregan a personas con solapamiento',
   '2.7.2': 'Fix: Mapeo LEFT_FOOT/RIGHT_FOOT para mostrar calzado en tabla',
