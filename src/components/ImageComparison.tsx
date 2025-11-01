@@ -604,6 +604,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                       let detectedEPP = null;
                       let eppConfidence = 0;
                       
+                      // Buscar EPP detectado SIN filtrar por umbral
                       if (hasRequiredPart) {
                         person.BodyParts?.forEach((bp: any) => {
                           if (requiredParts.includes(bp.Name)) {
@@ -673,7 +674,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                           <td className="px-4 py-3 text-sm">
                             {detectedEPP ? (
                               <span className={`font-medium ${
-                                eppConfidence >= minConfidence ? 'text-green-700' : 'text-orange-600'
+                                eppConfidence >= minConfidence ? 'text-green-700' : 'text-red-700'
                               }`}>
                                 {eppConfidence.toFixed(1)}%
                               </span>
@@ -692,11 +693,11 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                               </span>
                             ) : eppConfidence >= minConfidence ? (
                               <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                                ✅ Cumple
+                                ✅ Cumple {eppConfidence.toFixed(0)}%
                               </span>
                             ) : (
-                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
-                                ⚠️ Bajo umbral
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                                ❌ No cumple {eppConfidence.toFixed(0)}%
                               </span>
                             )}
                           </td>

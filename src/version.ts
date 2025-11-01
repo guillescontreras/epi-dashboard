@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.6.14';
+export const APP_VERSION = '2.6.15';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.6.15': 'Fix crítico: Tabla muestra TODOS los EPPs detectados, umbral solo determina Cumple/No cumple',
   '2.6.14': 'Mejora: Mostrar EPPs bajo umbral + diferenciar "No detectado" vs "Bajo umbral"',
   '2.6.13': 'Mejora: PDF rediseñado con tabla detallada de evaluabilidad y diseño moderno',
   '2.6.12': 'Fix: Tabla mejorada visible en historial con selectedEPPs correctos',
@@ -44,4 +45,4 @@ export const VERSION_HISTORY = {
 };
 
 // Fecha de última actualización
-export const LAST_UPDATE = '2024-11-01';
+export const LAST_UPDATE = '2024-11-02';

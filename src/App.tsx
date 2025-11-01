@@ -243,7 +243,7 @@ const App: React.FC = () => {
       compliancePercent
     });
     
-    // Analizar detecciones de EPP
+    // Analizar detecciones de EPP - MOSTRAR TODOS LOS DETECTADOS
     let totalDetections = 0;
     let detectedItems: string[] = [];
     let belowThresholdItems: string[] = [];
@@ -262,7 +262,7 @@ const App: React.FC = () => {
                   detectedItems.push(eq.Type);
                 }
               } else {
-                // EPP detectado pero bajo umbral
+                // EPP detectado pero NO cumple umbral
                 if (!belowThresholdItems.includes(eq.Type)) {
                   belowThresholdItems.push(eq.Type);
                 }
@@ -343,8 +343,8 @@ const App: React.FC = () => {
       
       if (belowThresholdItems.length > 0) {
         const belowNames = belowThresholdItems.map(item => itemNames[item] || item).join(', ');
-        summary += `**⚠️ EPP detectados pero bajo umbral de confianza**: ${belowNames}\n`;
-        summary += `Estos elementos fueron detectados en la imagen pero con un nivel de confianza inferior al ${MinConfidence}% requerido. Se recomienda verificar visualmente o ajustar el ángulo de captura.\n\n`;
+        summary += `**⚠️ EPP detectados pero NO cumplen umbral de ${MinConfidence}%**: ${belowNames}\n`;
+        summary += `Estos elementos fueron detectados en la imagen pero con un nivel de confianza inferior al ${MinConfidence}% requerido. Aunque están presentes, NO cumplen con el estándar establecido. Se recomienda verificar visualmente o ajustar el ángulo de captura.\n\n`;
       }
       
       if (compliant === totalPersons && compliant > 0) {
