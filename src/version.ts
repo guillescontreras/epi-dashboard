@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.6.16';
+export const APP_VERSION = '2.6.17';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.6.17': 'Fix crítico: Lambda siempre detecta con 50% mínimo, umbral usuario solo afecta estado',
   '2.6.16': 'Fix crítico: Anotaciones visuales muestran TODOS los EPPs detectados (boxes en imagen)',
   '2.6.15': 'Fix crítico: Tabla muestra TODOS los EPPs detectados, umbral solo determina Cumple/No cumple',
   '2.6.14': 'Mejora: Mostrar EPPs bajo umbral + diferenciar "No detectado" vs "Bajo umbral"',
@@ -46,4 +47,4 @@ export const VERSION_HISTORY = {
 };
 
 // Fecha de última actualización
-export const LAST_UPDATE = '2024-11-02';
+export const LAST_UPDATE = '2024-11-03';
