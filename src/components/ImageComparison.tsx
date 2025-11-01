@@ -672,7 +672,9 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                           </td>
                           <td className="px-4 py-3 text-sm">
                             {detectedEPP ? (
-                              <span className="text-green-700 font-medium">
+                              <span className={`font-medium ${
+                                eppConfidence >= minConfidence ? 'text-green-700' : 'text-orange-600'
+                              }`}>
                                 {eppConfidence.toFixed(1)}%
                               </span>
                             ) : (
@@ -684,13 +686,17 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                               <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
                                 ⚠️ No evaluable
                               </span>
-                            ) : detectedEPP && eppConfidence >= minConfidence ? (
+                            ) : !detectedEPP ? (
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                                ❌ No detectado
+                              </span>
+                            ) : eppConfidence >= minConfidence ? (
                               <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                                 ✅ Cumple
                               </span>
                             ) : (
-                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                                ❌ No cumple
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+                                ⚠️ Bajo umbral
                               </span>
                             )}
                           </td>

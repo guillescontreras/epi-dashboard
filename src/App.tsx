@@ -246,6 +246,7 @@ const App: React.FC = () => {
     // Analizar detecciones de EPP
     let totalDetections = 0;
     let detectedItems: string[] = [];
+    let belowThresholdItems: string[] = [];
     
     if (evaluablePersons && evaluablePersons.length > 0) {
       console.log('🔎 Analizando personas evaluables:', evaluablePersons.length);
@@ -254,10 +255,17 @@ const App: React.FC = () => {
         person.BodyParts?.forEach((part: any) => {
           part.EquipmentDetections?.forEach((eq: any) => {
             console.log(`  🛡️ Equipo detectado: ${eq.Type} - ${eq.Confidence}%`);
-            if (eq.Confidence >= (MinConfidence || 75) && validateEPPForBodyPart(eq.Type, part.Name)) {
-              totalDetections++;
-              if (!detectedItems.includes(eq.Type)) {
-                detectedItems.push(eq.Type);
+            if (validateEPPForBodyPart(eq.Type, part.Name)) {
+              if (eq.Confidence >= (MinConfidence || 75)) {
+                totalDetections++;
+                if (!detectedItems.includes(eq.Type)) {
+                  detectedItems.push(eq.Type);
+                }
+              } else {
+                // EPP detectado pero bajo umbral
+                if (!belowThresholdItems.includes(eq.Type)) {
+                  belowThresholdItems.push(eq.Type);
+                }
               }
             }
           });
@@ -267,6 +275,7 @@ const App: React.FC = () => {
     
     console.log('✅ Detecciones totales:', totalDetections);
     console.log('✅ Items detectados:', detectedItems);
+    console.log('⚠️ Items bajo umbral:', belowThresholdItems);
     
     let summary = `**Resumen del Análisis de Seguridad Industrial**\n\n`;
     
@@ -318,17 +327,24 @@ const App: React.FC = () => {
       }
       
       // Mostrar EPP detectados
+      const itemNames: any = {
+        'HEAD_COVER': 'Casco',
+        'EYE_COVER': 'Gafas de seguridad',
+        'HAND_COVER': 'Guantes',
+        'FOOT_COVER': 'Calzado de seguridad',
+        'FACE_COVER': 'Mascarilla',
+        'EAR_COVER': 'Protección auditiva'
+      };
+      
       if (detectedItems.length > 0) {
-        const itemNames: any = {
-          'HEAD_COVER': 'Casco',
-          'EYE_COVER': 'Gafas de seguridad',
-          'HAND_COVER': 'Guantes',
-          'FOOT_COVER': 'Calzado de seguridad',
-          'FACE_COVER': 'Mascarilla',
-          'EAR_COVER': 'Protección auditiva'
-        };
         const detectedNames = detectedItems.map(item => itemNames[item] || item).join(', ');
-        summary += `**EPP detectados**: ${detectedNames}\n\n`;
+        summary += `**EPP detectados (cumplen umbral de ${MinConfidence}%)**: ${detectedNames}\n\n`;
+      }
+      
+      if (belowThresholdItems.length > 0) {
+        const belowNames = belowThresholdItems.map(item => itemNames[item] || item).join(', ');
+        summary += `**⚠️ EPP detectados pero bajo umbral de confianza**: ${belowNames}\n`;
+        summary += `Estos elementos fueron detectados en la imagen pero con un nivel de confianza inferior al ${MinConfidence}% requerido. Se recomienda verificar visualmente o ajustar el ángulo de captura.\n\n`;
       }
       
       if (compliant === totalPersons && compliant > 0) {

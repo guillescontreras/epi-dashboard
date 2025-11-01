@@ -266,8 +266,10 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
           pdf.text('No visible', 110, yPosition);
         }
 
+        // Mostrar porcentaje siempre que haya detección, independiente de confianza
         if (detectedEPP) {
-          pdf.setTextColor(34, 197, 94);
+          const meetsThreshold = eppConfidence >= (analysisData.MinConfidence || 75);
+          pdf.setTextColor(meetsThreshold ? 34 : 251, meetsThreshold ? 197 : 146, meetsThreshold ? 94 : 60);
           pdf.text(`${eppConfidence.toFixed(1)}%`, 140, yPosition);
         } else {
           pdf.setTextColor(156, 163, 175);
@@ -277,12 +279,15 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
         if (!hasRequiredPart) {
           pdf.setTextColor(156, 163, 175);
           pdf.text('No evaluable', 165, yPosition);
-        } else if (detectedEPP && eppConfidence >= (analysisData.MinConfidence || 75)) {
+        } else if (!detectedEPP) {
+          pdf.setTextColor(239, 68, 68);
+          pdf.text('No detectado', 165, yPosition);
+        } else if (eppConfidence >= (analysisData.MinConfidence || 75)) {
           pdf.setTextColor(34, 197, 94);
           pdf.text('Cumple', 165, yPosition);
         } else {
-          pdf.setTextColor(239, 68, 68);
-          pdf.text('No cumple', 165, yPosition);
+          pdf.setTextColor(251, 146, 60);
+          pdf.text('Bajo umbral', 165, yPosition);
         }
 
         yPosition += 6;
