@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.6.18';
+export const APP_VERSION = '2.7.0';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.7.0': 'Feature: Detección híbrida EPPs (nativa + labels) - gafas, calzado, orejeras detectables',
   '2.6.18': 'Fix definitivo: Lambda usa MinConfidence 50 fijo, todos los EPPs ≥50% llegan al frontend',
   '2.6.17': 'Fix crítico: Lambda siempre detecta con 50% mínimo, umbral usuario solo afecta estado',
   '2.6.16': 'Fix crítico: Anotaciones visuales muestran TODOS los EPPs detectados (boxes en imagen)',

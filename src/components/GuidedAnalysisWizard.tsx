@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import DragDropUpload from './DragDropUpload';
+import EPPDetectionInfo from './EPPDetectionInfo';
 
 interface GuidedAnalysisWizardProps {
   onComplete: (config: {
@@ -220,30 +221,33 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
           </div>
 
           {(detectionType === 'ppe_detection' || detectionType === 'realtime_ppe') && (
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4">🦺 Elementos EPP a Detectar</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { value: 'HEAD_COVER', label: 'Casco', icon: '🪖' },
-                  { value: 'EYE_COVER', label: 'Gafas', icon: '🥽' },
-                  { value: 'HAND_COVER', label: 'Guantes', icon: '🧤' },
-                  { value: 'FOOT_COVER', label: 'Calzado', icon: '🥾' },
-                  { value: 'FACE_COVER', label: 'Mascarilla', icon: '😷' },
-                  { value: 'EAR_COVER', label: 'Orejeras', icon: '🎧' }
-                ].map((item) => (
-                  <label key={item.value} className="flex items-center space-x-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      checked={epiItems.includes(item.value)}
-                      onChange={() => handleEpiItemChange(item.value)}
-                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                  </label>
-                ))}
+            <>
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <h3 className="font-bold text-gray-900 mb-4">🦺 Elementos EPP a Detectar</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'HEAD_COVER', label: 'Casco', icon: '🪖' },
+                    { value: 'EYE_COVER', label: 'Gafas', icon: '🥽' },
+                    { value: 'HAND_COVER', label: 'Guantes', icon: '🧤' },
+                    { value: 'FOOT_COVER', label: 'Calzado', icon: '🥾' },
+                    { value: 'FACE_COVER', label: 'Mascarilla', icon: '😷' },
+                    { value: 'EAR_COVER', label: 'Orejeras', icon: '🎧' }
+                  ].map((item) => (
+                    <label key={item.value} className="flex items-center space-x-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50">
+                      <input
+                        type="checkbox"
+                        checked={epiItems.includes(item.value)}
+                        onChange={() => handleEpiItemChange(item.value)}
+                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-xl">{item.icon}</span>
+                      <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
+              <EPPDetectionInfo />
+            </>
           )}
 
           <div className="flex space-x-4">
