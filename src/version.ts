@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.13';
+export const APP_VERSION = '2.8.14';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.14': 'Fix: EPP se guarda 1 sola vez con resumen IA, evita sobrescritura',
   '2.8.13': 'Fix: Historial ahora guarda TODOS los tipos de análisis (objetos/rostros/texto/EPP)',
   '2.8.12': 'Fix: Detección facial ahora muestra edad, género, emociones y atributos completos',
   '2.8.11': 'Fix: Lambda genera presignedUrl para TODOS los tipos de detección (objetos/rostros/texto)',
