@@ -652,8 +652,10 @@ const App: React.FC = () => {
       setProgress(70);
 
       // Guardar en DynamoDB (TODOS los tipos)
+      console.log('💾 Intentando guardar análisis:', finalData.DetectionType);
       try {
         const user = await getCurrentUser();
+        console.log('👤 Usuario obtenido:', user.username);
         await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
           userId: user.username,
           analysisData: analysisResult
@@ -661,6 +663,7 @@ const App: React.FC = () => {
         console.log('✅ Análisis guardado:', finalData.DetectionType);
       } catch (dbError) {
         console.error('❌ Error guardando análisis:', dbError);
+        console.error('❌ Detalles:', JSON.stringify(dbError, null, 2));
       }
 
       // Generar resumen IA (solo para ppe_detection)
