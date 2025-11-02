@@ -651,17 +651,16 @@ const App: React.FC = () => {
       
       setProgress(70);
 
-      // Guardar en DynamoDB solo tipos NO-EPP (EPP se guarda después con resumen IA)
-      if (finalData.DetectionType !== 'ppe_detection') {
-        try {
-          const user = await getCurrentUser();
-          await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
-            userId: user.username,
-            analysisData: analysisResult
-          });
-        } catch (dbError) {
-          console.error('Error guardando análisis:', dbError);
-        }
+      // Guardar en DynamoDB (TODOS los tipos)
+      try {
+        const user = await getCurrentUser();
+        await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+          userId: user.username,
+          analysisData: analysisResult
+        });
+        console.log('✅ Análisis guardado:', finalData.DetectionType);
+      } catch (dbError) {
+        console.error('❌ Error guardando análisis:', dbError);
       }
 
       // Generar resumen IA (solo para ppe_detection)
@@ -678,15 +677,16 @@ const App: React.FC = () => {
             const updatedResult = { ...analysisResult, aiSummary: summaryData.summary };
             setResults(updatedResult);
             
-            // Guardar en DynamoDB con resumen IA
+            // Actualizar en DynamoDB con resumen IA Bedrock
             try {
               const user = await getCurrentUser();
               await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
                 userId: user.username,
                 analysisData: updatedResult
               });
+              console.log('✅ Análisis EPP actualizado con resumen IA Bedrock');
             } catch (dbError) {
-              console.error('Error guardando análisis:', dbError);
+              console.error('❌ Error actualizando análisis:', dbError);
             }
           }
         } catch (error) {
@@ -696,15 +696,16 @@ const App: React.FC = () => {
           const updatedResult = { ...analysisResult, aiSummary: localSummary };
           setResults(updatedResult);
           
-          // Guardar en DynamoDB con resumen local
+          // Actualizar en DynamoDB con resumen local
           try {
             const user = await getCurrentUser();
             await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
               userId: user.username,
               analysisData: updatedResult
             });
+            console.log('✅ Análisis EPP actualizado con resumen local');
           } catch (dbError) {
-            console.error('Error guardando análisis:', dbError);
+            console.error('❌ Error actualizando análisis:', dbError);
           }
         }
       }
@@ -862,15 +863,16 @@ const App: React.FC = () => {
             const updatedResult = { ...analysisResult, aiSummary: summaryData.summary };
             setResults(updatedResult);
             
-            // Guardar en DynamoDB con resumen IA
+            // Actualizar en DynamoDB con resumen IA Bedrock
             try {
               const user = await getCurrentUser();
               await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
                 userId: user.username,
                 analysisData: updatedResult
               });
+              console.log('✅ Análisis EPP actualizado con resumen IA Bedrock');
             } catch (dbError) {
-              console.error('Error guardando análisis:', dbError);
+              console.error('❌ Error actualizando análisis:', dbError);
             }
           }
         } catch (error) {
@@ -880,15 +882,16 @@ const App: React.FC = () => {
           const updatedResult = { ...analysisResult, aiSummary: localSummary };
           setResults(updatedResult);
           
-          // Guardar en DynamoDB con resumen local
+          // Actualizar en DynamoDB con resumen local
           try {
             const user = await getCurrentUser();
             await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
               userId: user.username,
               analysisData: updatedResult
             });
+            console.log('✅ Análisis EPP actualizado con resumen local');
           } catch (dbError) {
-            console.error('Error guardando análisis:', dbError);
+            console.error('❌ Error actualizando análisis:', dbError);
           }
         }
       }
