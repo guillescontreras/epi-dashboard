@@ -2,9 +2,10 @@ import React from 'react';
 
 interface DashboardProps {
   analysisHistory: any[];
+  calculateCompliance: (analysisData: any, selectedEPPs: string[], confidenceThreshold: number) => number;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ analysisHistory }) => {
+const Dashboard: React.FC<DashboardProps> = ({ analysisHistory, calculateCompliance }) => {
   const totalAnalysis = analysisHistory.length;
   const ppeAnalysis = analysisHistory.filter(a => a.DetectionType === 'ppe_detection').length;
   const avgConfidence = analysisHistory.length > 0 
@@ -16,7 +17,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory }) => {
     .filter(a => a.DetectionType === 'ppe_detection' && a.Summary)
     .reduce((acc, a) => {
       acc.totalPersons += a.Summary.totalPersons || 0;
-      acc.compliantPersons += a.Summary.compliant || 0;
+      acc.compliantPersons += calculateCompliance(a, a.selectedEPPs || [], a.MinConfidence || 75);
       return acc;
     }, { totalPersons: 0, compliantPersons: 0 });
 
@@ -137,7 +138,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory }) => {
                       {analysis.Summary && (
                         <p className="text-sm text-gray-500">
                           {analysis.DetectionType === 'ppe_detection' && 
-                            `${analysis.Summary.compliant}/${analysis.Summary.totalPersons} cumplientes`}
+                            `${calculateCompliance(analysis, analysis.selectedEPPs || [], analysis.MinConfidence || 75)}/${analysis.Summary.totalPersons} cumplientes`}
                           {analysis.DetectionType === 'face_detection' && 
                             `${analysis.Summary.totalFaces} rostros detectados`}
                         </p>

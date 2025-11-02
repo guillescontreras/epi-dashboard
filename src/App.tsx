@@ -72,7 +72,9 @@ const App: React.FC = () => {
       const historyResponse = await fetch(historyUrl);
       const historyData = await historyResponse.json();
       console.log('Historial recibido:', historyData);
-      setAnalysisHistory(historyData.history?.map((item: any) => item.analysisData) || []);
+      const sortedHistory = (historyData.history?.map((item: any) => item.analysisData) || [])
+        .sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
+      setAnalysisHistory(sortedHistory);
       
       // Verificar si tiene perfil
       try {
@@ -1189,7 +1191,7 @@ const App: React.FC = () => {
           </div>
         );
       case 'dashboard':
-        return <Dashboard analysisHistory={analysisHistory} />;
+        return <Dashboard analysisHistory={analysisHistory} calculateCompliance={calculateCompliance} />;
       case 'history':
         // Si hay un resultado seleccionado, mostrar informe completo
         if (results && activeSection === 'history') {
@@ -1370,7 +1372,7 @@ const App: React.FC = () => {
                           </span>
                           {analysis.Summary && analysis.DetectionType === 'ppe_detection' && (
                             <p className="text-sm text-gray-600">
-                              {analysis.Summary.compliant}/{analysis.Summary.totalPersons} cumplientes
+                              {calculateCompliance(analysis, analysis.selectedEPPs || [], analysis.MinConfidence || 75)}/{analysis.Summary.totalPersons} cumplientes
                             </p>
                           )}
                         </div>

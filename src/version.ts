@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.4';
+export const APP_VERSION = '2.8.5';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.5': 'Fix: Cumplimiento correcto en historial/dashboard + ordenamiento por timestamp',
   '2.8.4': 'Optimización: Guardado único en DynamoDB con resumen IA completo (evita sobrescritura)',
   '2.8.3': 'Fix: MinConfidence ahora se guarda correctamente en DynamoDB (visible en historial)',
   '2.8.2': 'Fix: 4 correcciones críticas (analysisId al inicio resumen, PDF FOOT_COVER completo, analysisId duplicado eliminado, Lambda Bedrock EPPs)',
@@ -61,4 +62,4 @@ export const VERSION_HISTORY = {
 };
 
 // Fecha de última actualización
-export const LAST_UPDATE = '2024-11-04';
+export const LAST_UPDATE = '2025-11-02';
