@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.3';
+export const APP_VERSION = '2.8.4';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.4': 'Optimización: Guardado único en DynamoDB con resumen IA completo (evita sobrescritura)',
   '2.8.3': 'Fix: MinConfidence ahora se guarda correctamente en DynamoDB (visible en historial)',
   '2.8.2': 'Fix: 4 correcciones críticas (analysisId al inicio resumen, PDF FOOT_COVER completo, analysisId duplicado eliminado, Lambda Bedrock EPPs)',
   '2.8.1': 'Fix: 10 correcciones (badges colores EPPs, analysisId visible, PDF centrado/justificado, resumen IA completo, historial mejorado)',

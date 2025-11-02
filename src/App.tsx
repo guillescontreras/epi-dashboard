@@ -611,26 +611,11 @@ const App: React.FC = () => {
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
       
-      // Guardar en DynamoDB
-      try {
-        const user = await getCurrentUser();
-        console.log("💾 Guardando análisis en DynamoDB...");
-        console.log("User ID:", user.username);
-        const saveResponse = await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
-          userId: user.username,
-          analysisData: analysisResult
-        });
-        console.log("✅ Análisis guardado:", saveResponse.data);
-      } catch (error) {
-        console.error('Error guardando análisis:', error);
-      }
-      
       setProgress(70);
 
       // Generar resumen IA
       if (res.data.DetectionType === 'ppe_detection') {
         try {
-          console.log('Generando resumen IA...');
           setProgress(85);
           const summaryResponse = await axios.post('https://n2vmezhgo7.execute-api.us-east-1.amazonaws.com/prod', {
             analysisResults: res.data,
@@ -638,47 +623,38 @@ const App: React.FC = () => {
             requiredEPPs: epiItems
           });
           const summaryData = summaryResponse.data;
-          console.log('Resumen IA recibido:', summaryData);
           if (summaryData.summary) {
             const updatedResult = { ...analysisResult, aiSummary: summaryData.summary };
             setResults(updatedResult);
-            console.log('✅ Resumen IA (Bedrock) agregado exitosamente');
             
-            // Actualizar en DynamoDB con el resumen IA
+            // Guardar en DynamoDB con resumen IA
             try {
               const user = await getCurrentUser();
               await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
                 userId: user.username,
                 analysisData: updatedResult
               });
-              console.log('✅ Análisis actualizado con resumen IA');
             } catch (dbError) {
-              console.error('Error actualizando con resumen IA:', dbError);
+              console.error('Error guardando análisis:', dbError);
             }
-            
-            // toast.success('Resumen IA generado exitosamente'); // Eliminado: redundante
           }
         } catch (error) {
-          console.error('❌ Error con Bedrock, usando resumen local:', error);
+          console.error('Error con Bedrock, usando resumen local:', error);
           // Fallback: usar resumen local
           const localSummary = generateLocalAISummary(res.data);
           const updatedResult = { ...analysisResult, aiSummary: localSummary };
           setResults(updatedResult);
           
-          // Actualizar en DynamoDB con resumen local
+          // Guardar en DynamoDB con resumen local
           try {
             const user = await getCurrentUser();
             await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
               userId: user.username,
               analysisData: updatedResult
             });
-            console.log('✅ Análisis actualizado con resumen local');
           } catch (dbError) {
-            console.error('Error actualizando con resumen local:', dbError);
+            console.error('Error guardando análisis:', dbError);
           }
-          
-          console.log('✅ Resumen IA local generado');
-          // toast.success('Resumen de análisis generado'); // Eliminado: redundante
         }
       }
 
@@ -819,27 +795,11 @@ const App: React.FC = () => {
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
       
-      // Guardar en DynamoDB
-      try {
-        const user = await getCurrentUser();
-        console.log("💾 Guardando análisis (guided)...");
-        console.log("User ID:", user.username);
-        console.log("📦 Datos a guardar (inicial):", JSON.stringify(analysisResult, null, 2));
-        const saveResponse = await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
-          userId: user.username,
-          analysisData: analysisResult
-        });
-        console.log("✅ Análisis guardado (guided):", saveResponse.data);
-      } catch (error) {
-        console.error('Error guardando análisis:', error);
-      }
-      
       setProgress(70);
 
       // Generar resumen IA
       if (res.data.DetectionType === 'ppe_detection') {
         try {
-          console.log('Generando resumen IA (guided mode)...');
           setProgress(85);
           const summaryResponse = await axios.post('https://n2vmezhgo7.execute-api.us-east-1.amazonaws.com/prod', {
             analysisResults: res.data,
@@ -847,48 +807,38 @@ const App: React.FC = () => {
             requiredEPPs: uploadEpiItems
           });
           const summaryData = summaryResponse.data;
-          console.log('Resumen IA recibido (guided):', summaryData);
           if (summaryData.summary) {
             const updatedResult = { ...analysisResult, aiSummary: summaryData.summary };
             setResults(updatedResult);
-            console.log('✅ Resumen IA (Bedrock) agregado (guided)');
             
-            // Actualizar en DynamoDB con el resumen IA
+            // Guardar en DynamoDB con resumen IA
             try {
               const user = await getCurrentUser();
-              console.log("📦 Datos a guardar (con resumen IA):", JSON.stringify(updatedResult, null, 2));
               await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
                 userId: user.username,
                 analysisData: updatedResult
               });
-              console.log('✅ Análisis actualizado con resumen IA (guided)');
             } catch (dbError) {
-              console.error('Error actualizando con resumen IA:', dbError);
+              console.error('Error guardando análisis:', dbError);
             }
-            
-            // toast.success('Resumen IA generado exitosamente'); // Eliminado: redundante
           }
         } catch (error) {
-          console.error('❌ Error con Bedrock (guided), usando resumen local:', error);
+          console.error('Error con Bedrock, usando resumen local:', error);
           // Fallback: usar resumen local
           const localSummary = generateLocalAISummary(res.data);
           const updatedResult = { ...analysisResult, aiSummary: localSummary };
           setResults(updatedResult);
           
-          // Actualizar en DynamoDB con resumen local
+          // Guardar en DynamoDB con resumen local
           try {
             const user = await getCurrentUser();
             await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
               userId: user.username,
               analysisData: updatedResult
             });
-            console.log('✅ Análisis actualizado con resumen local (guided)');
           } catch (dbError) {
-            console.error('Error actualizando con resumen local:', dbError);
+            console.error('Error guardando análisis:', dbError);
           }
-          
-          console.log('✅ Resumen IA local generado (guided)');
-          // toast.success('Resumen de análisis generado'); // Eliminado: redundante
         }
       }
       
