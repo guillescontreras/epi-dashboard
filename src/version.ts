@@ -1,7 +1,9 @@
-export const APP_VERSION = '2.8.11';
+export const APP_VERSION = '2.8.13';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.13': 'Fix: Historial ahora guarda TODOS los tipos de análisis (objetos/rostros/texto/EPP)',
+  '2.8.12': 'Fix: Detección facial ahora muestra edad, género, emociones y atributos completos',
   '2.8.11': 'Fix: Lambda genera presignedUrl para TODOS los tipos de detección (objetos/rostros/texto)',
   '2.8.10': 'Fix: Detección de objetos/rostros/texto funcional (manejo de respuestas sin presignedUrl)',
   '2.8.9': 'Fix: ContactModal agrega campo subject al payload para compatibilidad con Lambda',
