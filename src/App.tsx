@@ -626,18 +626,19 @@ const App: React.FC = () => {
       console.log('ResponseData final procesada:', responseData);
 
       const jsonPresignedUrl = responseData.presignedUrl;
+      let finalData;
 
-      if (!jsonPresignedUrl || typeof jsonPresignedUrl !== 'string') {
-        console.error('Estructura de respuesta completa:', analyzeRes.data);
-        console.error('ResponseData procesada:', responseData);
-        console.error('PresignedUrl encontrada:', jsonPresignedUrl);
-        throw new Error('URL presigned para JSON no válida');
+      // Si hay presignedUrl, obtener datos desde S3 (EPP detection)
+      if (jsonPresignedUrl && typeof jsonPresignedUrl === 'string') {
+        const res = await axios.get(jsonPresignedUrl);
+        finalData = res.data;
+      } else {
+        // Si no hay presignedUrl, usar responseData directamente (otros tipos de detección)
+        finalData = responseData;
       }
 
-      // Obtener el JSON usando la presigned URL
-      const res = await axios.get(jsonPresignedUrl);
       const analysisId = uuidv4();
-      const analysisResult = { ...res.data, analysisId, timestamp: Date.now(), imageUrl: imageUrl, selectedEPPs: epiItems, MinConfidence: minConfidence };
+      const analysisResult = { ...finalData, analysisId, timestamp: Date.now(), imageUrl: imageUrl, selectedEPPs: epiItems, MinConfidence: minConfidence };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
@@ -645,11 +646,11 @@ const App: React.FC = () => {
       setProgress(70);
 
       // Generar resumen IA
-      if (res.data.DetectionType === 'ppe_detection') {
+      if (finalData.DetectionType === 'ppe_detection') {
         try {
           setProgress(85);
           const summaryResponse = await axios.post('https://n2vmezhgo7.execute-api.us-east-1.amazonaws.com/prod', {
-            analysisResults: res.data,
+            analysisResults: finalData,
             imageUrl: imageUrl,
             requiredEPPs: epiItems
           });
@@ -672,7 +673,7 @@ const App: React.FC = () => {
         } catch (error) {
           console.error('Error con Bedrock, usando resumen local:', error);
           // Fallback: usar resumen local
-          const localSummary = generateLocalAISummary(res.data);
+          const localSummary = generateLocalAISummary(finalData);
           const updatedResult = { ...analysisResult, aiSummary: localSummary };
           setResults(updatedResult);
           
