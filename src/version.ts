@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.0';
+export const APP_VERSION = '2.8.1';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.1': 'Fix: 10 correcciones (badges colores EPPs, analysisId visible, PDF centrado/justificado, resumen IA completo, historial mejorado)',
   '2.8.0': 'Mejoras UX: Badges colores EPP (verde/amarillo/rojo), analysisId UUID visible, formulario contacto autocompletado',
   '2.7.7': 'Fix definitivo: Verificación espacial correcta (centro del EPP dentro de persona)',
   '2.7.6': 'Fix crítico: Eliminar lógica IoU - restaurar comportamiento anterior que funcionaba',
@@ -57,4 +58,4 @@ export const VERSION_HISTORY = {
 };
 
 // Fecha de última actualización
-export const LAST_UPDATE = '2024-11-03';
+export const LAST_UPDATE = '2024-11-04';

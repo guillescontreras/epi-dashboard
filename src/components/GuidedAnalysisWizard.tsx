@@ -246,7 +246,6 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
                   ))}
                 </div>
               </div>
-              <EPPDetectionInfo />
             </>
           )}
 

@@ -339,13 +339,18 @@ const App: React.FC = () => {
       
       if (detectedItems.length > 0) {
         const detectedNames = detectedItems.map(item => itemNames[item] || item).join(', ');
-        summary += `**EPP detectados (cumplen umbral de ${MinConfidence}%)**: ${detectedNames}\n\n`;
+        summary += `**✅ EPP que cumplen el umbral de ${MinConfidence}%**: ${detectedNames}\n\n`;
       }
       
       if (belowThresholdItems.length > 0) {
         const belowNames = belowThresholdItems.map(item => itemNames[item] || item).join(', ');
-        summary += `**⚠️ EPP detectados pero NO cumplen umbral de ${MinConfidence}%**: ${belowNames}\n`;
-        summary += `Estos elementos fueron detectados en la imagen pero con un nivel de confianza inferior al ${MinConfidence}% requerido. Aunque están presentes, NO cumplen con el estándar establecido. Se recomienda verificar visualmente o ajustar el ángulo de captura.\n\n`;
+        summary += `**⚠️ EPP detectados pero bajo el umbral de ${MinConfidence}%**: ${belowNames}\n`;
+        summary += `Estos elementos fueron detectados en la imagen pero con un nivel de confianza inferior al ${MinConfidence}% establecido por el usuario. Aunque están presentes físicamente, NO cumplen con el criterio de confianza requerido para considerarse válidos. \n\n`;
+        summary += `**🔍 Recomendaciones para mejorar la detección:**\n`;
+        summary += `- Acercarse más a las personas (3-5 metros)\n`;
+        summary += `- Mejorar el ángulo de captura (frontal o 45° máximo)\n`;
+        summary += `- Verificar buena iluminación y enfoque\n`;
+        summary += `- Evitar obstrucciones que tapen los EPP\n\n`;
       }
       
       if (compliant === totalPersons && compliant > 0) {
@@ -986,20 +991,28 @@ const App: React.FC = () => {
                                          item === 'FACE_COVER' ? 'Mascarilla' :
                                          item === 'EAR_COVER' ? 'Orejeras' : item;
                           
-                          const detections = results.ProtectiveEquipment?.reduce((count: number, person: any) => {
-                            return count + (person.BodyParts?.reduce((partCount: number, part: any) => {
-                              return partCount + (part.EquipmentDetections?.filter((eq: any) => 
-                                eq.Type === item && eq.Confidence >= minConfidence
-                              ).length || 0);
-                            }, 0) || 0);
-                          }, 0) || 0;
+                          let maxConfidence = 0;
+                          let detected = false;
+                          results.ProtectiveEquipment?.forEach((person: any) => {
+                            person.BodyParts?.forEach((part: any) => {
+                              part.EquipmentDetections?.forEach((eq: any) => {
+                                if (eq.Type === item) {
+                                  detected = true;
+                                  if (eq.Confidence > maxConfidence) maxConfidence = eq.Confidence;
+                                }
+                              });
+                            });
+                          });
+                          
+                          const meetsThreshold = maxConfidence >= minConfidence;
+                          const badgeColor = !detected ? 'bg-red-500 text-white' : 
+                                           meetsThreshold ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white';
+                          const icon = !detected ? '❌' : meetsThreshold ? '✅' : '⚠️';
                           
                           return (
-                            <div key={item} className={`flex items-center justify-between p-2 rounded ${
-                              detections > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
+                            <div key={item} className={`flex items-center justify-between p-2 rounded font-bold ${badgeColor}`}>
                               <span>{itemName}</span>
-                              <span className="font-bold">{detections > 0 ? '✓' : '✗'}</span>
+                              <span>{icon} {detected ? `${maxConfidence.toFixed(0)}%` : ''}</span>
                             </div>
                           );
                         })}
@@ -1106,21 +1119,28 @@ const App: React.FC = () => {
                                              item === 'FACE_COVER' ? 'Mascarilla' :
                                              item === 'EAR_COVER' ? 'Orejeras' : item;
                               
-                              // Contar detecciones de este elemento
-                              const detections = results.ProtectiveEquipment?.reduce((count: number, person: any) => {
-                                return count + (person.BodyParts?.reduce((partCount: number, part: any) => {
-                                  return partCount + (part.EquipmentDetections?.filter((eq: any) => 
-                                    eq.Type === item && eq.Confidence >= minConfidence
-                                  ).length || 0);
-                                }, 0) || 0);
-                              }, 0) || 0;
+                              let maxConfidence = 0;
+                              let detected = false;
+                              results.ProtectiveEquipment?.forEach((person: any) => {
+                                person.BodyParts?.forEach((part: any) => {
+                                  part.EquipmentDetections?.forEach((eq: any) => {
+                                    if (eq.Type === item) {
+                                      detected = true;
+                                      if (eq.Confidence > maxConfidence) maxConfidence = eq.Confidence;
+                                    }
+                                  });
+                                });
+                              });
+                              
+                              const meetsThreshold = maxConfidence >= minConfidence;
+                              const badgeColor = !detected ? 'bg-red-500 text-white' : 
+                                               meetsThreshold ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white';
+                              const icon = !detected ? '❌' : meetsThreshold ? '✅' : '⚠️';
                               
                               return (
-                                <div key={item} className={`flex items-center justify-between p-2 rounded ${
-                                  detections > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}>
+                                <div key={item} className={`flex items-center justify-between p-2 rounded font-bold ${badgeColor}`}>
                                   <span>{itemName}</span>
-                                  <span className="font-bold">{detections > 0 ? '✓' : '✗'}</span>
+                                  <span>{icon} {detected ? `${maxConfidence.toFixed(0)}%` : ''}</span>
                                 </div>
                               );
                             })}
@@ -1361,12 +1381,13 @@ const App: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">Confianza: {analysis.MinConfidence}%</p>
-                          {analysis.Summary && (
+                        <div className="text-right space-y-2">
+                          <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
+                            {analysis.MinConfidence || 75}% confianza
+                          </span>
+                          {analysis.Summary && analysis.DetectionType === 'ppe_detection' && (
                             <p className="text-sm text-gray-600">
-                              {analysis.DetectionType === 'ppe_detection' && 
-                                `${analysis.Summary.compliant}/${analysis.Summary.totalPersons} cumplientes`}
+                              {analysis.Summary.compliant}/{analysis.Summary.totalPersons} cumplientes
                             </p>
                           )}
                         </div>

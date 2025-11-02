@@ -55,7 +55,7 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
     pdf.text(`ID de Análisis: ${analysisData.analysisId}`, 20, yPosition);
     yPosition += 6;
   }
-  pdf.text(`Confianza Mínima: ${analysisData.MinConfidence}%`, 20, yPosition);
+  pdf.text(`Confianza Mínima: ${analysisData.MinConfidence || analysisData.Summary?.minConfidence || 75}%`, 20, yPosition);
   yPosition += 10;
 
   // EPPs Evaluados
@@ -156,7 +156,7 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
         pdf.addPage();
         yPosition = 20;
       }
-      pdf.text(lines[i], 20, yPosition);
+      pdf.text(lines[i], 20, yPosition, { maxWidth: pageWidth - 40, align: 'left' });
       yPosition += 5;
     }
     yPosition += 5;
@@ -280,19 +280,19 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
           pdf.text('-', 140, yPosition);
         }
 
-        // Estados: No evaluable, No detectado, Cumple %, No cumple %
+        // Estados: No evaluable, No detectado, Cumple (verde), Bajo umbral (amarillo)
         if (!hasRequiredPart) {
           pdf.setTextColor(156, 163, 175);
           pdf.text('No evaluable', 165, yPosition);
         } else if (!detectedEPP) {
           pdf.setTextColor(239, 68, 68);
           pdf.text('No detectado', 165, yPosition);
-        } else if (eppConfidence >= (analysisData.MinConfidence || 75)) {
+        } else if (eppConfidence >= (analysisData.MinConfidence || analysisData.Summary?.minConfidence || 75)) {
           pdf.setTextColor(34, 197, 94);
           pdf.text(`Cumple ${eppConfidence.toFixed(0)}%`, 165, yPosition);
         } else {
-          pdf.setTextColor(239, 68, 68);
-          pdf.text(`No cumple ${eppConfidence.toFixed(0)}%`, 165, yPosition);
+          pdf.setTextColor(251, 191, 36);
+          pdf.text(`Bajo umbral ${eppConfidence.toFixed(0)}%`, 165, yPosition);
         }
 
         yPosition += 6;
@@ -385,7 +385,8 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
         pdf.text('Imagen Original del Análisis', 20, yPosition);
         yPosition += 5;
         
-        pdf.addImage(base64, 'JPEG', 20, yPosition, imgWidth, imgHeight);
+        const imgX = (pageWidth - imgWidth) / 2;
+        pdf.addImage(base64, 'JPEG', imgX, yPosition, imgWidth, imgHeight);
         yPosition += imgHeight + 10;
       } catch (imgError) {
         console.error('Error cargando imagen en PDF:', imgError);
