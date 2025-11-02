@@ -965,6 +965,12 @@ const App: React.FC = () => {
                     </h2>
                   </div>
                   <div className="p-6">
+                    {results.analysisId && (
+                      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs font-semibold text-blue-700 mb-1">🎯 ID de Análisis:</p>
+                        <p className="text-sm font-mono text-blue-900">{results.analysisId}</p>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
                         <p className="text-3xl font-bold">{results.Summary?.totalPersons || 0}</p>
@@ -1272,11 +1278,8 @@ const App: React.FC = () => {
                         <p className="text-sm opacity-90">Confianza Mínima</p>
                       </div>
                     </div>
-                    <div className="text-sm text-gray-500 mb-4 space-y-1">
+                    <div className="text-sm text-gray-500 mb-4">
                       <p>📅 Fecha: {new Date(results.timestamp).toLocaleString()}</p>
-                      {results.analysisId && (
-                        <p className="font-mono text-xs">🎯 ID: {results.analysisId}</p>
-                      )}
                     </div>
                     
                     {/* EPPs Evaluados */}
