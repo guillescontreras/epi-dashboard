@@ -824,6 +824,7 @@ const App: React.FC = () => {
         const user = await getCurrentUser();
         console.log("💾 Guardando análisis (guided)...");
         console.log("User ID:", user.username);
+        console.log("📦 Datos a guardar (inicial):", JSON.stringify(analysisResult, null, 2));
         const saveResponse = await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
           userId: user.username,
           analysisData: analysisResult
@@ -855,6 +856,7 @@ const App: React.FC = () => {
             // Actualizar en DynamoDB con el resumen IA
             try {
               const user = await getCurrentUser();
+              console.log("📦 Datos a guardar (con resumen IA):", JSON.stringify(updatedResult, null, 2));
               await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
                 userId: user.username,
                 analysisData: updatedResult
