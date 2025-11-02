@@ -903,7 +903,8 @@ const App: React.FC = () => {
                     <button
                       onClick={() => {
                         const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
-                        generateAnalysisPDF({ analysisData: results, imageUrl, epiItems: results.selectedEPPs || epiItems, userName });
+                        const compliantCount = calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || minConfidence);
+                        generateAnalysisPDF({ analysisData: results, imageUrl, epiItems: results.selectedEPPs || epiItems, userName, compliantCount });
                       }}
                       className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
                     >
@@ -1205,7 +1206,8 @@ const App: React.FC = () => {
                       <button
                         onClick={() => {
                           const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
-                          generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems: results.selectedEPPs || epiItems, userName });
+                          const compliantCount = calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || 75);
+                          generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems: results.selectedEPPs || epiItems, userName, compliantCount });
                         }}
                         className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
                       >

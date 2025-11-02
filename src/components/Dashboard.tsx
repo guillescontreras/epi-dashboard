@@ -25,7 +25,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory, calculateComplia
     ? ((ppeStats.compliantPersons / ppeStats.totalPersons) * 100).toFixed(1)
     : '0';
 
-  const recentAnalysis = analysisHistory.slice(-6).reverse();
+  const recentAnalysis = analysisHistory.slice(0, 6);
 
   const stats = [
     { 

@@ -6,10 +6,11 @@ interface PDFGeneratorOptions {
   imageUrl?: string;
   userName?: string;
   epiItems?: string[];
+  compliantCount?: number;
 }
 
 export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
-  const { analysisData, imageUrl, userName = 'Usuario', epiItems = [] } = options;
+  const { analysisData, imageUrl, userName = 'Usuario', epiItems = [], compliantCount } = options;
   
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = pdf.internal.pageSize.getWidth();
@@ -96,8 +97,9 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
   yPosition += 10;
   
   if (analysisData.Summary) {
+    const actualCompliant = compliantCount !== undefined ? compliantCount : analysisData.Summary.compliant;
     const compliancePercent = analysisData.Summary.totalPersons > 0 
-      ? Math.round((analysisData.Summary.compliant / analysisData.Summary.totalPersons) * 100)
+      ? Math.round((actualCompliant / analysisData.Summary.totalPersons) * 100)
       : 0;
 
     // Tarjeta 1: Personas Detectadas
@@ -116,7 +118,7 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
     pdf.roundedRect(75, yPosition, 50, 20, 3, 3, 'F');
     pdf.setFontSize(18);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(`${analysisData.Summary.compliant || 0}`, 100, yPosition + 10, { align: 'center' });
+    pdf.text(`${actualCompliant || 0}`, 100, yPosition + 10, { align: 'center' });
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
     pdf.text('Cumplientes', 100, yPosition + 16, { align: 'center' });
@@ -156,7 +158,7 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
         pdf.addPage();
         yPosition = 20;
       }
-      pdf.text(lines[i], 20, yPosition, { maxWidth: pageWidth - 40, align: 'left' });
+      pdf.text(lines[i], 20, yPosition, { maxWidth: pageWidth - 40, align: 'justify' });
       yPosition += 5;
     }
     yPosition += 5;

@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.5';
+export const APP_VERSION = '2.8.6';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.6': 'Fix: Dashboard análisis recientes ordenados + PDF cumplimiento correcto + párrafos justificados',
   '2.8.5': 'Fix: Cumplimiento correcto en historial/dashboard + ordenamiento por timestamp',
   '2.8.4': 'Optimización: Guardado único en DynamoDB con resumen IA completo (evita sobrescritura)',
   '2.8.3': 'Fix: MinConfidence ahora se guarda correctamente en DynamoDB (visible en historial)',
