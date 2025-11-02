@@ -624,18 +624,24 @@ const App: React.FC = () => {
       }
       
       console.log('ResponseData final procesada:', responseData);
+      console.log('Tipo de detección:', detectionType);
 
       const jsonPresignedUrl = responseData.presignedUrl;
+      console.log('PresignedUrl encontrada:', jsonPresignedUrl);
       let finalData;
 
       // Si hay presignedUrl, obtener datos desde S3 (EPP detection)
       if (jsonPresignedUrl && typeof jsonPresignedUrl === 'string') {
+        console.log('Obteniendo datos desde S3 con presignedUrl');
         const res = await axios.get(jsonPresignedUrl);
         finalData = res.data;
       } else {
         // Si no hay presignedUrl, usar responseData directamente (otros tipos de detección)
+        console.log('Usando responseData directamente (sin presignedUrl)');
         finalData = responseData;
       }
+      
+      console.log('FinalData:', finalData);
 
       const analysisId = uuidv4();
       const analysisResult = { ...finalData, analysisId, timestamp: Date.now(), imageUrl: imageUrl, selectedEPPs: epiItems, MinConfidence: minConfidence };
