@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.2';
+export const APP_VERSION = '2.8.3';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.3': 'Fix: MinConfidence ahora se guarda correctamente en DynamoDB (visible en historial)',
   '2.8.2': 'Fix: 4 correcciones críticas (analysisId al inicio resumen, PDF FOOT_COVER completo, analysisId duplicado eliminado, Lambda Bedrock EPPs)',
   '2.8.1': 'Fix: 10 correcciones (badges colores EPPs, analysisId visible, PDF centrado/justificado, resumen IA completo, historial mejorado)',
   '2.8.0': 'Mejoras UX: Badges colores EPP (verde/amarillo/rojo), analysisId UUID visible, formulario contacto autocompletado',

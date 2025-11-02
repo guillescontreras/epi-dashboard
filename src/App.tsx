@@ -606,7 +606,7 @@ const App: React.FC = () => {
       // Obtener el JSON usando la presigned URL
       const res = await axios.get(jsonPresignedUrl);
       const analysisId = uuidv4();
-      const analysisResult = { ...res.data, analysisId, timestamp: Date.now(), imageUrl: imageUrl, selectedEPPs: epiItems };
+      const analysisResult = { ...res.data, analysisId, timestamp: Date.now(), imageUrl: imageUrl, selectedEPPs: epiItems, MinConfidence: minConfidence };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
@@ -814,7 +814,7 @@ const App: React.FC = () => {
       const jsonPresignedUrl = responseData.presignedUrl;
       const res = await axios.get(jsonPresignedUrl);
       const analysisId = uuidv4();
-      const analysisResult = { ...res.data, analysisId, timestamp: Date.now(), imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`, selectedEPPs: uploadEpiItems };
+      const analysisResult = { ...res.data, analysisId, timestamp: Date.now(), imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`, selectedEPPs: uploadEpiItems, MinConfidence: uploadMinConfidence };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
