@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.14';
+export const APP_VERSION = '2.8.15';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.15': 'Feature: analysisId visible en resumen y historial de TODOS los tipos de análisis',
   '2.8.14': 'Fix: EPP se guarda 1 sola vez con resumen IA, evita sobrescritura',
   '2.8.13': 'Fix: Historial ahora guarda TODOS los tipos de análisis (objetos/rostros/texto/EPP)',
   '2.8.12': 'Fix: Detección facial ahora muestra edad, género, emociones y atributos completos',

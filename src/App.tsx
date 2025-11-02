@@ -958,21 +958,24 @@ const App: React.FC = () => {
                 </button>
               </div>
               
-              {results.DetectionType === 'ppe_detection' && (
-                <div data-analysis-summary className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                      <span>📊</span>
-                      <span>Resumen del Análisis</span>
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {results.analysisId && (
-                      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-xs font-semibold text-blue-700 mb-1">🎯 ID de Análisis:</p>
-                        <p className="text-sm font-mono text-blue-900">{results.analysisId}</p>
-                      </div>
-                    )}
+              {/* Resumen del Análisis - TODOS los tipos */}
+              <div data-analysis-summary className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                    <span>📊</span>
+                    <span>Resumen del Análisis</span>
+                  </h2>
+                </div>
+                <div className="p-6">
+                  {results.analysisId && (
+                    <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-xs font-semibold text-blue-700 mb-1">🎯 ID de Análisis:</p>
+                      <p className="text-sm font-mono text-blue-900">{results.analysisId}</p>
+                    </div>
+                  )}
+                  
+                  {results.DetectionType === 'ppe_detection' && (
+                    <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
                         <p className="text-3xl font-bold">{results.Summary?.totalPersons || 0}</p>
@@ -1026,9 +1029,50 @@ const App: React.FC = () => {
                         })}
                       </div>
                     </div>
+                    </>
+                  )}
+                  
+                  {/* Resumen para otros tipos de detección */}
+                  {results.DetectionType === 'face_detection' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-4 text-white text-center">
+                    <p className="text-3xl font-bold">{results.Summary?.totalFaces || 0}</p>
+                    <p className="text-sm opacity-90">Rostros Detectados</p>
+                  </div>
+                  <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
+                    <p className="text-3xl font-bold">{minConfidence}%</p>
+                    <p className="text-sm opacity-90">Confianza Mínima</p>
                   </div>
                 </div>
               )}
+              
+              {results.DetectionType === 'label_detection' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-4 text-white text-center">
+                    <p className="text-3xl font-bold">{results.Summary?.totalLabels || 0}</p>
+                    <p className="text-sm opacity-90">Objetos Detectados</p>
+                  </div>
+                  <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
+                    <p className="text-3xl font-bold">{minConfidence}%</p>
+                    <p className="text-sm opacity-90">Confianza Mínima</p>
+                  </div>
+                </div>
+              )}
+              
+              {results.DetectionType === 'text_detection' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl p-4 text-white text-center">
+                    <p className="text-3xl font-bold">{results.Summary?.totalTextDetections || 0}</p>
+                    <p className="text-sm opacity-90">Textos Detectados</p>
+                  </div>
+                  <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
+                    <p className="text-3xl font-bold">{minConfidence}%</p>
+                    <p className="text-sm opacity-90">Confianza Mínima</p>
+                  </div>
+                </div>
+              )}
+                </div>
+              </div>
               
               {results.aiSummary && (
                 <AISummary summary={results.aiSummary} />
@@ -1375,6 +1419,11 @@ const App: React.FC = () => {
                           <p className="text-sm text-gray-500">
                             {new Date(analysis.timestamp).toLocaleString()}
                           </p>
+                          {analysis.analysisId && (
+                            <p className="text-xs text-gray-400 font-mono mt-1">
+                              ID: {analysis.analysisId}
+                            </p>
+                          )}
                           {analysis.selectedEPPs && analysis.selectedEPPs.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {analysis.selectedEPPs.map((epp: string) => {
