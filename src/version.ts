@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.10';
+export const APP_VERSION = '2.8.11';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.11': 'Fix: Lambda genera presignedUrl para TODOS los tipos de detección (objetos/rostros/texto)',
   '2.8.10': 'Fix: Detección de objetos/rostros/texto funcional (manejo de respuestas sin presignedUrl)',
   '2.8.9': 'Fix: ContactModal agrega campo subject al payload para compatibilidad con Lambda',
   '2.8.8': 'PDF sin emojis + viñetas justificadas + ContactModal rediseñado con desplegable',
