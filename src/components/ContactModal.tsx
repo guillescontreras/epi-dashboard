@@ -3,21 +3,25 @@ import { getCurrentUser } from 'aws-amplify/auth';
 
 interface ContactModalProps {
   onClose: () => void;
-  initialTab?: TabType;
+  initialTab?: 'contact' | 'feature' | 'bug';
   initialMessage?: string;
   userProfile?: any;
   analysisId?: string;
 }
 
-type TabType = 'contact' | 'feature' | 'bug';
-type MessageType = 'Contacto General' | 'Solicitud de Característica' | 'Reporte de Bug';
+type MessageType = 'Contacto' | 'Requerimiento de Característica' | 'Reporte de Bug' | 'Soporte';
 
 const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'contact', initialMessage = '', userProfile, analysisId }) => {
-  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+  const getInitialMessageType = (): MessageType => {
+    if (initialTab === 'bug') return 'Reporte de Bug';
+    if (initialTab === 'feature') return 'Requerimiento de Característica';
+    return 'Contacto';
+  };
+
   const [formData, setFormData] = useState({
     name: userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : '',
     email: userProfile?.email || '',
-    subject: '',
+    messageType: getInitialMessageType(),
     message: initialMessage,
     analysisId: ''
   });
@@ -43,13 +47,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const getMessageType = (): MessageType => {
-    switch (activeTab) {
-      case 'contact': return 'Contacto General';
-      case 'feature': return 'Solicitud de Característica';
-      case 'bug': return 'Reporte de Bug';
-    }
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,10 +60,9 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
 
       const payload = {
         userId,
-        messageType: getMessageType(),
+        messageType: formData.messageType,
         name: formData.name,
         email: formData.email,
-        subject: formData.subject,
         message: formData.message,
         analysisId: formData.analysisId || undefined,
         timestamp: new Date().toISOString()
@@ -80,7 +77,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
       if (!response.ok) throw new Error('Error al enviar mensaje');
 
       setSubmitStatus('success');
-      setFormData({ name: '', email: '', subject: '', message: '', analysisId: '' });
+      setFormData({ name: '', email: '', messageType: 'Contacto', message: '', analysisId: '' });
       
       setTimeout(() => {
         onClose();
@@ -93,30 +90,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
     }
   };
 
-  const getTabContent = () => {
-    switch (activeTab) {
-      case 'contact':
-        return {
-          title: '📧 Contacto General',
-          description: 'Envíanos tus consultas, sugerencias o comentarios',
-          subjectPlaceholder: 'Ej: Consulta sobre funcionalidades'
-        };
-      case 'feature':
-        return {
-          title: '💡 Solicitar Característica',
-          description: 'Cuéntanos qué funcionalidad te gustaría ver en CoironTech AI',
-          subjectPlaceholder: 'Ej: Exportar informes en formato Excel'
-        };
-      case 'bug':
-        return {
-          title: '🐛 Reportar Bug',
-          description: 'Ayúdanos a mejorar reportando errores o problemas técnicos',
-          subjectPlaceholder: 'Ej: Error al cargar historial de análisis'
-        };
-    }
-  };
 
-  const content = getTabContent();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -124,7 +98,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Contáctanos</h2>
+            <h2 className="text-2xl font-bold text-white">Formulario de Contacto</h2>
             <button
               onClick={onClose}
               className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
@@ -134,46 +108,8 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('contact')}
-            className={`flex-1 py-4 px-6 font-semibold transition-all ${
-              activeTab === 'contact'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            📧 Contacto
-          </button>
-          <button
-            onClick={() => setActiveTab('feature')}
-            className={`flex-1 py-4 px-6 font-semibold transition-all ${
-              activeTab === 'feature'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            💡 Feature
-          </button>
-          <button
-            onClick={() => setActiveTab('bug')}
-            className={`flex-1 py-4 px-6 font-semibold transition-all ${
-              activeTab === 'bug'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            🐛 Bug
-          </button>
-        </div>
-
         {/* Content */}
         <div className="p-6">
-          <div className="mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">{content.title}</h3>
-            <p className="text-gray-600">{content.description}</p>
-          </div>
 
           {/* Success/Error Messages */}
           {submitStatus === 'success' && (
@@ -221,14 +157,17 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Asunto *
               </label>
-              <input
-                type="text"
+              <select
                 required
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                value={formData.messageType}
+                onChange={(e) => setFormData({ ...formData, messageType: e.target.value as MessageType })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder={content.subjectPlaceholder}
-              />
+              >
+                <option value="Contacto">Contacto</option>
+                <option value="Requerimiento de Característica">Requerimiento de Característica</option>
+                <option value="Reporte de Bug">Reporte de Bug</option>
+                <option value="Soporte">Soporte</option>
+              </select>
             </div>
 
             <div>

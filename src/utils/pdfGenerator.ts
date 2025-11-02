@@ -158,12 +158,12 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
         yPosition = 20;
       }
       
-      // Detectar si es título (contiene **)
-      const isTitle = line.includes('**');
+      // Detectar si es título (contiene **) pero NO es viñeta
+      const isTitle = line.includes('**') && !line.trim().startsWith('-') && !line.includes('•');
       
       if (isTitle) {
         // Título: negrita y subrayado
-        const titleText = line.replace(/\*\*/g, '').trim();
+        const titleText = line.replace(/\*\*/g, '').replace(/[🎯📊⚠️🔍✅❌]/g, '').trim();
         if (titleText) {
           pdf.setFont('helvetica', 'bold');
           pdf.text(titleText, 20, yPosition);
@@ -172,9 +172,9 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
           yPosition += 6;
         }
       } else {
-        // Texto normal: justificado manualmente
+        // Texto normal: justificado manualmente (incluye viñetas)
         pdf.setFont('helvetica', 'normal');
-        const cleanLine = line.replace(/•/g, '-').trim();
+        const cleanLine = line.replace(/[•🎯📊⚠️🔍✅❌]/g, '').replace(/^\s*-\s*/, '- ').trim();
         
         if (cleanLine) {
           const words = cleanLine.split(' ');
