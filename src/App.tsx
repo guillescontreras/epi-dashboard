@@ -108,6 +108,34 @@ const App: React.FC = () => {
     setTotalAnalysisCount(prev => prev + 1);
   };
   
+  const calculateCompliance = (analysisData: any, selectedEPPs: string[], confidenceThreshold: number) => {
+    if (!analysisData.ProtectiveEquipment || analysisData.ProtectiveEquipment.length === 0) {
+      return 0;
+    }
+    
+    let compliantCount = 0;
+    
+    analysisData.ProtectiveEquipment.forEach((person: any) => {
+      const detectedEPPs = new Set<string>();
+      
+      person.BodyParts?.forEach((part: any) => {
+        part.EquipmentDetections?.forEach((eq: any) => {
+          if (eq.Confidence >= confidenceThreshold) {
+            detectedEPPs.add(eq.Type);
+          }
+        });
+      });
+      
+      // Persona cumple si tiene TODOS los EPPs seleccionados con confianza >= umbral
+      const hasAllRequired = selectedEPPs.every(epp => detectedEPPs.has(epp));
+      if (hasAllRequired) {
+        compliantCount++;
+      }
+    });
+    
+    return compliantCount;
+  };
+  
   const generateLocalAISummary = (analysisData: any) => {
     console.log('🔍 Generando resumen local con datos:', analysisData);
     const { Summary, ProtectiveEquipment, MinConfidence } = analysisData;
@@ -1222,7 +1250,7 @@ const App: React.FC = () => {
                         <p className="text-sm opacity-90">Personas Detectadas</p>
                       </div>
                       <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
-                        <p className="text-3xl font-bold">{results.Summary?.compliant || 0}</p>
+                        <p className="text-3xl font-bold">{calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || 75)}</p>
                         <p className="text-sm opacity-90">Cumplientes</p>
                       </div>
                       <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
