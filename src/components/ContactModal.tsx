@@ -63,6 +63,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
         messageType: formData.messageType,
         name: formData.name,
         email: formData.email,
+        subject: formData.messageType,
         message: formData.message,
         analysisId: formData.analysisId || undefined,
         timestamp: new Date().toISOString()

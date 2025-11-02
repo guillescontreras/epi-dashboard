@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.8';
+export const APP_VERSION = '2.8.9';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.9': 'Fix: ContactModal agrega campo subject al payload para compatibilidad con Lambda',
   '2.8.8': 'PDF sin emojis + viñetas justificadas + ContactModal rediseñado con desplegable',
   '2.8.7': 'Formulario de contacto unificado con autocompletado de analysisId al reportar errores',
   '2.8.6': 'Fix: Dashboard análisis recientes ordenados + PDF cumplimiento correcto + párrafos justificados',
