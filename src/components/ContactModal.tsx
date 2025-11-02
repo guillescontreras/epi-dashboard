@@ -6,18 +6,20 @@ interface ContactModalProps {
   initialTab?: TabType;
   initialMessage?: string;
   userProfile?: any;
+  analysisId?: string;
 }
 
 type TabType = 'contact' | 'feature' | 'bug';
 type MessageType = 'Contacto General' | 'Solicitud de Característica' | 'Reporte de Bug';
 
-const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'contact', initialMessage = '', userProfile }) => {
+const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'contact', initialMessage = '', userProfile, analysisId }) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [formData, setFormData] = useState({
     name: userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : '',
     email: userProfile?.email || '',
     subject: '',
-    message: initialMessage
+    message: initialMessage,
+    analysisId: ''
   });
 
   React.useEffect(() => {
@@ -29,6 +31,15 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
       }));
     }
   }, [userProfile]);
+
+  React.useEffect(() => {
+    if (analysisId) {
+      setFormData(prev => ({
+        ...prev,
+        analysisId: analysisId
+      }));
+    }
+  }, [analysisId]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -56,6 +67,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
         email: formData.email,
         subject: formData.subject,
         message: formData.message,
+        analysisId: formData.analysisId || undefined,
         timestamp: new Date().toISOString()
       };
 
@@ -68,7 +80,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
       if (!response.ok) throw new Error('Error al enviar mensaje');
 
       setSubmitStatus('success');
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setFormData({ name: '', email: '', subject: '', message: '', analysisId: '' });
       
       setTimeout(() => {
         onClose();
@@ -232,6 +244,21 @@ const ContactModal: React.FC<ContactModalProps> = ({ onClose, initialTab = 'cont
                 placeholder="Describe tu consulta, sugerencia o problema en detalle..."
               />
             </div>
+
+            {analysisId && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  ID de Análisis
+                </label>
+                <input
+                  type="text"
+                  value={formData.analysisId}
+                  readOnly
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">Este ID ayudará a nuestro equipo a identificar el análisis específico</p>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <button

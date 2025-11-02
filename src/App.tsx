@@ -52,6 +52,7 @@ const App: React.FC = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackAnalysisId, setFeedbackAnalysisId] = useState<string>('');
   const [showContact, setShowContact] = useState(false);
+  const [contactModalData, setContactModalData] = useState<{ initialTab?: 'contact' | 'feature' | 'bug'; initialMessage?: string; analysisId?: string }>({});
   
   const fetchAnalysisData = async () => {
     try {
@@ -913,15 +914,13 @@ const App: React.FC = () => {
                     </button>
                     <button
                       onClick={() => {
-                        const analysisInfo = `Reporte de error en análisis:\n- ID: ${results.timestamp}\n- Fecha: ${new Date(results.timestamp).toLocaleString()}\n- EPPs evaluados: ${(results.selectedEPPs || epiItems).map((e: string) => e.replace('_COVER', '')).join(', ')}\n\nDescripción del problema:\n`;
+                        const analysisInfo = `Reporte de error en análisis:\n- ID: ${results.analysisId || results.timestamp}\n- Fecha: ${new Date(results.timestamp).toLocaleString()}\n- EPPs evaluados: ${(results.selectedEPPs || epiItems).map((e: string) => e.replace('_COVER', '')).join(', ')}\n\nDescripción del problema:\n`;
+                        setContactModalData({
+                          initialTab: 'bug',
+                          initialMessage: analysisInfo,
+                          analysisId: results.analysisId || results.timestamp?.toString()
+                        });
                         setShowContact(true);
-                        // Pasar initialTab y initialMessage via state temporal
-                        setTimeout(() => {
-                          const modal = document.querySelector('[data-contact-modal]');
-                          if (modal) {
-                            // Trigger tab change and message
-                          }
-                        }, 100);
                       }}
                       className="bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
                     >
@@ -1215,7 +1214,15 @@ const App: React.FC = () => {
                         <span>Descargar PDF</span>
                       </button>
                       <button
-                        onClick={() => setShowContact(true)}
+                        onClick={() => {
+                          const analysisInfo = `Reporte de error en análisis:\n- ID: ${results.analysisId || results.timestamp}\n- Fecha: ${new Date(results.timestamp).toLocaleString()}\n- EPPs evaluados: ${(results.selectedEPPs || epiItems).map((e: string) => e.replace('_COVER', '')).join(', ')}\n\nDescripción del problema:\n`;
+                          setContactModalData({
+                            initialTab: 'bug',
+                            initialMessage: analysisInfo,
+                            analysisId: results.analysisId || results.timestamp?.toString()
+                          });
+                          setShowContact(true);
+                        }}
                         className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-4 py-2 rounded-lg font-medium hover:from-orange-700 hover:to-red-700 transition-all flex items-center space-x-2"
                       >
                         <span>🚨</span>
@@ -1751,7 +1758,16 @@ const App: React.FC = () => {
       />
       
       {showContact && (
-        <ContactModal onClose={() => setShowContact(false)} userProfile={userProfile} />
+        <ContactModal 
+          onClose={() => {
+            setShowContact(false);
+            setContactModalData({});
+          }} 
+          userProfile={userProfile}
+          initialTab={contactModalData.initialTab}
+          initialMessage={contactModalData.initialMessage}
+          analysisId={contactModalData.analysisId}
+        />
       )}
       </div>
     </AuthWrapper>

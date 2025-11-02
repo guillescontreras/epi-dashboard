@@ -147,19 +147,84 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
     yPosition += 8;
 
     pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(0, 0, 0);
     
-    const summaryText = analysisData.aiSummary.replace(/\*\*/g, '').replace(/•/g, '-');
-    const lines = pdf.splitTextToSize(summaryText, pageWidth - 40);
+    // Procesar línea por línea para detectar títulos
+    const summaryLines = analysisData.aiSummary.split('\n');
     
-    for (let i = 0; i < lines.length; i++) {
+    for (let line of summaryLines) {
       if (yPosition > pageHeight - 30) {
         pdf.addPage();
         yPosition = 20;
       }
-      pdf.text(lines[i], 20, yPosition, { maxWidth: pageWidth - 40, align: 'justify' });
-      yPosition += 5;
+      
+      // Detectar si es título (contiene **)
+      const isTitle = line.includes('**');
+      
+      if (isTitle) {
+        // Título: negrita y subrayado
+        const titleText = line.replace(/\*\*/g, '').trim();
+        if (titleText) {
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(titleText, 20, yPosition);
+          const textWidth = pdf.getTextWidth(titleText);
+          pdf.line(20, yPosition + 1, 20 + textWidth, yPosition + 1);
+          yPosition += 6;
+        }
+      } else {
+        // Texto normal: justificado manualmente
+        pdf.setFont('helvetica', 'normal');
+        const cleanLine = line.replace(/•/g, '-').trim();
+        
+        if (cleanLine) {
+          const words = cleanLine.split(' ');
+          const maxWidth = pageWidth - 40;
+          let currentLine = '';
+          let lineWords: string[] = [];
+          
+          for (let word of words) {
+            const testLine = currentLine + (currentLine ? ' ' : '') + word;
+            const testWidth = pdf.getTextWidth(testLine);
+            
+            if (testWidth > maxWidth && currentLine) {
+              // Justificar línea completa
+              if (lineWords.length > 1) {
+                const lineText = lineWords.join(' ');
+                const lineWidth = pdf.getTextWidth(lineText);
+                const spaceWidth = (maxWidth - lineWidth) / (lineWords.length - 1);
+                
+                let xPos = 20;
+                for (let i = 0; i < lineWords.length; i++) {
+                  pdf.text(lineWords[i], xPos, yPosition);
+                  xPos += pdf.getTextWidth(lineWords[i]) + pdf.getTextWidth(' ') + spaceWidth;
+                }
+              } else {
+                pdf.text(currentLine, 20, yPosition);
+              }
+              
+              yPosition += 5;
+              currentLine = word;
+              lineWords = [word];
+              
+              if (yPosition > pageHeight - 30) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+            } else {
+              currentLine = testLine;
+              lineWords.push(word);
+            }
+          }
+          
+          // Última línea (sin justificar)
+          if (currentLine) {
+            pdf.text(currentLine, 20, yPosition);
+            yPosition += 5;
+          }
+        } else {
+          yPosition += 3;
+        }
+      }
     }
     yPosition += 5;
   }
