@@ -409,8 +409,8 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       // Por ahora solo mostramos la imagen original
       
       try {
-        // Usar fetch para obtener la imagen como blob y convertir a base64
-        const response = await fetch(imageUrl);
+        // Usar fetch con mode 'cors' para obtener la imagen como blob y convertir a base64
+        const response = await fetch(imageUrl, { mode: 'cors' });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
