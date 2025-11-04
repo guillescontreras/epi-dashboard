@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.19';
+export const APP_VERSION = '2.8.20';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.20': 'Fix: Badges de EPPs en historial solo se muestran para análisis de tipo ppe_detection',
   '2.8.19': 'Feature: Email de feedback incluye nombre de usuario, ID y tipo de análisis',
   '2.8.18': 'Fix crítico: Guardado en DynamoDB para TODOS los tipos en modo guiado',
   '2.8.17': 'Debug: Logs de diagnóstico para guardado en DynamoDB',

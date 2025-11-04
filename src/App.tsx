@@ -1446,7 +1446,7 @@ const App: React.FC = () => {
                               ID: {analysis.analysisId}
                             </p>
                           )}
-                          {analysis.selectedEPPs && analysis.selectedEPPs.length > 0 && (
+                          {analysis.DetectionType === 'ppe_detection' && analysis.selectedEPPs && analysis.selectedEPPs.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {analysis.selectedEPPs.map((epp: string) => {
                                 const eppNames: any = {
