@@ -549,7 +549,7 @@ const App: React.FC = () => {
           
           batchResults.push({
             filename: currentFile.name,
-            imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${currentFile.name}`,
+            imageUrl: resultData.data.imagePresignedUrl || `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${currentFile.name}`,
             result: resultData.data
           });
         }
@@ -645,7 +645,8 @@ const App: React.FC = () => {
       console.log('FinalData:', finalData);
 
       const analysisId = uuidv4();
-      const analysisResult = { ...finalData, analysisId, timestamp: Date.now(), imageUrl: imageUrl, selectedEPPs: epiItems, MinConfidence: minConfidence };
+      const imageUrlToUse = finalData.imagePresignedUrl || imageUrl;
+      const analysisResult = { ...finalData, analysisId, timestamp: Date.now(), imageUrl: imageUrlToUse, selectedEPPs: epiItems, MinConfidence: minConfidence };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
@@ -846,7 +847,8 @@ const App: React.FC = () => {
       const jsonPresignedUrl = responseData.presignedUrl;
       const res = await axios.get(jsonPresignedUrl);
       const analysisId = uuidv4();
-      const analysisResult = { ...res.data, analysisId, timestamp: Date.now(), imageUrl: `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`, selectedEPPs: uploadEpiItems, MinConfidence: uploadMinConfidence };
+      const imageUrlToUse = res.data.imagePresignedUrl || `https://rekognition-gcontreras.s3.us-east-1.amazonaws.com/input/${uploadFile.name}`;
+      const analysisResult = { ...res.data, analysisId, timestamp: Date.now(), imageUrl: imageUrlToUse, selectedEPPs: uploadEpiItems, MinConfidence: uploadMinConfidence };
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
