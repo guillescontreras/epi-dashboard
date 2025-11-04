@@ -409,19 +409,42 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       // Por ahora solo mostramos la imagen original
       
       try {
-        // Usar fetch con mode 'cors' para obtener la imagen como blob y convertir a base64
-        const response = await fetch(imageUrl, { mode: 'cors' });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const blob = await response.blob();
-        const reader = new FileReader();
-        
+        // Usar patrón <img> + canvas (mejor práctica AWS para URLs presignadas)
         const base64 = await new Promise<string>((resolve, reject) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          
+          const timeout = setTimeout(() => {
+            reject(new Error('Timeout cargando imagen'));
+          }, 10000);
+          
+          img.onload = () => {
+            clearTimeout(timeout);
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              
+              if (!ctx) {
+                reject(new Error('No se pudo obtener contexto del canvas'));
+                return;
+              }
+              
+              ctx.drawImage(img, 0, 0);
+              const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+              resolve(dataURL);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          
+          img.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error('Error cargando imagen'));
+          };
+          
+          img.src = imageUrl;
         });
         
         // Crear imagen temporal para obtener dimensiones reales

@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.22';
+export const APP_VERSION = '2.8.23';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.23': 'Fix: Carga de imágenes en PDF usando patrón img+canvas (mejor práctica AWS)',
   '2.8.22': 'Fix: Carga de imágenes en PDF con mode cors para URLs presignadas de S3',
   '2.8.21': 'Feature: Botones Reportar Error y Feedback disponibles para TODOS los tipos de detección',
   '2.8.20': 'Fix: Badges de EPPs en historial solo se muestran para análisis de tipo ppe_detection',
