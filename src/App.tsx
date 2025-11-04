@@ -941,35 +941,40 @@ const App: React.FC = () => {
             <div className="mt-8">
               <div className="mb-4 flex justify-end gap-3">
                 {results.DetectionType === 'ppe_detection' && (
-                  <>
-                    <button
-                      onClick={() => {
-                        const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
-                        const compliantCount = calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || minConfidence);
-                        generateAnalysisPDF({ analysisData: results, imageUrl, epiItems: results.selectedEPPs || epiItems, userName, compliantCount });
-                      }}
-                      className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
-                    >
-                      <span>📝</span>
-                      <span>Descargar PDF</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        const analysisInfo = `Reporte de error en análisis:\n- ID: ${results.analysisId || results.timestamp}\n- Fecha: ${new Date(results.timestamp).toLocaleString()}\n- EPPs evaluados: ${(results.selectedEPPs || epiItems).map((e: string) => e.replace('_COVER', '')).join(', ')}\n\nDescripción del problema:\n`;
-                        setContactModalData({
-                          initialTab: 'bug',
-                          initialMessage: analysisInfo,
-                          analysisId: results.analysisId || results.timestamp?.toString()
-                        });
-                        setShowContact(true);
-                      }}
-                      className="bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
-                    >
-                      <span>🚨</span>
-                      <span>Reportar Error</span>
-                    </button>
-                  </>
+                  <button
+                    onClick={() => {
+                      const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
+                      const compliantCount = calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || minConfidence);
+                      generateAnalysisPDF({ analysisData: results, imageUrl, epiItems: results.selectedEPPs || epiItems, userName, compliantCount });
+                    }}
+                    className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
+                  >
+                    <span>📝</span>
+                    <span>Descargar PDF</span>
+                  </button>
                 )}
+                <button
+                  onClick={() => {
+                    const detectionTypeNames: any = {
+                      'ppe_detection': 'Análisis EPP',
+                      'face_detection': 'Detección de Rostros',
+                      'label_detection': 'Detección de Objetos',
+                      'text_detection': 'Detección de Texto'
+                    };
+                    const typeName = detectionTypeNames[results.DetectionType] || results.DetectionType;
+                    const analysisInfo = `Reporte de error en análisis:\n- ID: ${results.analysisId || results.timestamp}\n- Tipo: ${typeName}\n- Fecha: ${new Date(results.timestamp).toLocaleString()}\n${results.DetectionType === 'ppe_detection' ? `- EPPs evaluados: ${(results.selectedEPPs || epiItems).map((e: string) => e.replace('_COVER', '')).join(', ')}\n` : ''}\nDescripción del problema:\n`;
+                    setContactModalData({
+                      initialTab: 'bug',
+                      initialMessage: analysisInfo,
+                      analysisId: results.analysisId || results.timestamp?.toString()
+                    });
+                    setShowContact(true);
+                  }}
+                  className="bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
+                >
+                  <span>🚨</span>
+                  <span>Reportar Error</span>
+                </button>
                 <button
                   onClick={resetToStart}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
@@ -1109,20 +1114,19 @@ const App: React.FC = () => {
               )}
               
               {/* Botón Feedback al final del informe */}
-              {results.DetectionType === 'ppe_detection' && (
-                <div className="mt-6 flex justify-center">
-                  <button
-                    onClick={() => {
-                      setFeedbackAnalysisId(results.timestamp?.toString() || Date.now().toString());
-                      setShowFeedback(true);
-                    }}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center space-x-2"
-                  >
-                    <span>⭐</span>
-                    <span>Dar Feedback sobre este Análisis</span>
-                  </button>
-                </div>
-              )}
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => {
+                    setFeedbackAnalysisId(results.analysisId || results.timestamp?.toString() || Date.now().toString());
+                    setFeedbackAnalysisType(results.DetectionType || 'ppe_detection');
+                    setShowFeedback(true);
+                  }}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center space-x-2"
+                >
+                  <span>⭐</span>
+                  <span>Dar Feedback sobre este Análisis</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -1286,35 +1290,40 @@ const App: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">📊 Informe de Análisis</h2>
                 <div className="flex gap-3">
                   {results.DetectionType === 'ppe_detection' && (
-                    <>
-                      <button
-                        onClick={() => {
-                          const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
-                          const compliantCount = calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || 75);
-                          generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems: results.selectedEPPs || epiItems, userName, compliantCount });
-                        }}
-                        className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
-                      >
-                        <span>📝</span>
-                        <span>Descargar PDF</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          const analysisInfo = `Reporte de error en análisis:\n- ID: ${results.analysisId || results.timestamp}\n- Fecha: ${new Date(results.timestamp).toLocaleString()}\n- EPPs evaluados: ${(results.selectedEPPs || epiItems).map((e: string) => e.replace('_COVER', '')).join(', ')}\n\nDescripción del problema:\n`;
-                          setContactModalData({
-                            initialTab: 'bug',
-                            initialMessage: analysisInfo,
-                            analysisId: results.analysisId || results.timestamp?.toString()
-                          });
-                          setShowContact(true);
-                        }}
-                        className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-4 py-2 rounded-lg font-medium hover:from-orange-700 hover:to-red-700 transition-all flex items-center space-x-2"
-                      >
-                        <span>🚨</span>
-                        <span>Reportar Error</span>
-                      </button>
-                    </>
+                    <button
+                      onClick={() => {
+                        const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario';
+                        const compliantCount = calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || 75);
+                        generateAnalysisPDF({ analysisData: results, imageUrl: results.imageUrl, epiItems: results.selectedEPPs || epiItems, userName, compliantCount });
+                      }}
+                      className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+                    >
+                      <span>📝</span>
+                      <span>Descargar PDF</span>
+                    </button>
                   )}
+                  <button
+                    onClick={() => {
+                      const detectionTypeNames: any = {
+                        'ppe_detection': 'Análisis EPP',
+                        'face_detection': 'Detección de Rostros',
+                        'label_detection': 'Detección de Objetos',
+                        'text_detection': 'Detección de Texto'
+                      };
+                      const typeName = detectionTypeNames[results.DetectionType] || results.DetectionType;
+                      const analysisInfo = `Reporte de error en análisis:\n- ID: ${results.analysisId || results.timestamp}\n- Tipo: ${typeName}\n- Fecha: ${new Date(results.timestamp).toLocaleString()}\n${results.DetectionType === 'ppe_detection' ? `- EPPs evaluados: ${(results.selectedEPPs || epiItems).map((e: string) => e.replace('_COVER', '')).join(', ')}\n` : ''}\nDescripción del problema:\n`;
+                      setContactModalData({
+                        initialTab: 'bug',
+                        initialMessage: analysisInfo,
+                        analysisId: results.analysisId || results.timestamp?.toString()
+                      });
+                      setShowContact(true);
+                    }}
+                    className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-4 py-2 rounded-lg font-medium hover:from-orange-700 hover:to-red-700 transition-all flex items-center space-x-2"
+                  >
+                    <span>🚨</span>
+                    <span>Reportar Error</span>
+                  </button>
                   <button
                     onClick={() => setResults(null)}
                     className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all"
@@ -1401,21 +1410,19 @@ const App: React.FC = () => {
               )}
               
               {/* Botón Feedback al final del informe */}
-              {results.DetectionType === 'ppe_detection' && (
-                <div className="mt-6 flex justify-center">
-                  <button
-                    onClick={() => {
-                      setFeedbackAnalysisId(results.analysisId || results.timestamp?.toString() || Date.now().toString());
-                      setFeedbackAnalysisType(results.DetectionType || 'ppe_detection');
-                      setShowFeedback(true);
-                    }}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center space-x-2"
-                  >
-                    <span>⭐</span>
-                    <span>Dar Feedback sobre este Análisis</span>
-                  </button>
-                </div>
-              )}
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => {
+                    setFeedbackAnalysisId(results.analysisId || results.timestamp?.toString() || Date.now().toString());
+                    setFeedbackAnalysisType(results.DetectionType || 'ppe_detection');
+                    setShowFeedback(true);
+                  }}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center space-x-2"
+                >
+                  <span>⭐</span>
+                  <span>Dar Feedback sobre este Análisis</span>
+                </button>
+              </div>
             </div>
           );
         }
