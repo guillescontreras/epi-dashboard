@@ -7,9 +7,11 @@ interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
   analysisId?: string;
+  userName?: string;
+  analysisType?: string;
 }
 
-const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, analysisId }) => {
+const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, analysisId, userName, analysisType }) => {
   const [rating, setRating] = useState<number>(0);
   const [aiAccurate, setAiAccurate] = useState<boolean | null>(null);
   const [comments, setComments] = useState('');
@@ -36,6 +38,8 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, analysis
         rating,
         aiAccurate,
         comments,
+        userName: userName || 'Usuario',
+        analysisType: analysisType || 'general',
         timestamp: new Date().toISOString()
       };
 

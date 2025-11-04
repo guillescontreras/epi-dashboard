@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.18';
+export const APP_VERSION = '2.8.19';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.19': 'Feature: Email de feedback incluye nombre de usuario, ID y tipo de análisis',
   '2.8.18': 'Fix crítico: Guardado en DynamoDB para TODOS los tipos en modo guiado',
   '2.8.17': 'Debug: Logs de diagnóstico para guardado en DynamoDB',
   '2.8.16': 'Fix crítico: TODOS los tipos de análisis se guardan en historial (EPP/rostros/objetos/texto)',

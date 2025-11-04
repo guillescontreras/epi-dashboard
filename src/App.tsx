@@ -51,6 +51,7 @@ const App: React.FC = () => {
   const [showFAQ, setShowFAQ] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackAnalysisId, setFeedbackAnalysisId] = useState<string>('');
+  const [feedbackAnalysisType, setFeedbackAnalysisType] = useState<string>('');
   const [showContact, setShowContact] = useState(false);
   const [contactModalData, setContactModalData] = useState<{ initialTab?: 'contact' | 'feature' | 'bug'; initialMessage?: string; analysisId?: string }>({});
   
@@ -1404,7 +1405,8 @@ const App: React.FC = () => {
                 <div className="mt-6 flex justify-center">
                   <button
                     onClick={() => {
-                      setFeedbackAnalysisId(results.timestamp?.toString() || Date.now().toString());
+                      setFeedbackAnalysisId(results.analysisId || results.timestamp?.toString() || Date.now().toString());
+                      setFeedbackAnalysisType(results.DetectionType || 'ppe_detection');
                       setShowFeedback(true);
                     }}
                     className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-8 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center space-x-2"
@@ -1844,6 +1846,8 @@ const App: React.FC = () => {
         isOpen={showFeedback}
         onClose={() => setShowFeedback(false)}
         analysisId={feedbackAnalysisId}
+        userName={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Usuario'}
+        analysisType={feedbackAnalysisType}
       />
       
       {showContact && (
