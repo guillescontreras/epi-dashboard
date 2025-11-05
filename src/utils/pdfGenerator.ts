@@ -415,7 +415,7 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
           console.log('URL no presignada detectada, solicitando nueva URL presignada');
           try {
             const filename = imageUrl.split('/').pop();
-            const response = await fetch(`https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod/upload?filename=${filename}&operation=get`);
+            const response = await fetch(`https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload?filename=${filename}&operation=get`);
             const data = await response.json();
             finalImageUrl = data.url;
             console.log('Nueva URL presignada obtenida');
