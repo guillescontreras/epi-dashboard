@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.24';
+export const APP_VERSION = '2.8.25';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.25': 'Fix: Generar URL presignada para análisis antiguos al generar PDF',
   '2.8.24': 'Fix: Usar imagePresignedUrl de Lambda para cargar imágenes en PDF (solución definitiva)',
   '2.8.23': 'Fix: Carga de imágenes en PDF usando patrón img+canvas (mejor práctica AWS)',
   '2.8.22': 'Fix: Carga de imágenes en PDF con mode cors para URLs presignadas de S3',

@@ -409,6 +409,21 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
       // Por ahora solo mostramos la imagen original
       
       try {
+        // Si la URL no es presignada (análisis antiguos), solicitar una nueva
+        let finalImageUrl = imageUrl;
+        if (!imageUrl.includes('X-Amz-Algorithm')) {
+          console.log('URL no presignada detectada, solicitando nueva URL presignada');
+          try {
+            const filename = imageUrl.split('/').pop();
+            const response = await fetch(`https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod/upload?filename=${filename}&operation=get`);
+            const data = await response.json();
+            finalImageUrl = data.url;
+            console.log('Nueva URL presignada obtenida');
+          } catch (error) {
+            console.error('Error obteniendo URL presignada:', error);
+          }
+        }
+        
         // Usar patrón <img> + canvas (mejor práctica AWS para URLs presignadas)
         const base64 = await new Promise<string>((resolve, reject) => {
           const img = new Image();
@@ -444,7 +459,7 @@ export const generateAnalysisPDF = async (options: PDFGeneratorOptions) => {
             reject(new Error('Error cargando imagen'));
           };
           
-          img.src = imageUrl;
+          img.src = finalImageUrl;
         });
         
         // Crear imagen temporal para obtener dimensiones reales
