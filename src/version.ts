@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.26';
+export const APP_VERSION = '2.8.27';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.27': 'Fix: Traducciones de código de verificación en Cognito a español',
   '2.8.26': 'Fix: Usar API Gateway correcta (kmekzxexq5) para solicitar URL presignada',
   '2.8.25': 'Fix: Generar URL presignada para análisis antiguos al generar PDF',
   '2.8.24': 'Fix: Usar imagePresignedUrl de Lambda para cargar imágenes en PDF (solución definitiva)',

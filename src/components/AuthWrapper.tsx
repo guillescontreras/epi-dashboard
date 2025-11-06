@@ -49,7 +49,20 @@ I18n.putVocabularies({
     'Password must have numbers': 'La contraseña debe tener números',
     'Password must have special characters': 'La contraseña debe tener caracteres especiales',
     'Password must have upper case letters': 'La contraseña debe tener mayúsculas',
-    'Password must have lower case letters': 'La contraseña debe tener minúsculas'
+    'Password must have lower case letters': 'La contraseña debe tener minúsculas',
+    'We Emailed You': 'Te enviamos un correo',
+    'Your code is on the way. To log in, enter the code we emailed to': 'Tu código está en camino. Para iniciar sesión, ingresa el código que enviamos a',
+    'It may take a minute to arrive.': 'Puede tardar un minuto en llegar.',
+    'We Texted You': 'Te enviamos un mensaje',
+    'Your code is on the way. To log in, enter the code we texted to': 'Tu código está en camino. Para iniciar sesión, ingresa el código que enviamos a',
+    'We Sent A Code': 'Enviamos un código',
+    'Confirm SMS Code': 'Confirmar código SMS',
+    'Confirm TOTP Code': 'Confirmar código TOTP',
+    'Enter your code': 'Ingresa tu código',
+    'Verify Contact': 'Verificar contacto',
+    'Account recovery requires verified contact information': 'La recuperación de cuenta requiere información de contacto verificada',
+    'Skip': 'Omitir',
+    'Verify': 'Verificar'
   }
 });
 
