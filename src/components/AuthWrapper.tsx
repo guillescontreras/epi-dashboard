@@ -60,7 +60,6 @@ I18n.putVocabularies({
     'Confirm TOTP Code': 'Confirmar código TOTP',
     'Enter your code': 'Ingresa tu código',
     'Verify Contact': 'Verificar contacto',
-    'Account recovery requires verified contact information': 'La recuperación de cuenta requiere información de contacto verificada',
     'Skip': 'Omitir',
     'Verify': 'Verificar'
   }
