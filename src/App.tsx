@@ -1162,6 +1162,7 @@ const App: React.FC = () => {
                 handleUpload={handleUpload}
                 progress={progress}
                 hasResults={results !== null}
+                setProgress={setProgress}
               />
             </div>
             <div className="space-y-6">

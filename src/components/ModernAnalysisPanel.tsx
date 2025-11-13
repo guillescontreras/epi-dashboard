@@ -16,11 +16,12 @@ interface ModernAnalysisPanelProps {
   handleUpload: () => void;
   progress: number;
   hasResults?: boolean;
+  setProgress?: (progress: number) => void;
 }
 
 const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
   file, setFile, files = [], setFiles = () => {}, detectionType, setDetectionType, minConfidence, setMinConfidence,
-  epiItems, handleEpiItemChange, strictMode, setStrictMode, handleUpload, progress, hasResults = false
+  epiItems, handleEpiItemChange, strictMode, setStrictMode, handleUpload, progress, hasResults = false, setProgress = () => {}
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -295,14 +296,67 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         <div className="p-6">
           <button
-            onClick={handleUpload}
-            disabled={(detectionType !== 'realtime_detection' && !file) || progress > 0}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+            onClick={() => {
+              if (progress === 100) {
+                setProgress(0);
+                const analysisElement = document.querySelector('[data-analysis-summary]');
+                if (analysisElement) {
+                  analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              } else {
+                handleUpload();
+              }
+            }}
+            disabled={(detectionType !== 'realtime_detection' && !file) || (progress > 0 && progress < 100)}
+            className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 shadow-lg ${
+              progress === 100
+                ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 cursor-pointer animate-pulse'
+                : progress > 0
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 cursor-not-allowed'
+                : (detectionType !== 'realtime_detection' && !file)
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl'
+            } text-white`}
           >
-            {progress > 0 ? (
+            {progress === 100 ? (
               <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>Analizando... {progress}%</span>
+                <span className="text-2xl">✅</span>
+                <span>Análisis Completado - Ver Resultados</span>
+              </div>
+            ) : progress >= 85 ? (
+              <div className="flex flex-col items-center space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Generando resumen con IA...</span>
+                </div>
+                <div className="w-full bg-white/20 rounded-full h-2">
+                  <div className="bg-white h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                </div>
+                <span className="text-sm opacity-90">{progress}%</span>
+              </div>
+            ) : progress >= 50 ? (
+              <div className="flex flex-col items-center space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Analizando con Rekognition...</span>
+                </div>
+                <div className="w-full bg-white/20 rounded-full h-2">
+                  <div className="bg-white h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                </div>
+                <span className="text-sm opacity-90">{progress}%</span>
+              </div>
+            ) : progress > 0 ? (
+              <div className="flex flex-col items-center space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Subiendo imagen...</span>
+                </div>
+                <div className="w-full bg-white/20 rounded-full h-2">
+                  <div className="bg-white h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                </div>
+                <span className="text-sm opacity-90">{progress}%</span>
               </div>
             ) : detectionType === 'realtime_detection' ? (
               <div className="flex items-center justify-center space-x-2">
@@ -316,17 +370,6 @@ const ModernAnalysisPanel: React.FC<ModernAnalysisPanelProps> = ({
               </div>
             )}
           </button>
-
-          {progress > 0 && (
-            <div className="mt-4">
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
