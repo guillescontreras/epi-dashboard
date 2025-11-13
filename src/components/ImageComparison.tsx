@@ -696,9 +696,13 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({
                               <span className="inline-flex px-2 py-1 text-xs font-bold rounded-full bg-green-500 text-white">
                                 ✅ Cumple {eppConfidence.toFixed(0)}%
                               </span>
-                            ) : (
+                            ) : eppConfidence >= 40 ? (
                               <span className="inline-flex px-2 py-1 text-xs font-bold rounded-full bg-yellow-500 text-white">
-                                ⚠️ Bajo umbral {eppConfidence.toFixed(0)}%
+                                ⚠️ Bajo umbral {eppConfidence.toFixed(0)}% - Verificar visualmente
+                              </span>
+                            ) : (
+                              <span className="inline-flex px-2 py-1 text-xs font-bold rounded-full bg-red-500 text-white">
+                                ❌ Muy bajo {eppConfidence.toFixed(0)}%
                               </span>
                             )}
                           </td>

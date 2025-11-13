@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.30';
+export const APP_VERSION = '2.8.31';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.31': 'Feature: Diferenciar colores en tabla EPP (verde ≥75%, amarillo 40-74%, rojo <40%)',
   '2.8.30': 'Debug: Agregar logs al crear analysisResult',
   '2.8.29': 'Debug: Agregar logs para diagnosticar cálculo de cumplientes',
   '2.8.28': 'Fix: Calcular cumplientes con EPPs seleccionados en lugar de todos los EPPs',
