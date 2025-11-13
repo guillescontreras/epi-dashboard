@@ -1688,54 +1688,7 @@ const App: React.FC = () => {
 
       <ToastContainer position="top-right" />
       
-      {/* Indicador de progreso flotante */}
-      {progress > 0 && (
-        <div className="fixed top-20 right-4 z-50 w-96 max-w-md">
-          {progress < 100 ? (
-            <div className="bg-white rounded-2xl shadow-2xl border-2 border-blue-500 p-4 animate-pulse">
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xl">⏳</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-gray-900">Analizando imagen...</p>
-                  <p className="text-sm text-gray-600">Por favor espera</p>
-                </div>
-                <span className="text-2xl font-bold text-blue-600">{progress}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-2xl p-4">
-              <div className="flex items-center space-x-3 mb-3 cursor-pointer hover:opacity-90 transition-opacity"
-                   onClick={() => {
-                     setProgress(0);
-                     const analysisElement = document.querySelector('[data-analysis-summary]');
-                     if (analysisElement) {
-                       analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                     } else {
-                       window.scrollTo({ top: 0, behavior: 'smooth' });
-                     }
-                   }}>
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center animate-pulse">
-                  <span className="text-green-500 text-2xl">✓</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-white">¡Análisis completado!</p>
-                  <p className="text-sm text-green-100">Haz clic para ver el resumen</p>
-                </div>
-                <span className="text-white text-2xl">📊</span>
-              </div>
-              {/* Botón Feedback movido al final del informe */}
-            </div>
-          )}
-        </div>
-      )}
+
       
       {showWelcome && (
         <WelcomeModal onClose={() => {
