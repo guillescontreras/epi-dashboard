@@ -1010,7 +1010,11 @@ const App: React.FC = () => {
                         <p className="text-sm opacity-90">Personas Detectadas</p>
                       </div>
                       <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
-                        <p className="text-3xl font-bold">{calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || minConfidence)}</p>
+                        <p className="text-3xl font-bold">{(() => {
+                          const epps = results.selectedEPPs || epiItems || [];
+                          console.log('🔍 [Resumen] EPPs:', epps, 'Umbral:', results.MinConfidence || minConfidence);
+                          return calculateCompliance(results, epps, results.MinConfidence || minConfidence);
+                        })()}</p>
                         <p className="text-sm opacity-90">Cumplientes</p>
                       </div>
                       <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
