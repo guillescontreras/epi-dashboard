@@ -938,7 +938,7 @@ const App: React.FC = () => {
               <span className="text-xs text-gray-500 bg-yellow-100 px-2 py-1 rounded">⚠️ Modo Avanzado temporalmente deshabilitado</span>
             </div>
           </div>
-          <GuidedAnalysisWizard key={wizardKey} onComplete={handleGuidedComplete} />
+          <GuidedAnalysisWizard key={wizardKey} onComplete={handleGuidedComplete} progress={progress} setProgress={setProgress} />
           
           {/* Resultados en el asistente */}
           {results && useGuidedMode && !showRealtimeDetection && !showVideoProcessor && (

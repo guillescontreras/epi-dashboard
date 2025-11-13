@@ -11,9 +11,11 @@ interface GuidedAnalysisWizardProps {
     epiItems: string[];
   }) => void;
   resetStep?: boolean;
+  progress?: number;
+  setProgress?: (progress: number) => void;
 }
 
-const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete, resetStep }) => {
+const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete, resetStep, progress = 0, setProgress = () => {} }) => {
   const [step, setStep] = useState(1);
   const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
   
@@ -377,11 +379,75 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
               ← Volver
             </button>
             <button
-              onClick={handleComplete}
-              disabled={mode === 'image' && !file}
-              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+              onClick={() => {
+                if (progress === 100) {
+                  setProgress(0);
+                  const analysisElement = document.querySelector('[data-analysis-summary]');
+                  if (analysisElement) {
+                    analysisElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                } else {
+                  handleComplete();
+                }
+              }}
+              disabled={(mode === 'image' && !file) || (progress > 0 && progress < 100)}
+              className={`flex-1 py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 shadow-lg ${
+                progress === 100
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 cursor-pointer animate-pulse'
+                  : progress > 0
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 cursor-not-allowed'
+                  : (mode === 'image' && !file)
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:shadow-xl'
+              } text-white`}
             >
-              {mode === 'image' ? '🚀 Iniciar Análisis' : file ? '🎬 Procesar Video' : '📹 Abrir Cámara'}
+              {progress === 100 ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="text-2xl">✅</span>
+                  <span>Análisis Completado - Ver Resultados</span>
+                </div>
+              ) : progress >= 85 ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Generando resumen con IA...</span>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-2">
+                    <div className="bg-white h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                  </div>
+                  <span className="text-sm opacity-90">{progress}%</span>
+                </div>
+              ) : progress >= 50 ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Analizando con Rekognition...</span>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-2">
+                    <div className="bg-white h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                  </div>
+                  <span className="text-sm opacity-90">{progress}%</span>
+                </div>
+              ) : progress > 0 ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Subiendo imagen...</span>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-2">
+                    <div className="bg-white h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                  </div>
+                  <span className="text-sm opacity-90">{progress}%</span>
+                </div>
+              ) : mode === 'image' ? (
+                <span>🚀 Iniciar Análisis</span>
+              ) : file ? (
+                <span>🎬 Procesar Video</span>
+              ) : (
+                <span>📹 Abrir Cámara</span>
+              )}
             </button>
           </div>
         </div>
