@@ -646,7 +646,9 @@ const App: React.FC = () => {
 
       const analysisId = uuidv4();
       const imageUrlToUse = finalData.imagePresignedUrl || imageUrl;
+      console.log('🔍 Creando analysisResult con epiItems:', epiItems);
       const analysisResult = { ...finalData, analysisId, timestamp: Date.now(), imageUrl: imageUrlToUse, selectedEPPs: epiItems, MinConfidence: minConfidence };
+      console.log('🔍 analysisResult.selectedEPPs:', analysisResult.selectedEPPs);
       setResults(analysisResult);
       setAnalysisHistory(prev => [...prev, analysisResult]);
       incrementAnalysisCount();
