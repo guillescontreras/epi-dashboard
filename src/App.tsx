@@ -1010,7 +1010,7 @@ const App: React.FC = () => {
                         <p className="text-sm opacity-90">Personas Detectadas</p>
                       </div>
                       <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
-                        <p className="text-3xl font-bold">{results.Summary?.compliant || 0}</p>
+                        <p className="text-3xl font-bold">{calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || minConfidence)}</p>
                         <p className="text-sm opacity-90">Cumplientes</p>
                       </div>
                       <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
@@ -1177,7 +1177,7 @@ const App: React.FC = () => {
                             <p className="text-sm opacity-90">Personas Detectadas</p>
                           </div>
                           <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
-                            <p className="text-3xl font-bold">{results.Summary?.compliant || 0}</p>
+                            <p className="text-3xl font-bold">{calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || minConfidence)}</p>
                             <p className="text-sm opacity-90">Cumplientes</p>
                           </div>
                           <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
@@ -1646,7 +1646,7 @@ const App: React.FC = () => {
                   </div>
                   <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-3 rounded-lg text-white">
                     <p className="text-xs opacity-90">Cumplientes</p>
-                    <p className="text-2xl font-bold">{results.summary?.compliant || 0}</p>
+                    <p className="text-2xl font-bold">{calculateCompliance(results, results.selectedEPPs || [], results.MinConfidence || 75)}</p>
                   </div>
                 </div>
               </div>
