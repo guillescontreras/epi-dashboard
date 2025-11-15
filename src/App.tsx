@@ -61,13 +61,6 @@ const App: React.FC = () => {
   
   const fetchAnalysisData = async () => {
     try {
-      // Contador global desde S3
-      console.log('Obteniendo contador...');
-      const countResponse = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
-      const countData = await countResponse.json();
-      console.log('Contador recibido:', countData);
-      setTotalAnalysisCount(countData.count || 0);
-      
       // Usuario actual
       const user = await getCurrentUser();
       console.log('Usuario actual:', user);
@@ -109,8 +102,17 @@ const App: React.FC = () => {
       const newHistory = historyData.history || [];
       
       if (loadMore) {
-        setAnalysisHistory(prev => [...prev, ...newHistory]);
+        // Combinar y eliminar duplicados por timestamp
+        const combined = [...analysisHistory, ...newHistory];
+        const unique = combined.filter((item, index, self) => 
+          index === self.findIndex(t => t.timestamp === item.timestamp)
+        );
+        // Ordenar por timestamp descendente
+        unique.sort((a, b) => b.timestamp - a.timestamp);
+        setAnalysisHistory(unique);
       } else {
+        // Ordenar por timestamp descendente
+        newHistory.sort((a, b) => b.timestamp - a.timestamp);
         setAnalysisHistory(newHistory);
       }
       
@@ -126,6 +128,20 @@ const App: React.FC = () => {
   
   React.useEffect(() => {
     fetchAnalysisData();
+    
+    // Cargar contador de forma lazy (no bloquea carga inicial)
+    setTimeout(async () => {
+      try {
+        console.log('Obteniendo contador...');
+        const countResponse = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
+        const countData = await countResponse.json();
+        console.log('Contador recibido:', countData);
+        setTotalAnalysisCount(countData.count || 0);
+      } catch (error) {
+        console.error('Error cargando contador:', error);
+        setTotalAnalysisCount(0);
+      }
+    }, 100);
   }, []);
   
   // Cargar historial solo cuando se accede a la sección
