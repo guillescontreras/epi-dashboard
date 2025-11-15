@@ -108,11 +108,11 @@ const App: React.FC = () => {
           index === self.findIndex(t => t.timestamp === item.timestamp)
         );
         // Ordenar por timestamp descendente
-        unique.sort((a, b) => b.timestamp - a.timestamp);
+        unique.sort((a: any, b: any) => b.timestamp - a.timestamp);
         setAnalysisHistory(unique);
       } else {
         // Ordenar por timestamp descendente
-        newHistory.sort((a, b) => b.timestamp - a.timestamp);
+        newHistory.sort((a: any, b: any) => b.timestamp - a.timestamp);
         setAnalysisHistory(newHistory);
       }
       
