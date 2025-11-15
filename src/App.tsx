@@ -55,6 +55,10 @@ const App: React.FC = () => {
   const [showContact, setShowContact] = useState(false);
   const [contactModalData, setContactModalData] = useState<{ initialTab?: 'contact' | 'feature' | 'bug'; initialMessage?: string; analysisId?: string }>({});
   
+  const [lastHistoryKey, setLastHistoryKey] = useState<string | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
+  
   const fetchAnalysisData = async () => {
     try {
       // Contador global desde S3
@@ -64,19 +68,10 @@ const App: React.FC = () => {
       console.log('Contador recibido:', countData);
       setTotalAnalysisCount(countData.count || 0);
       
-      // Historial personal
+      // Usuario actual
       const user = await getCurrentUser();
       console.log('Usuario actual:', user);
       setCurrentUserId(user.username);
-      
-      const historyUrl = `https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod?userId=${user.username}`;
-      console.log('URL historial:', historyUrl);
-      const historyResponse = await fetch(historyUrl);
-      const historyData = await historyResponse.json();
-      console.log('Historial recibido:', historyData);
-      const sortedHistory = (historyData.history?.map((item: any) => item.analysisData) || [])
-        .sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
-      setAnalysisHistory(sortedHistory);
       
       // Verificar si tiene perfil
       try {
@@ -84,7 +79,6 @@ const App: React.FC = () => {
         if (profileResponse.data.profile) {
           setUserProfile(profileResponse.data.profile);
         } else {
-          // No tiene perfil, mostrar modal
           setShowProfileModal(true);
         }
       } catch (profileError) {
@@ -97,14 +91,47 @@ const App: React.FC = () => {
     }
   };
   
+  const fetchHistory = async (loadMore = false) => {
+    try {
+      setLoadingHistory(true);
+      const user = await getCurrentUser();
+      
+      let historyUrl = `https://n0f5jga1wc.execute-api.us-east-1.amazonaws.com/prod?userId=${user.username}&limit=10`;
+      if (loadMore && lastHistoryKey) {
+        historyUrl += `&lastKey=${encodeURIComponent(lastHistoryKey)}`;
+      }
+      
+      console.log('Cargando historial:', historyUrl);
+      const historyResponse = await fetch(historyUrl);
+      const historyData = await historyResponse.json();
+      console.log('Historial recibido:', historyData);
+      
+      const newHistory = historyData.history || [];
+      
+      if (loadMore) {
+        setAnalysisHistory(prev => [...prev, ...newHistory]);
+      } else {
+        setAnalysisHistory(newHistory);
+      }
+      
+      setLastHistoryKey(historyData.lastKey || null);
+      setHasMoreHistory(!!historyData.lastKey);
+      
+    } catch (error) {
+      console.error('Error cargando historial:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+  
   React.useEffect(() => {
     fetchAnalysisData();
   }, []);
   
-  // Refrescar datos cuando cambia la sección activa
+  // Cargar historial solo cuando se accede a la sección
   React.useEffect(() => {
-    if (activeSection === 'dashboard' || activeSection === 'history') {
-      fetchAnalysisData();
+    if (activeSection === 'history' && analysisHistory.length === 0) {
+      fetchHistory();
     }
   }, [activeSection]);
   
@@ -1441,7 +1468,12 @@ const App: React.FC = () => {
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">📋 Historial de Análisis</h2>
-              {analysisHistory.length > 0 ? (
+              {loadingHistory && analysisHistory.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-500">Cargando historial...</p>
+                </div>
+              ) : analysisHistory.length > 0 ? (
                 <div className="space-y-4">
                   {analysisHistory.map((analysis, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -1545,6 +1577,25 @@ const App: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                
+                {hasMoreHistory && (
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={() => fetchHistory(true)}
+                      disabled={loadingHistory}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                    >
+                      {loadingHistory ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          <span>Cargando...</span>
+                        </div>
+                      ) : (
+                        <span>🔄 Cargar más</span>
+                      )}
+                    </button>
+                  </div>
+                )}
               ) : (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-4">📋</div>

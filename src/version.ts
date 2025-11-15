@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.8.34';
+export const APP_VERSION = '2.8.35';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.8.35': 'Performance: Lazy loading historial + paginación (10 items) + botón "Cargar más"',
   '2.8.34': 'UX: Eliminar toast flotante redundante + texto "fueron incluidas" en lugar de "evaluadas completamente"',
   '2.8.33': 'UX: Botón análisis unificado en modo guiado con estados de progreso',
   '2.8.32': 'UX: Botón análisis unificado con estados de progreso (subiendo/analizando/generando IA/completado)',
