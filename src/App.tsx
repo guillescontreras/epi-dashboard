@@ -1596,8 +1596,7 @@ const App: React.FC = () => {
                     </button>
                   </div>
                 )}
-              </div>
-            ) : (
+              ) : (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-4">📋</div>
                   <p className="text-gray-500">No hay análisis en el historial</p>
