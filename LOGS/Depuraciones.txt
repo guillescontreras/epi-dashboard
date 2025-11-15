@@ -1,0 +1,1413 @@
+# 📋 REGISTRO DE DEPURACIONES - CoironTech AI EPP Dashboard
+
+## 📊 HISTORIAL DE VERSIONES
+
+### ✅ v2.6.0 (MINOR) - 31/10/2025
+**PDF completo con imágenes y branding corporativo**
+- ✅ Logo CoironTech en header del PDF
+- ✅ Imágenes comparativas (original vs anotada) lado a lado
+- ✅ Footer corporativo con información de contacto
+- ✅ Conversión automática de URLs S3 a base64
+- ✅ CORS configurado en bucket S3 rekognition-gcontreras
+- ✅ PDF profesional y completo
+
+**Archivos modificados:**
+- `/epi-dashboard/src/utils/pdfGenerator.ts`
+- `/epi-dashboard/src/utils/imageToBase64.ts` (nuevo)
+- `/epi-dashboard/src/version.ts`
+- `/s3-cors-config.json` (nuevo)
+
+**Infraestructura:**
+- ✅ CORS habilitado en S3 para carga de imágenes
+
+---
+
+### ✅ v2.5.9 (PATCH) - 31/10/2025
+**Correcciones UX críticas (6 de 7)**
+- ✅ EPPs seleccionados visibles en historial con badges azules
+- ✅ Resultados solo visibles cuando progress === 0 (análisis completo)
+- ✅ Eliminados 4 toasts redundantes con emergente verde
+- ✅ Botón feedback movido al final del informe (asistente + historial)
+- ✅ Emergente verde limpio sin botón prematuro
+- ✅ UX más clara y menos confusa
+
+**Archivos modificados:**
+- `/epi-dashboard/src/App.tsx`
+- `/epi-dashboard/src/version.ts`
+
+---
+
+### ✅ v2.5.8 (PATCH) - 31/10/2025
+**EPPs seleccionados + botón reportar errores**
+- ✅ Guardar selectedEPPs en análisis (trazabilidad completa)
+- ✅ Mostrar EPPs evaluados en PDF
+- ✅ Botón "Reportar Error" en resultados e historial
+- ✅ ContactModal acepta initialTab e initialMessage
+- ✅ Referencia a imagen analizada en PDF
+
+**Archivos modificados:**
+- `/epi-dashboard/src/App.tsx`
+- `/epi-dashboard/src/components/ContactModal.tsx`
+- `/epi-dashboard/src/utils/pdfGenerator.ts`
+- `/epi-dashboard/src/version.ts`
+
+---
+
+### ✅ v2.5.7 (PATCH) - 31/10/2025
+**Evaluación parcial de EPPs**
+- ✅ Persona evaluable si tiene AL MENOS UNA parte visible
+- ✅ Permite evaluación parcial de EPPs según partes visibles
+- ✅ Ejemplo: Si selecciona CASCO+GUANTES+CALZADO, evalúa cada EPP independientemente
+
+**Lógica corregida:**
+- Antes: Persona debía tener TODAS las partes para TODOS los EPPs → demasiado estricto
+- Ahora: Persona evaluable si tiene AL MENOS UNA parte de los EPPs requeridos
+
+**Archivos modificados:**
+- `/epi-dashboard/src/App.tsx` - Función `generateLocalAISummary()`
+- `/bedrock-summary-lambda.py` - Función `is_evaluable_person()`
+
+---
+
+### ✅ v2.5.6 (PATCH) - 31/10/2025
+**Filtrado dinámico correcto según EPPs requeridos**
+- ✅ Fix: Error de sintaxis en version.ts
+- ✅ Filtrado dinámico de personas evaluables
+- ✅ Lógica: Persona evaluable si tiene partes visibles para EPPs requeridos
+
+**Archivos modificados:**
+- `/epi-dashboard/src/version.ts`
+- `/epi-dashboard/src/App.tsx`
+- `/bedrock-summary-lambda.py`
+
+---
+
+### ✅ v2.5.2 (PATCH) - 31/10/2025
+**Modo avanzado deshabilitado temporalmente**
+- ✅ Desactivación temporal del modo avanzado
+- ✅ Botón reemplazado por mensaje: "⚠️ Modo Avanzado temporalmente deshabilitado"
+- ✅ Usuarios solo pueden usar Asistente de Análisis (modo guiado)
+
+**Problema detectado:**
+- Análisis desde modo avanzado no se guardaban correctamente en DynamoDB
+- Inconsistencias en historial
+- Pérdida de datos de análisis
+
+---
+
+### ✅ v2.5.0 - v2.5.1 (MINOR/PATCH) - 31/10/2025
+**Formulario de contacto + FAQ + Feedback**
+- ✅ Formulario de contacto con 3 tabs (Contacto, Feature Request, Bug Report)
+- ✅ Sección FAQ con 12 preguntas frecuentes
+- ✅ Sistema de feedback post-análisis
+- ✅ Lambda contact-submission con DynamoDB y SES
+- ✅ Correcciones críticas en modo avanzado y evaluación EPP
+
+---
+
+### ✅ v2.4.0 - v2.4.3 (MINOR/PATCH) - 30/10/2025
+**Listas geográficas + validación de seguridad**
+- ✅ Listas geográficas en cascada para perfil de usuario
+- ✅ Validación de seguridad en Lambdas + Rate limiting
+- ✅ Sistema de feedback post-análisis
+
+---
+
+### ✅ v2.3.0 - v2.3.3 (MINOR/PATCH) - 29/10/2025
+**Resúmenes IA + correcciones críticas**
+- ✅ Resúmenes IA con Claude 3 Haiku (Amazon Bedrock)
+- ✅ Exportación PDF con nombre único
+- ✅ Eliminar análisis del historial
+- ✅ Deshabilitar PDF en análisis no-EPP
+- ✅ Edición de perfil desde menú usuario
+
+---
+
+### ✅ v2.2.0 (MINOR) - 28/10/2025
+**Integración completa con AWS**
+- ✅ AWS Cognito para autenticación
+- ✅ DynamoDB para almacenamiento de análisis
+- ✅ Lambda para operaciones backend
+- ✅ API Gateway para endpoints REST
+
+---
+
+### ✅ v2.0.0 - v2.1.1 (MAJOR/MINOR) - 27/10/2025
+**Rediseño completo + análisis de video**
+- ✅ Rediseño completo con branding CoironTech
+- ✅ Análisis de video y detección en tiempo real
+- ✅ Optimizaciones de UX y flujo del asistente
+
+---
+
+## 🐛 BUGS PENDIENTES (BACKLOG)
+
+### 🔴 ALTA PRIORIDAD
+
+#### Modo Avanzado - Rediseño completo (v2.7.0 - MINOR)
+**Estado:** Deshabilitado temporalmente desde v2.5.2
+**Problema:** Inconsistencias en guardado de análisis en DynamoDB
+**Solución propuesta:**
+- Revisar flujo de guardado en DynamoDB
+- Sincronizar estados entre modo avanzado y historial
+- Implementar validación de guardado exitoso
+- Agregar feedback visual de guardado
+- Testing exhaustivo antes de reactivar
+
+---
+
+### 🟡 MEDIA PRIORIDAD
+
+#### ✅ Backend de Feedback - COMPLETADO
+**Estado:** Funcional
+**Implementado:**
+- ✅ Lambda feedback-submission creada y desplegada
+- ✅ Tabla DynamoDB UserFeedback
+- ✅ API Gateway endpoint /feedback configurado
+- ✅ Permisos IAM configurados
+- ✅ Probado exitosamente
+
+**Archivos creados:**
+- `/feedback-submission-lambda.py`
+- `/feedback-submission-lambda.zip`
+
+---
+
+#### FAQ - Mención de servicios específicos (v2.6.1 - PATCH)
+**Estado:** Pendiente
+**Problema:** FAQ menciona "Amazon Rekognition" (servicio específico)
+**Solución propuesta:**
+- Actualizar respuesta "¿Cómo funciona la detección de EPP?"
+- Mencionar: Tecnología de IA (genérico), soporte AWS, mejora continua
+- NO mencionar: Rekognition, TensorFlow.js, Bedrock
+
+**Archivo:** `/epi-dashboard/src/components/FAQ.tsx` (línea ~18-20)
+
+---
+
+## 📝 NOTAS Y OBSERVACIONES
+
+### Infraestructura AWS
+
+#### DynamoDB Tables
+- **UserProfiles:** Perfiles de usuario con datos geográficos
+- **epi-user-analysis:** Historial de análisis con selectedEPPs
+- **ContactMessages:** Mensajes de contacto (3 tipos)
+- **UserFeedback:** Feedback de usuarios (pendiente backend)
+
+#### Lambdas
+- **user-profile:** Gestión de perfiles de usuario
+- **delete-analysis:** Eliminación de análisis del historial
+- **contact-submission:** Procesamiento de mensajes de contacto
+- **feedback-submission:** Procesamiento de feedback (pendiente)
+- **bedrock-summary:** Resúmenes IA con Claude 3 Haiku
+
+#### API Gateway
+- **REST API:** n0f5jga1wc
+- **Endpoints:** /user-profile, /delete, /contact, /feedback
+
+#### S3 Buckets
+- **rekognition-gcontreras:** Almacenamiento de imágenes
+  - ✅ CORS habilitado para carga en PDF
+  - Carpetas: /input, /output
+
+---
+
+### Configuración de Dominio
+- **Servidor:** Lightsail con WordPress
+- **Dominio:** www.coirontech.com
+- **Pendiente:** Configurar subdominio para la app
+
+---
+
+### Mejoras Implementadas en v2.5.x - v2.6.0
+
+#### Filtrado Inteligente de Personas
+- Evaluación parcial según partes del cuerpo visibles
+- Filtrado dinámico según EPPs seleccionados
+- Validación EPP-BodyPart coherente
+- Métricas precisas de cumplimiento
+
+#### UX Mejorada
+- EPPs visibles en historial con badges
+- Timing correcto de visualización de resultados
+- Feedback reposicionado al final del informe
+- Eliminación de notificaciones redundantes
+
+#### PDF Profesional
+- Logo corporativo en header
+- Imágenes comparativas (original vs anotada)
+- Footer con información de contacto
+- EPPs seleccionados listados
+- Normas OSHA e ISO 45001
+
+---
+
+## 🎯 ROADMAP FUTURO
+
+### 🔴 PRIORIDAD ALTA
+
+#### v2.6.17 (PATCH) - Análisis detallado muestra todos los EPPs sin filtrar por umbral
+**Estado:** ✅ Completado
+**Problema:** Al cambiar umbral de 50% a 75%, elementos detectados al 50-74% desaparecen del análisis detallado por persona
+**Solución implementada:**
+- Lambda modificada para usar MinConfidence fijo de 50%
+- Rekognition devuelve TODAS las detecciones ≥50%
+- Umbral del usuario solo afecta estado en frontend
+- **Tiempo real:** 30 min
+
+#### ✅ Badges de EPP con colores según estado - COMPLETADO
+**Estado:** Resuelto en v2.8.0
+**Problema:** En resumen de análisis, badges de EPP seleccionados no diferencian visualmente su estado
+**Solución propuesta:**
+- 🟢 Verde: EPP detectado y cumple con umbral de confianza
+- 🟡 Amarillo: EPP detectado pero NO cumple con umbral
+- 🔴 Rojo: EPP NO detectado
+- **Estimado:** 30 min
+
+#### Dashboard no coincide con historial
+**Estado:** Pendiente
+**Problema:** Análisis recientes en dashboard no coinciden con los del historial
+**Solución propuesta:**
+- Revisar query de DynamoDB en dashboard
+- Verificar ordenamiento por timestamp
+- Asegurar consistencia entre ambas vistas
+- **Estimado:** 30 min
+
+#### ✅ ID único de análisis - COMPLETADO
+**Estado:** Resuelto en v2.8.0
+**Problema:** No existía identificador único visible para cada análisis
+**Solución implementada:**
+- Campo `analysisId` (UUID) agregado en cada análisis
+- ID visible en informe, PDF y historial
+- Guardado en DynamoDB
+
+#### Formulario de contacto unificado con autocompletado
+**Estado:** Pendiente
+**Problema:** Botón "Reportar Error" no lleva a formulario unificado ni autocompleta datos
+**Solución propuesta:**
+- Crear formulario único de contacto con desplegable:
+  - Contacto general
+  - Reporte de bug
+  - Solicitar característica
+  - Soporte técnico
+- Campos: nombre, email, tipo, analysisId, mensaje
+- Botón "Reportar Error" autocompleta:
+  - Nombre del usuario (desde Cognito)
+  - Email del usuario
+  - ID del análisis actual
+  - Tipo: "Reporte de bug" (preseleccionado)
+- **Estimado:** 1-1.5 horas
+
+#### Optimización móvil de botones en historial
+**Estado:** Pendiente
+**Problema:** Botones se ven muy grandes en móvil al abrir informes desde historial
+**Solución propuesta:**
+- Media queries para reducir tamaño de botones en móvil
+- Ajustar padding y font-size
+- Mejorar espaciado entre elementos
+- **Estimado:** 30 min
+
+#### Estilo diferenciado para aclaraciones en informe IA
+**Estado:** Pendiente
+**Problema:** Explicaciones de personas no evaluables y recomendaciones se ven como parte del informe
+**Solución propuesta:**
+- Aplicar estilo de "cita" o "nota" a:
+  - Explicación de personas no evaluables
+  - Recomendaciones para mejorar detección
+- Opciones: borde izquierdo, fondo gris claro, fuente italic, ícono de info
+- **Estimado:** 30 min
+
+#### Recorte de imagen por persona en análisis detallado
+**Estado:** Pendiente
+**Problema:** Tabla de análisis detallado no muestra visualmente a qué persona se refiere
+**Solución propuesta:**
+- Agregar columna con recorte de imagen de cada persona
+- Usar coordenadas del bounding box de la persona
+- Mostrar miniatura (ej: 80x80px)
+- **Estimado:** 1-1.5 horas
+
+#### ✅ Tooltip explicativo en selector de confianza mínima - COMPLETADO
+**Estado:** Resuelto en v2.6.18
+**Problema:** Usuario no entendía que el umbral de 50% es fijo para detección
+**Solución implementada:**
+- Mensaje informativo agregado en componentes de análisis
+- Explica que Rekognition usa 50% fijo y el umbral del usuario solo afecta el estado
+
+---
+
+### 🟡 PRIORIDAD MEDIA
+
+#### v2.7.0 (MINOR) - Rediseño Modo Avanzado
+- Reactivar modo avanzado con guardado correcto
+- Sincronización de estados
+- Validación de guardado
+- Testing exhaustivo
+- **Estimado:** 3-4 horas
+
+---
+
+#### v2.6.26 (PATCH) - Correcciones menores
+- Backend de feedback funcional
+- FAQ sin menciones de servicios específicos
+- **Estimado:** 1 hora
+
+#### v3.0.0 (MAJOR) - Panel de Administrador
+- Dashboard de métricas globales
+- Gestión de usuarios
+- Reportes consolidados
+- Configuración de sistema
+- **Estimado:** 8-10 horas
+
+#### v3.1.0 (MINOR) - Modo Inspección de Sitio
+- Análisis por lotes mejorado
+- Geolocalización de análisis
+- Reportes por ubicación
+- Exportación masiva
+- **Estimado:** 4-6 horas
+
+#### v3.2.0 (MINOR) - Notificaciones y Tutoriales
+- Notificaciones por email (SES)
+- Tutoriales interactivos
+- Análisis de uso (Pinpoint/Analytics)
+- **Estimado:** 3-4 horas
+
+---
+
+### 🟢 PRIORIDAD BAJA
+
+#### v4.0.0 (MAJOR) - Soporte Multilingüe
+- react-i18next
+- Idiomas: Español, Inglés, Portugués
+- Traducción de UI y resúmenes IA
+- **Estimado:** 6-8 horas
+
+#### v4.1.0 (MINOR) - Seguridad Avanzada
+- MFA con Cognito (SMS/TOTP)
+- Opcional para usuarios
+- Obligatorio para admins
+- **Estimado:** 2-3 horas
+
+#### v4.1.1 (PATCH) - Optimización Móvil
+- Lazy loading de componentes
+- Compresión de imágenes
+- Service Workers para PWA
+- Caché de resultados
+- **Estimado:** 3-4 horas
+
+---
+
+## 🔧 INFRAESTRUCTURA PENDIENTE
+
+### Sistema de Backups Automáticos
+- DynamoDB Point-in-Time Recovery
+- Backups diarios a S3
+- Retención de 30 días
+- **Complejidad:** 🟢 Baja (30 min)
+- **Impacto:** 🟢 Alto (protección de datos)
+
+### Pruebas de Usabilidad
+- Contratar 5-10 usuarios beta
+- Sesiones de testing moderadas
+- Heatmaps con Hotjar
+- Identificar pain points
+- **Complejidad:** N/A (proceso externo)
+- **Impacto:** 🟢 Alto (mejora continua)
+
+---
+
+## 📌 CONVENCIONES
+
+### Versionado Semántico
+- **MAJOR (X.0.0):** Cambios incompatibles, rediseños completos
+- **MINOR (x.X.0):** Nuevas funcionalidades compatibles
+- **PATCH (x.x.X):** Correcciones de bugs, mejoras menores
+
+### Prioridades
+- 🔴 **ALTA:** Crítico, afecta funcionalidad core
+- 🟡 **MEDIA:** Importante, mejora experiencia
+- 🟢 **BAJA:** Nice to have, evaluar demanda
+
+### Complejidad
+- 🟢 **Baja:** < 1 hora
+- 🟡 **Media:** 1-3 horas
+- 🟠 **Alta:** > 3 horas
+
+---
+
+## 📈 MÉTRICAS DE PROGRESO
+
+### Sesión 31/10/2025
+- **Versiones desplegadas:** v2.5.6 → v2.6.0 (5 versiones)
+- **Bugs corregidos:** 7 críticos UX/UI
+- **Features implementadas:** 3 (EPPs en historial, PDF completo, feedback reposicionado)
+- **Infraestructura:** CORS configurado en S3
+- **Tiempo total:** ~4 horas
+
+### Estado General del Proyecto
+- **Versión actual:** v2.6.0
+- **Bugs críticos pendientes:** 1 (Modo avanzado)
+- **Bugs media prioridad:** 2 (Backend feedback, FAQ)
+- **Features planificadas:** 10+ en roadmap
+- **Estabilidad:** ✅ Alta (modo guiado funcional)
+
+---
+
+### ✅ v2.6.4 (PATCH) - 31/10/2025
+**Fix crítico: Tabla EPP visible inmediatamente + PDF imagen única**
+- ✅ Eliminada condición `progress === 0` que impedía mostrar tabla EPP después del análisis
+- ✅ PDF ahora muestra solo imagen original (una vez) en lugar de duplicarla
+- ✅ Comentarios agregados indicando que imagen anotada requiere modificación de Lambda
+
+**Problema resuelto:**
+- Tabla "Detalles de EPP Detectado" no aparecía después del análisis (solo en PDF/historial)
+- PDF mostraba la misma imagen dos veces
+
+**Archivos modificados:**
+- `/epi-dashboard/src/App.tsx` - Eliminada condición progress === 0
+- `/epi-dashboard/src/utils/pdfGenerator.ts` - PDF con imagen única
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.6.4
+
+---
+
+### ✅ v2.6.5 (PATCH) - 31/10/2025
+**Fix crítico: Tabla EPP muestra todas las detecciones**
+- ✅ Eliminado filtrado restrictivo en tabla "Detalles de EPP Detectado"
+- ✅ Ahora muestra TODAS las personas detectadas con TODOS sus EPPs
+- ✅ NO afecta detección, resumen IA, métricas ni PDF
+
+**Problema resuelto:**
+- Tabla "Detalles de EPP Detectado" no mostraba filas después del análisis
+- Filtrado demasiado estricto bloqueaba visualización
+
+**Archivos modificados:**
+- `/epi-dashboard/src/components/ImageComparison.tsx` - Simplificado lógica de tabla
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.6.5
+
+**Nota importante:** Este cambio solo afecta la visualización de la tabla. La lógica de evaluación de personas, cálculo de cumplimiento y resumen IA permanecen intactos en App.tsx y bedrock-summary-lambda.py
+
+---
+
+### ✅ v2.6.15 (PATCH) - 02/11/2025
+**Fix crítico: Tabla muestra TODOS los EPPs detectados, umbral solo determina Cumple/No cumple**
+- ✅ Tabla ahora muestra TODOS los elementos detectados sin filtrar por umbral
+- ✅ Umbral solo determina el ESTADO: Cumple % / No cumple % / No detectado / No evaluable
+- ✅ Estados actualizados:
+  - ✅ **Cumple X%** (verde): EPP detectado ≥ umbral configurado
+  - ❌ **No cumple X%** (rojo): EPP detectado < umbral configurado
+  - ❌ **No detectado** (rojo): EPP no encontrado (0%)
+  - ⚠️ **No evaluable** (gris): Parte del cuerpo no visible
+- ✅ Contexto de IA actualizado para incluir todos los elementos detectados
+- ✅ PDF actualizado con misma lógica de estados
+
+**Problema resuelto:**
+- Usuario reportó que tabla no mostraba elementos con porcentaje bajo umbral
+- Sistema ocultaba EPPs detectados que no cumplían el umbral
+- Ahora muestra TODOS los detectados, el umbral solo afecta el estado
+
+**Archivos modificados:**
+- `/epi-dashboard/src/components/ImageComparison.tsx` - Estados actualizados
+- `/epi-dashboard/src/utils/pdfGenerator.ts` - Estados en PDF
+- `/epi-dashboard/src/App.tsx` - Contexto IA actualizado
+- `/bedrock-summary-lambda.py` - Prompt actualizado
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.6.15
+
+---
+
+### ✅ v2.6.16 (PATCH) - 02/11/2025
+**Fix crítico: Anotaciones visuales muestran TODOS los EPPs detectados**
+- ✅ Eliminado filtro de `minConfidence` en anotaciones visuales (boxes en imagen)
+- ✅ Ahora se dibujan boxes para TODOS los EPPs detectados, sin importar el porcentaje
+- ✅ Color verde si cumple umbral, rojo si no cumple
+- ✅ Leyenda actualizada: EPP No Cumple en rojo
+
+**Problema resuelto:**
+- Usuario reportó que al cambiar umbral de 50% a 75%, elementos detectados al 69% desaparecían de la imagen
+- Filtro en línea 80-81 de ImageComparison.tsx ocultaba EPPs bajo umbral
+- Ahora TODOS los elementos detectados se muestran visualmente
+
+**Archivos modificados:**
+- `/epi-dashboard/src/components/ImageComparison.tsx` - Eliminado filtro minConfidence en anotaciones
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.6.16
+
+---
+
+### ✅ v2.6.17 (PATCH) - 03/11/2025
+**Fix crítico: Lambda siempre detecta con MinConfidence 50%, umbral usuario solo afecta estado**
+- ✅ Lambda `rekognition-processor` modificada para usar MinConfidence fijo de 50%
+- ✅ AWS Rekognition ahora devuelve TODAS las detecciones con confianza ≥50%
+- ✅ Umbral configurado por usuario solo se usa en frontend para determinar estado (Cumple/No cumple)
+- ✅ Tabla de análisis detallado muestra TODOS los EPPs detectados independiente del umbral
+
+**Problema resuelto:**
+- Usuario reportó: análisis al 75% no mostraba calzado detectado al 69% en tabla detallada
+- Al cambiar a 50%, el calzado aparecía
+- Causa raíz: Lambda pasaba `minConfidence` del usuario a Rekognition, filtrando resultados
+- Solución: Lambda siempre usa 50% fijo, frontend aplica umbral del usuario solo para estados
+
+**Archivos modificados:**
+- `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs` - MinConfidence fijo en 50%
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.6.17
+
+**Despliegues:**
+- ✅ Lambda `rekognition-processor` actualizada vía AWS CLI
+- ✅ Frontend v2.6.17 pusheado a GitHub (Amplify auto-deploy)
+
+---
+
+### ✅ v2.6.17 - RESTAURACIÓN CRÍTICA (03/11/2025)
+**INCIDENTE CRÍTICO: Lambda rekognition-processor rota por modificaciones sin backup**
+
+**Problema:**
+- Se modificó Lambda rekognition-processor sin hacer backup previo
+- Se intentó cambiar MinConfidence a 50% fijo
+- Se rompió la estructura de respuesta que el frontend esperaba
+- Aplicación completamente inoperativa por ~45 minutos
+
+**Causa raíz:**
+- Lambda NO devolvía campo `presignedUrl` que el frontend requiere (líneas 591-597 de App.tsx)
+- Frontend hace `axios.get(presignedUrl)` para obtener JSON con resultados
+- Sin presignedUrl → error "cannot read properties of undefined (reading 'protocol')"
+
+**Solución implementada:**
+- Lambda ahora guarda resultados en S3 como JSON (`web/${baseName}_${timestamp}.json`)
+- Genera presignedUrl usando `getSignedUrl` de AWS SDK
+- Devuelve respuesta con presignedUrl incluido
+- Frontend obtiene JSON desde S3 usando presignedUrl
+
+**Estructura correcta de respuesta Lambda:**
+```javascript
+{
+  ProtectiveEquipment: [...],
+  Summary: { totalPersons, compliant, minConfidence },
+  DetectionType: 'ppe_detection',
+  presignedUrl: 'https://rekognition-gcontreras.s3...'
+}
+```
+
+**Archivos críticos:**
+- Lambda: `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs`
+- Frontend: `/epi-dashboard/src/App.tsx` (líneas 591-597)
+- Backup Lambda v4: `function-v4.zip` (versión S3 trigger, NO compatible con invocación directa)
+
+**Lecciones aprendidas:**
+1. ⚠️ SIEMPRE hacer backup antes de modificar Lambda
+2. ⚠️ NUNCA modificar frontend sin autorización explícita
+3. ⚠️ Documentar estructura de respuesta esperada
+4. ⚠️ Verificar versiones de Lambda en AWS antes de restaurar
+5. ⚠️ Lambda v4 es para S3 triggers, NO para invocación directa
+
+**Tiempo de resolución:** ~45 minutos
+**Impacto:** Aplicación completamente inoperativa
+**Estado final:** ✅ Restaurado y funcionando
+
+---
+
+### ✅ SISTEMA DE BACKUPS IMPLEMENTADO (01/11/2025)
+**Infraestructura de respaldo completa para EPI CoironTech**
+
+**Problema:**
+- Incidente crítico previo demostró necesidad de backups robustos
+- No existía sistema automatizado de respaldo
+- Riesgo de pérdida de infraestructura completa
+
+**Solución implementada:**
+
+#### 1. Backup Local (backup-complete.sh)
+- Descarga toda la infraestructura de AWS a Mac local
+- Respalda: 3 Lambdas (19MB total), S3 config, 2 APIs, Amplify, IAM roles
+- Genera template CloudFormation para recrear infraestructura
+- Ubicación: `/infrastructure/backup-complete.sh`
+- Uso: `./backup-complete.sh`
+
+#### 2. AWS Backup Automático (aws-backup-setup.sh)
+- Backups diarios automáticos en la nube a las 5:00 AM UTC
+- Vault: EPI-CoironTech-Vault
+- Retención: 30 días
+- Recursos: rekognition-processor, upload-presigned, bedrock-summary
+- Versionado S3 habilitado en rekognition-gcontreras
+- Ubicación: `/infrastructure/aws-backup-setup.sh`
+
+**Primer backup ejecutado:**
+- Fecha: 01/11/2025 17:07
+- Lambdas: 3/3 ✅ (rekognition-processor 19MB, upload-presigned 818B, bedrock-summary 4.1KB)
+- APIs: 2/2 ✅
+- Amplify: 1/1 ✅
+
+**AWS Backup configurado:**
+- Vault ARN: arn:aws:backup:us-east-1:825765382487:backup-vault:EPI-CoironTech-Vault
+- Plan ID: 1ddada9a-f290-4ced-8752-ed2231921e5a
+- Estado: ✅ Activo
+
+**Estrategia:**
+1. Automático diario: AWS Backup en nube
+2. Manual pre-cambios: backup-complete.sh
+3. Versionado S3: Protección archivos bucket
+
+**Restauración:**
+- Local: `aws lambda update-function-code --zip-file fileb://lambdas/nombre.zip`
+- CloudFormation: `aws cloudformation create-stack --template-body file://epi-infrastructure.yaml`
+- AWS Backup: Desde consola AWS
+
+**Archivos creados:**
+- `/infrastructure/backup-complete.sh` (20 KB)
+- `/infrastructure/aws-backup-setup.sh` (5.3 KB)
+- `/infrastructure/README.md` (7.4 KB)
+- `/backups-epi/20251101-170710/` (primer backup)
+
+---
+
+### ✅ v2.6.18 (PATCH) - 01/11/2025
+**Fix definitivo: Lambda usa MinConfidence 50 fijo para Rekognition**
+- ✅ Lambda modificada para usar `rekognitionMinConfidence = 50` fijo
+- ✅ Rekognition devuelve TODAS las detecciones con confianza ≥50%
+- ✅ Umbral del usuario (minConfidence) se mantiene en Summary para frontend
+- ✅ Frontend recibe todos los EPPs y aplica umbral solo para estado visual
+
+**Problema resuelto:**
+- Usuario reportaba que al configurar umbral 75%, elementos detectados al 69% no aparecían
+- Lambda estaba pasando umbral del usuario a Rekognition, filtrando resultados prematuramente
+- Ahora Lambda siempre pide detecciones ≥50%, frontend decide qué mostrar como Cumple/No cumple
+
+**Ejemplo de funcionamiento:**
+- Usuario configura umbral: 75%
+- Lambda llama Rekognition con MinConfidence: 50
+- Rekognition devuelve: casco 95%, chaleco 82%, calzado 69%
+- Frontend recibe los 3 elementos
+- Frontend muestra: casco ✅ Cumple 95%, chaleco ✅ Cumple 82%, calzado ❌ No cumple 69%
+
+**Archivos modificados:**
+- `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs` - MinConfidence fijo en 50
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.6.18
+- `/epi-dashboard/src/components/GuidedAnalysisWizard.tsx` - Mensaje informativo agregado
+- `/epi-dashboard/src/components/AnalysisSection.tsx` - Mensaje informativo agregado
+- `/epi-dashboard/src/components/ModernAnalysisPanel.tsx` - Mensaje informativo agregado
+
+**Despliegues:**
+- ✅ Lambda `rekognition-processor` actualizada vía AWS CLI (01/11/2025 20:18)
+- ✅ Backup previo disponible en `backups-epi/20251101-170710/`
+
+**Diferencia con v2.6.17:**
+- v2.6.17 intentó el fix pero rompió presignedUrl (incidente crítico)
+- v2.6.18 implementa el fix correctamente manteniendo estructura de respuesta
+
+---
+
+### ✅ v2.7.0 (MINOR) - 01/11/2025
+**Feature: Detección Híbrida de EPPs (Nativa + Labels)**
+- ✅ Lambda usa DetectProtectiveEquipment + DetectLabels simultáneamente
+- ✅ EPPs nativos: Casco, Guantes, Mascarilla (alta precisión)
+- ✅ EPPs por labels: Gafas, Calzado, Orejeras (precisión media)
+- ✅ Componente EPPDetectionInfo muestra métodos de detección
+- ✅ Constantes eppDetectionCapabilities.ts con metadata de cada EPP
+- ✅ Badges de confianza: Alta (verde), Media (amarillo), Baja (naranja)
+
+**Problema resuelto:**
+- AWS Rekognition DetectProtectiveEquipment solo detecta 3 tipos de EPP nativamente
+- Usuario necesita detectar 6 tipos: casco, gafas, guantes, calzado, mascarilla, orejeras
+- Gafas, calzado y orejeras no eran detectables
+
+**Solución implementada:**
+- Detección híbrida: PPE nativo + Labels para EPPs faltantes
+- Mapeo de labels: Glasses/Goggles → EYE_COVER, Footwear/Boots → FOOT_COVER, Headphones → EAR_COVER
+- Transparencia: UI muestra método de detección y nivel de confianza para cada EPP
+- Advertencia: EPPs por labels requieren validación visual adicional
+
+**Mapeo de Labels a EPPs:**
+```javascript
+EYE_COVER: ['Glasses', 'Goggles', 'Sunglasses', 'Safety Glasses', 'Eyewear']
+FOOT_COVER: ['Footwear', 'Shoe', 'Shoes', 'Boot', 'Boots', 'Safety Boots']
+EAR_COVER: ['Headphones', 'Earmuffs', 'Ear Protection', 'Hearing Protection']
+```
+
+**Archivos creados:**
+- `/epi-dashboard/src/constants/eppDetectionCapabilities.ts` - Metadata de EPPs
+- `/epi-dashboard/src/components/EPPDetectionInfo.tsx` - Componente informativo
+
+**Archivos modificados:**
+- `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs` - Detección híbrida
+- `/epi-dashboard/src/components/GuidedAnalysisWizard.tsx` - Componente EPPDetectionInfo agregado
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.7.0
+
+**Despliegues:**
+- ✅ Lambda `rekognition-processor` actualizada (01/11/2025 20:43)
+- ✅ Backup previo: index.mjs.backup-v2.6.18-20251101-174202
+
+**Estructura de respuesta Lambda actualizada:**
+```javascript
+{
+  ProtectiveEquipment: [...], // Incluye EPPs de ambos métodos
+  Summary: {
+    totalPersons: N,
+    compliant: N,
+    minConfidence: 75,
+    hybridDetection: true,
+    detectionMethods: {
+      native: ['HEAD_COVER', 'HAND_COVER', 'FACE_COVER'],
+      labels: ['EYE_COVER', 'FOOT_COVER', 'EAR_COVER']
+    }
+  },
+  DetectionType: 'ppe_detection',
+  presignedUrl: '...'
+}
+```
+
+**Indicador de método en detecciones:**
+- EPPs nativos: Sin campo DetectionMethod
+- EPPs por labels: DetectionMethod: 'LABEL_DETECTION'
+
+---
+
+### ✅ v2.7.2 (PATCH) - 02/11/2025
+**Fix: Mapeo LEFT_FOOT/RIGHT_FOOT para mostrar calzado en tabla**
+- ✅ Actualizado mapeo en ImageComparison.tsx línea 596
+- ✅ FOOT_COVER ahora busca: ['FOOT', 'LEFT_FOOT', 'RIGHT_FOOT']
+- ✅ Tabla detallada muestra calzado cuando Lambda crea LEFT_FOOT
+
+**Problema resuelto:**
+- Lambda creaba LEFT_FOOT pero tabla solo buscaba FOOT
+- Calzado detectado no aparecía en tabla por mapeo incompleto
+
+**Archivos modificados:**
+- `/epi-dashboard/src/components/ImageComparison.tsx` - Mapeo actualizado
+- `/epi-dashboard/src/version.ts` - v2.7.2
+
+---
+
+### ❌ v2.7.3 (PATCH) - 02/11/2025 - FALLIDA
+**Intento: Detección espacial IoU para EPPs híbridos**
+- ❌ Implementada función calculateIoU (Intersection over Union)
+- ❌ Verificación de solapamiento entre BoundingBox de EPP y persona
+- ❌ Umbral IoU > 0.1 (10%)
+- ❌ RESULTADO: Bloqueó todos los EPPs híbridos (IoU muy bajo 0.002-0.028)
+
+**Problema:**
+- Lógica IoU comparaba BoundingBox pequeño (calzado) con BoundingBox grande (persona completa)
+- Solapamiento siempre era mínimo
+- Ningún EPP híbrido pasaba el umbral
+
+**Archivos modificados:**
+- `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs`
+
+**Estado:** Revertido en v2.7.6
+
+---
+
+### ❌ v2.7.4 (PATCH) - 02/11/2025 - FALLIDA
+**Intento: Búsqueda exacta de labels**
+- ✅ Cambio de `.includes()` a `===` para comparación exacta
+- ❌ No resolvió el problema (IoU seguía bloqueando)
+
+**Archivos modificados:**
+- `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs`
+
+---
+
+### ❌ v2.7.5 (PATCH) - 02/11/2025 - FALLIDA
+**Intento: Priorizar labels con instancias**
+- ✅ Buscar todos los labels coincidentes con `.filter()`
+- ✅ Elegir el que tenga instancias con `.find()`
+- ❌ No resolvió el problema (IoU seguía bloqueando)
+
+**Lógica:**
+- Encontraba "Footwear" (sin instancias) y "Shoe" (con instancias)
+- Priorizaba "Shoe" correctamente
+- Pero IoU bloqueaba la asignación a personas
+
+**Archivos modificados:**
+- `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs`
+
+---
+
+### ✅ v2.7.6 (PATCH) - 02/11/2025
+**Fix CRÍTICO: Eliminar lógica IoU - restaurar funcionalidad**
+- ✅ Eliminada completamente función calculateIoU
+- ✅ Eliminada verificación de solapamiento
+- ✅ Restaurado comportamiento anterior que funcionaba
+- ✅ Aplicación operativa nuevamente
+
+**Problema resuelto:**
+- Lógica IoU (v2.7.3-v2.7.5) bloqueaba todos los EPPs híbridos
+- Aplicación completamente inoperativa para detección híbrida
+- Usuario reportó problema crítico
+
+**Resultado:**
+- ✅ Boxes se dibujan correctamente en imagen
+- ❌ EPPs se agregan a TODAS las personas (sin verificación espacial)
+
+**Archivos modificados:**
+- `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs`
+
+**Despliegue:**
+- ✅ Lambda actualizada: 2025-11-01T22:50:27Z
+
+---
+
+### ✅ v2.7.7 (PATCH) - 02/11/2025 - FUNCIONAL
+**Fix DEFINITIVO: Verificación espacial correcta (como EPPs nativos)**
+- ✅ Función `isInsideBox()` verifica si centro del EPP está dentro de persona
+- ✅ Filtra instances que están dentro del BoundingBox de cada persona
+- ✅ Solo agrega EPP si hay instance dentro de esa persona específica
+- ✅ Lógica similar a DetectProtectiveEquipment nativo
+
+**Problema resuelto:**
+- v2.7.6 agregaba EPPs a todas las personas sin discriminar
+- Usuario reportó: "calzado se repite en ambas personas cuando solo una lo tiene"
+- Necesitaba verificación espacial pero bien implementada
+
+**Solución implementada:**
+```javascript
+const isInsideBox = (innerBox, outerBox) => {
+  const innerCenterX = innerBox.Left + innerBox.Width / 2;
+  const innerCenterY = innerBox.Top + innerBox.Height / 2;
+  
+  return innerCenterX >= outerBox.Left && 
+         innerCenterX <= outerBox.Left + outerBox.Width &&
+         innerCenterY >= outerBox.Top && 
+         innerCenterY <= outerBox.Top + outerBox.Height;
+};
+
+// Filtrar instances dentro de esta persona
+const instancesInPerson = matchedLabel.Instances.filter(instance => 
+  instance.BoundingBox && person.BoundingBox && 
+  isInsideBox(instance.BoundingBox, person.BoundingBox)
+);
+```
+
+**Resultado:**
+- ✅ Boxes dibujados correctamente
+- ✅ EPPs solo en personas correctas
+- ✅ Detección híbrida funcional
+- ✅ Aplicación operativa
+
+**Archivos modificados:**
+- `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs`
+
+**Despliegue:**
+- ✅ Lambda actualizada: 2025-11-01T22:58:38Z
+
+**Lecciones aprendidas:**
+- IoU (Intersection over Union) no es apropiado para este caso
+- Verificación simple del centro funciona mejor
+- Seguir la lógica de EPPs nativos es el enfoque correcto
+
+---
+
+### ✅ v2.8.0 (MINOR) - 03/11/2025
+**Mejoras UX: Badges colores + analysisId + Formulario autocompletado**
+- ✅ Badges de EPP con colores según estado:
+  - Verde: Cumple (≥ umbral)
+  - Amarillo: Detectado pero bajo umbral
+  - Rojo: No detectado
+- ✅ ID único de análisis (analysisId UUID) visible en resumen y PDF
+- ✅ Formulario de contacto autocompletado con datos del perfil de usuario
+- ✅ Mensaje prellenado al reportar error desde análisis
+
+**Problema resuelto:**
+- Usuario solícito mejoras visuales para diferenciar estados de EPP
+- Necesidad de ID único para rastrear análisis específicos
+- Formulario de contacto requería llenar datos manualmente
+
+**Solución implementada:**
+- Badges con colores distintivos:
+  - `bg-green-500 text-white`: Cumple (EPP detectado ≥ umbral)
+  - `bg-yellow-500 text-white`: Bajo umbral (EPP detectado < umbral)
+  - `bg-red-500 text-white`: No detectado (EPP no encontrado)
+- UUID generado con `uuidv4()` al crear análisis
+- Formulario ContactModal recibe `userProfile` como prop
+- Autocompletado de nombre y email desde perfil
+
+**Archivos modificados:**
+- `/epi-dashboard/src/components/ImageComparison.tsx` - Badges colores en tabla
+- `/epi-dashboard/src/App.tsx` - analysisId UUID + pasar userProfile a ContactModal
+- `/epi-dashboard/src/utils/pdfGenerator.ts` - analysisId en PDF
+- `/epi-dashboard/src/components/ContactModal.tsx` - Autocompletado desde userProfile
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.8.0
+
+**Despliegues:**
+- ✅ Frontend desplegado vía Amplify (03/11/2025)
+
+**Estructura analysisResult actualizada:**
+```javascript
+{
+  analysisId: 'uuid-v4-string',
+  timestamp: Date.now(),
+  imageUrl: '...',
+  selectedEPPs: [...],
+  ProtectiveEquipment: [...],
+  Summary: {...},
+  aiSummary: '...'
+}
+```
+
+**Badges en tabla:**
+- No evaluable: `bg-gray-100 text-gray-600` (⚠️)
+- No detectado: `bg-red-500 text-white` (❌)
+- Cumple: `bg-green-500 text-white` (✅)
+- Bajo umbral: `bg-yellow-500 text-white` (⚠️)
+
+---
+
+### ✅ v2.8.1 (PATCH) - 04/11/2025
+**Fix: 10 correcciones UX, PDF y Resumen IA**
+- ✅ Eliminada sección métodos de detección EPP del paso 3 del asistente
+- ✅ Badges de colores en EPPs seleccionados (verde/amarillo/rojo según estado)
+- ✅ analysisId UUID visible inmediatamente en resumen de análisis
+- ✅ PDF: Confianza mínima corregida (ya no muestra undefined)
+- ✅ PDF: Análisis detallado sincronizado con tabla frontend (amarillo para bajo umbral)
+- ✅ PDF: Imagen analizada centrada en la página
+- ✅ PDF: Texto resumen IA con maxWidth para mejor legibilidad
+- ✅ Resumen IA menciona EPPs bajo umbral con recomendaciones
+- ✅ Historial: Badge de nivel de confianza visible
+- ✅ Historial: analysisId duplicado eliminado
+
+**Problemas resueltos:**
+- Usuario reportaba que EPPs seleccionados no mostraban estado visual
+- analysisId no era visible al terminar el análisis
+- PDF mostraba "undefined" en confianza mínima
+- PDF no coincidía con tabla del frontend (faltaba amarillo)
+- Imagen en PDF no estaba centrada
+- Resumen IA no mencionaba EPPs detectados bajo umbral
+- Historial no mostraba nivel de confianza claramente
+- analysisId aparecía duplicado en historial
+
+**Solución implementada:**
+
+1. **EPPs seleccionados con badges:**
+```typescript
+const badgeColor = !detected ? 'bg-red-500 text-white' : 
+                 meetsThreshold ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white';
+```
+
+2. **PDF confianza mínima:**
+```typescript
+${analysisData.MinConfidence || analysisData.Summary?.minConfidence || 75}%
+```
+
+3. **PDF imagen centrada:**
+```typescript
+const imgX = (pageWidth - imgWidth) / 2;
+pdf.addImage(base64, 'JPEG', imgX, yPosition, imgWidth, imgHeight);
+```
+
+4. **PDF estado "Bajo umbral" (amarillo):**
+```typescript
+pdf.setTextColor(251, 191, 36); // Amarillo
+pdf.text(`Bajo umbral ${eppConfidence.toFixed(0)}%`, 165, yPosition);
+```
+
+5. **Resumen IA con EPPs bajo umbral:**
+```typescript
+summary += `**⚠️ EPP detectados pero bajo el umbral de ${MinConfidence}%**: ${belowNames}\n`;
+summary += `**🔍 Recomendaciones para mejorar la detección:**\n`;
+```
+
+6. **Historial con badge de confianza:**
+```typescript
+<span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
+  {analysis.MinConfidence || 75}% confianza
+</span>
+```
+
+**Archivos modificados:**
+- `/epi-dashboard/src/components/GuidedAnalysisWizard.tsx` - Eliminado EPPDetectionInfo
+- `/epi-dashboard/src/App.tsx` - Badges colores EPPs + historial mejorado + resumen IA completo
+- `/epi-dashboard/src/utils/pdfGenerator.ts` - Confianza fix + imagen centrada + estado amarillo
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.8.1
+
+**Despliegues:**
+- ✅ Frontend desplegado vía Amplify (04/11/2025)
+
+**Badges actualizados:**
+- No detectado: `bg-red-500 text-white` ❌
+- Bajo umbral: `bg-yellow-500 text-white` ⚠️ (NUEVO)
+- Cumple: `bg-green-500 text-white` ✅
+- No evaluable: `bg-gray-100 text-gray-600` ⚠️
+
+---
+
+### ✅ v2.8.2 (PATCH) - 04/11/2025
+**Fix: 4 correcciones críticas UX y PDF**
+- ✅ analysisId visible al inicio del resumen (antes de tarjetas de estadísticas)
+- ✅ PDF análisis detallado replica tabla frontend (FOOT_COVER con LEFT_FOOT/RIGHT_FOOT)
+- ✅ analysisId duplicado eliminado en vista de informe desde historial
+- ✅ Lambda Bedrock corregida (mapeo FOOT_COVER completo)
+
+**Problemas resueltos:**
+- analysisId no era visible al inicio del resumen en modo guiado
+- PDF no mostraba calzado en análisis detallado (faltaba LEFT_FOOT/RIGHT_FOOT en mapeo)
+- analysisId aparecía duplicado en la vista de informe desde historial
+- Lambda Bedrock no mencionaba calzado bajo umbral (mapeo incompleto)
+
+**Solución implementada:**
+
+1. **analysisId al inicio del resumen:**
+```typescript
+{results.analysisId && (
+  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+    <p className="text-xs font-semibold text-blue-700 mb-1">🎯 ID de Análisis:</p>
+    <p className="text-sm font-mono text-blue-900">{results.analysisId}</p>
+  </div>
+)}
+```
+
+2. **PDF FOOT_COVER completo:**
+```typescript
+const eppToParts: any = {
+  'FOOT_COVER': ['FOOT', 'LEFT_FOOT', 'RIGHT_FOOT'],
+  // ...
+};
+```
+
+3. **analysisId duplicado eliminado:**
+```typescript
+// Eliminada sección duplicada en vista de informe
+<div className="text-sm text-gray-500 mb-4">
+  <p>📅 Fecha: {new Date(results.timestamp).toLocaleString()}</p>
+</div>
+```
+
+4. **Lambda Bedrock actualizada:**
+```python
+'FOOT_COVER': ['FOOT', 'LEFT_FOOT', 'RIGHT_FOOT']
+```
+
+**Archivos modificados:**
+- `/epi-dashboard/src/App.tsx` - analysisId al inicio + duplicado eliminado
+- `/epi-dashboard/src/utils/pdfGenerator.ts` - FOOT_COVER mapeo completo
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.8.2
+- `bedrock-summary-lambda.py` - Mapeo FOOT_COVER corregido
+
+**Despliegues:**
+- ✅ Frontend desplegado vía Amplify (04/11/2025)
+- ✅ Lambda bedrock-summary actualizada (04/11/2025)
+
+---
+
+### ✅ v2.8.3 (PATCH) - 04/11/2025
+**Fix: MinConfidence ahora se guarda correctamente en DynamoDB**
+- ✅ Campo MinConfidence agregado explícitamente al guardar análisis
+- ✅ Tarjeta naranja en informe desde historial ahora muestra el valor correcto
+
+**Problema resuelto:**
+- En el informe accedido desde historial, la tarjeta de "Confianza Mínima" solo mostraba "%" sin el número
+- Causa raíz: El campo `MinConfidence` no se estaba guardando explícitamente en el objeto `analysisResult`
+- La Lambda no devuelve `MinConfidence` en su respuesta, por lo que debe agregarse manualmente
+
+**Solución implementada:**
+
+1. **handleUpload (Línea 672):**
+```typescript
+const analysisResult = { 
+  ...res.data, 
+  analysisId, 
+  timestamp: Date.now(), 
+  imageUrl, 
+  selectedEPPs: epiItems,
+  MinConfidence: minConfidence  // AGREGADO
+};
+```
+
+2. **handleUploadWithFile (Línea 1003):**
+```typescript
+const analysisResult = { 
+  ...res.data, 
+  analysisId, 
+  timestamp: Date.now(), 
+  imageUrl: `...`, 
+  selectedEPPs: uploadEpiItems,
+  MinConfidence: uploadMinConfidence  // AGREGADO
+};
+```
+
+**Archivos modificados:**
+- `/epi-dashboard/src/App.tsx` - MinConfidence agregado en 2 ubicaciones
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.8.3
+
+**Despliegues:**
+- ✅ Frontend desplegado vía Amplify (04/11/2025)
+
+**Nota:** Los análisis antiguos sin MinConfidence seguirán mostrando solo "%", pero todos los nuevos análisis guardarán el valor correctamente.
+
+---
+
+## 🐛 BUGS PENDIENTES - v2.8.4
+
+### Sin bugs pendientes
+
+✅ **Todos los bugs identificados han sido resueltos**
+
+---
+
+## 🐛 BUGS CORREGIDOS (v2.8.1)
+
+### ❌ 1. **Sección métodos de detección EPP duplicada**
+**Ubicación:** Paso 3 del asistente de análisis
+**Problema:** Se menciona y aclara los métodos de detección de EPP en una sección que debe eliminarse
+**Solución:** Eliminar apartado de métodos de detección del paso 3
+**Archivo:** `/epi-dashboard/src/components/GuidedAnalysisWizard.tsx`
+
+#### 2. **EPPs seleccionados sin badges de colores**
+**Ubicación:** Resumen del análisis (inicio)
+**Problema:** Los elementos EPP seleccionados no tienen badges de colores según estado
+**Solución:** Aplicar misma lógica de badges (verde/amarillo/rojo) a EPPs seleccionados
+**Archivo:** `/epi-dashboard/src/App.tsx`
+
+#### 3. **analysisId no visible al terminar análisis**
+**Ubicación:** Resumen del análisis
+**Problema:** El ID único de análisis no se muestra apenas termina el análisis
+**Solución:** Mostrar analysisId en el resumen inmediatamente después del análisis
+**Archivo:** `/epi-dashboard/src/App.tsx`
+
+#### 4. **PDF muestra confianza mínima como undefined**
+**Ubicación:** PDF exportado
+**Problema:** El PDF no muestra la confianza mínima seteada, dice "undefined"
+**Solución:** Usar `analysisData.MinConfidence || minConfidence` en pdfGenerator
+**Archivo:** `/epi-dashboard/src/utils/pdfGenerator.ts`
+
+#### 5. **PDF análisis detallado no coincide con tabla**
+**Ubicación:** PDF - Análisis detallado por persona
+**Problema:** El PDF no muestra lo mismo que se ve en la tabla del frontend
+**Solución:** Sincronizar lógica de tabla PDF con tabla frontend (badges colores)
+**Archivo:** `/epi-dashboard/src/utils/pdfGenerator.ts`
+
+#### 6. **Imagen analizada en PDF no centrada**
+**Ubicación:** PDF - Imagen analizada
+**Problema:** La imagen analizada no está centrada en el PDF
+**Solución:** Calcular posición X para centrar imagen: `(pageWidth - imgWidth) / 2`
+**Archivo:** `/epi-dashboard/src/utils/pdfGenerator.ts`
+
+#### 7. **Resumen IA no justificado en PDF**
+**Ubicación:** PDF - Cuerpo del informe técnico
+**Problema:** El texto del resumen inteligente no está justificado
+**Solución:** Aplicar `pdf.text(..., { align: 'justify' })` al resumen IA
+**Archivo:** `/epi-dashboard/src/utils/pdfGenerator.ts`
+
+#### 8. **Resumen IA no menciona EPPs bajo umbral**
+**Ubicación:** Resumen inteligente de IA
+**Problema:** Solo menciona EPPs cumplientes, no menciona los detectados bajo umbral
+**Solución:** Agregar sección en resumen IA para EPPs detectados pero bajo umbral
+**Archivo:** `/epi-dashboard/src/App.tsx` - función `generateLocalAISummary`
+
+#### 9. **Nivel de confianza no visible en historial**
+**Ubicación:** Historial de análisis
+**Problema:** El nivel de confianza no se divisa en el historial
+**Solución:** Mostrar badge con nivel de confianza en cada análisis del historial
+**Archivo:** `/epi-dashboard/src/App.tsx`
+
+#### 10. **analysisId duplicado en historial**
+**Ubicación:** Historial de análisis
+**Problema:** El ID de análisis se ve repetido en 2 ubicaciones diferentes
+**Solución:** Eliminar una de las ubicaciones duplicadas del analysisId
+**Archivo:** `/epi-dashboard/src/App.tsx`
+
+---
+
+### ✅ v2.8.6 (PATCH) - 02/11/2025
+**Fix: Dashboard análisis recientes ordenados + PDF cumplimiento correcto + párrafos justificados**
+- ✅ Dashboard: Análisis recientes ahora usa `.slice(0, 6)` en lugar de `.slice(-6).reverse()`
+- ✅ PDF: Recibe `compliantCount` calculado con calculateCompliance como parámetro
+- ✅ PDF: Usa cumplimiento correcto en tarjeta de cumplientes y porcentaje
+- ✅ PDF: Párrafos del resumen IA justificados para mejor presentación
+
+**Problema resuelto:**
+- Dashboard mostraba análisis recientes desactualizados (tomaba últimos 6 e invertía)
+- PDF mostraba cumplimiento incorrecto (usaba Summary.compliant de la Lambda)
+- PDF tenía texto del resumen IA alineado a la izquierda
+
+**Solución implementada:**
+- Dashboard toma primeros 6 de analysisHistory ya ordenado por timestamp descendente
+- PDF calcula compliantCount con calculateCompliance antes de generar
+- PDF usa align: 'justify' en resumen IA
+
+**Archivos modificados:**
+- `/epi-dashboard/src/components/Dashboard.tsx` - Ordenamiento análisis recientes
+- `/epi-dashboard/src/utils/pdfGenerator.ts` - compliantCount + justificado
+- `/epi-dashboard/src/App.tsx` - Pasar compliantCount al PDF
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.8.6
+
+**Despliegues:**
+- ✅ Frontend desplegado vía Amplify (02/11/2025)
+
+---
+
+### ✅ v2.8.5 (PATCH) - 02/11/2025
+**Fix: Cumplimiento correcto en historial/dashboard + ordenamiento por timestamp**
+- ✅ Función calculateCompliance recalcula cumplimiento basado en EPPs seleccionados y umbral
+- ✅ Historial muestra cumplimiento correcto (usa calculateCompliance)
+- ✅ Dashboard muestra cumplimiento correcto (usa calculateCompliance)
+- ✅ analysisHistory ordenado por timestamp descendente (más reciente primero)
+- ✅ Dashboard muestra análisis recientes actualizados correctamente
+- ✅ Consistencia total entre Dashboard e Historial
+
+**Problema resuelto:**
+- Lambda devuelve `Summary.compliant` basado solo en EPPs nativos (HEAD_COVER, HAND_COVER, FACE_COVER)
+- Usuario selecciona EPPs híbridos (EYE_COVER) que no se consideraban en el cálculo
+- Dashboard mostraba análisis desactualizados por falta de ordenamiento
+- Historial y Dashboard mostraban "0 cumplientes" cuando debería ser "3 cumplientes"
+
+**Solución implementada:**
+- calculateCompliance calcula cumplimiento real: persona cumple si tiene TODOS los EPPs seleccionados con confianza ≥ umbral
+- Ordenamiento explícito por timestamp en fetchAnalysisData
+- Dashboard recibe calculateCompliance como prop y lo usa en estadísticas y lista reciente
+
+**Archivos modificados:**
+- `/epi-dashboard/src/App.tsx` - calculateCompliance + ordenamiento + prop a Dashboard
+- `/epi-dashboard/src/components/Dashboard.tsx` - Usa calculateCompliance
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.8.5
+
+**Despliegues:**
+- ✅ Frontend desplegado vía Amplify (02/11/2025)
+
+**Nota:** Esta versión corrige el commit 7d6c574 que se hizo sin versionar
+
+---
+
+**Última actualización:** 02/11/2025 - v2.8.6 DESPLEGADO
+**Versión actual:** v2.8.6
+**Estado:** ✅ Estable - Dashboard, Historial y PDF consistentes
+**Bugs pendientes:** 0
+**Backups:** ✅ Local + Nube configurados
+
+
+---
+
+### ✅ v2.8.11 (PATCH) - 02/11/2025
+**Fix CRÍTICO: Lambda genera presignedUrl para TODOS los tipos de detección**
+
+**Problema reportado:**
+- Detección de objetos (label_detection) tiraba error: "cannot read properties of undefined"
+- Mismo error ocurría con face_detection y text_detection
+- Solo ppe_detection funcionaba correctamente
+
+**Causa raíz identificada:**
+- Lambda rekognition-processor solo generaba presignedUrl para `ppe_detection`
+- Otros tipos de detección (label_detection, text_detection, face_detection) devolvían datos directamente sin presignedUrl
+- Frontend SIEMPRE espera presignedUrl para obtener JSON desde S3 (líneas 626-640 de App.tsx)
+- Sin presignedUrl → error "cannot read properties of undefined (reading 'protocol')"
+
+**Análisis del flujo correcto:**
+1. Frontend envía imagen a Lambda rekognition-processor
+2. Lambda procesa imagen con Rekognition
+3. Lambda guarda resultados en S3 como JSON (`web/${baseName}_${timestamp}.json`)
+4. Lambda genera presignedUrl usando `getSignedUrl` de AWS SDK
+5. Lambda devuelve respuesta CON presignedUrl incluido
+6. Frontend hace `axios.get(presignedUrl)` para obtener JSON con resultados
+7. Frontend procesa y muestra resultados
+
+**Problema detectado en Lambda:**
+```javascript
+// ❌ INCORRECTO (label_detection, text_detection, face_detection)
+case 'label_detection':
+  detectionResult = await rekognition.send(new DetectLabelsCommand(params));
+  return {
+    Labels: detectionResult.Labels,
+    Summary: { totalLabels: detectionResult.Labels.length },
+    DetectionType: 'label_detection',
+    // ❌ FALTA presignedUrl
+  };
+
+// ✅ CORRECTO (ppe_detection)
+case 'ppe_detection':
+  // ... procesamiento ...
+  await s3.send(new PutObjectCommand({ /* guardar en S3 */ }));
+  const presignedUrl = await getSignedUrl(s3, new GetObjectCommand({ /* ... */ }));
+  return {
+    ...resultData,
+    presignedUrl,  // ✅ presignedUrl incluido
+  };
+```
+
+**Solución implementada:**
+- Modificada Lambda rekognition-processor para que TODOS los tipos de detección:
+  1. Guarden resultados en S3 como JSON
+  2. Generen presignedUrl usando `getSignedUrl`
+  3. Devuelvan respuesta con presignedUrl incluido
+
+**Código corregido:**
+```javascript
+case 'label_detection':
+  detectionResult = await rekognition.send(new DetectLabelsCommand(params));
+  
+  const labelResultData = {
+    Labels: detectionResult.Labels,
+    Summary: { totalLabels: detectionResult.Labels.length, minConfidence },
+    DetectionType: 'label_detection',
+  };
+  
+  // Guardar resultado en S3
+  const labelBaseName = filename.split('/').pop().split('.')[0];
+  const labelJsonKey = `web/${labelBaseName}_${Date.now()}.json`;
+  
+  await s3.send(new PutObjectCommand({
+    Bucket: bucket,
+    Key: labelJsonKey,
+    Body: JSON.stringify(labelResultData),
+    ContentType: 'application/json',
+  }));
+  
+  // Generar presigned URL
+  const labelPresignedUrl = await getSignedUrl(s3, new GetObjectCommand({
+    Bucket: bucket,
+    Key: labelJsonKey,
+  }), { expiresIn: 3600 });
+  
+  return {
+    ...labelResultData,
+    presignedUrl: labelPresignedUrl,  // ✅ presignedUrl incluido
+  };
+```
+
+**Tipos de detección corregidos:**
+- ✅ face_detection: Ahora guarda en S3 y genera presignedUrl
+- ✅ label_detection: Ahora guarda en S3 y genera presignedUrl
+- ✅ text_detection: Ahora guarda en S3 y genera presignedUrl
+- ✅ ppe_detection: Ya funcionaba correctamente
+
+**Archivos modificados:**
+- `/tmp/aws-toolkit-vscode/lambda/us-east-1/rekognition-processor/index.mjs` - Todos los tipos de detección
+- `/epi-dashboard/src/version.ts` - Actualizado a v2.8.11
+
+**Despliegues:**
+- ✅ Lambda rekognition-processor actualizada (02/11/2025 21:06:32 UTC)
+- ✅ Frontend v2.8.11 pusheado a GitHub (Amplify auto-deploy)
+
+**Estructura correcta de respuesta Lambda (TODOS los tipos):**
+```javascript
+{
+  // Datos específicos del tipo de detección
+  Labels: [...],              // para label_detection
+  Faces: [...],               // para face_detection
+  TextDetections: [...],      // para text_detection
+  ProtectiveEquipment: [...], // para ppe_detection
+  
+  // Campos comunes
+  Summary: { ... },
+  DetectionType: 'label_detection',
+  presignedUrl: 'https://rekognition-gcontreras.s3...'  // ✅ OBLIGATORIO
+}
+```
+
+**Lecciones aprendidas:**
+1. ⚠️ **Flujo unificado:** TODOS los tipos de detección deben seguir el mismo flujo (guardar en S3 + presignedUrl)
+2. ⚠️ **Frontend espera consistencia:** El frontend está diseñado para obtener resultados desde S3 usando presignedUrl
+3. ⚠️ **No asumir diferencias:** Aunque los tipos de detección son diferentes, el flujo de respuesta debe ser idéntico
+4. ⚠️ **Documentar estructura:** La estructura de respuesta de la Lambda debe estar documentada y ser consistente
+5. ⚠️ **Revisar incidente v2.6.17:** Este mismo problema ya se había resuelto para ppe_detection, debió aplicarse a todos los tipos
+
+**Relación con incidente v2.6.17:**
+- v2.6.17 resolvió el problema de presignedUrl para ppe_detection
+- v2.8.11 extiende la solución a TODOS los tipos de detección
+- Ambos incidentes tienen la misma causa raíz: Lambda no genera presignedUrl
+- Ambos incidentes tienen la misma solución: Guardar en S3 + generar presignedUrl
+
+**Tiempo de resolución:** ~30 minutos
+**Impacto:** Detección de objetos/rostros/texto completamente inoperativa
+**Estado final:** ✅ Todos los tipos de detección funcionando correctamente
+
+---
+
+**Última actualización:** 02/11/2025 - v2.8.11 DESPLEGADO
+**Versión actual:** v2.8.11
+**Estado:** ✅ Estable - Todos los tipos de detección funcionales
+**Bugs pendientes:** 0
