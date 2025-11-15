@@ -1576,26 +1576,26 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                  
+                  {hasMoreHistory && (
+                    <div className="mt-6 text-center">
+                      <button
+                        onClick={() => fetchHistory(true)}
+                        disabled={loadingHistory}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                      >
+                        {loadingHistory ? (
+                          <div className="flex items-center space-x-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            <span>Cargando...</span>
+                          </div>
+                        ) : (
+                          <span>🔄 Cargar más</span>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
-                
-                {hasMoreHistory && (
-                  <div className="mt-6 text-center">
-                    <button
-                      onClick={() => fetchHistory(true)}
-                      disabled={loadingHistory}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
-                    >
-                      {loadingHistory ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                          <span>Cargando...</span>
-                        </div>
-                      ) : (
-                        <span>🔄 Cargar más</span>
-                      )}
-                    </button>
-                  </div>
-                )}
               ) : (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-4">📋</div>
