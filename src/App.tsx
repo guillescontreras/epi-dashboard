@@ -24,9 +24,12 @@ import ConfirmModal from './components/ConfirmModal';
 import FAQ from './components/FAQ';
 import FeedbackModal from './components/FeedbackModal';
 import ContactModal from './components/ContactModal';
+import AdminPanel from './components/AdminPanel';
+import { fetchUserAttributes } from 'aws-amplify/auth';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
+  const [userRole, setUserRole] = useState<'user' | 'admin'>('user');
   const [file, setFile] = useState<File | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [imageUrl, setImageUrl] = useState<string>('');
@@ -65,6 +68,17 @@ const App: React.FC = () => {
       const user = await getCurrentUser();
       console.log('Usuario actual:', user);
       setCurrentUserId(user.username);
+      
+      // Verificar rol de usuario
+      try {
+        const attributes = await fetchUserAttributes();
+        const role = attributes['custom:role'] as 'user' | 'admin' || 'user';
+        setUserRole(role);
+        console.log('👤 Rol de usuario:', role);
+      } catch (roleError) {
+        console.log('No se pudo obtener rol, asumiendo user');
+        setUserRole('user');
+      }
       
       // Verificar si tiene perfil
       try {
@@ -1333,6 +1347,8 @@ const App: React.FC = () => {
         );
       case 'dashboard':
         return <Dashboard analysisHistory={analysisHistory} calculateCompliance={calculateCompliance} />;
+      case 'admin':
+        return userRole === 'admin' ? <AdminPanel /> : null;
       case 'history':
         // Si hay un resultado seleccionado, mostrar informe completo
         if (results && activeSection === 'history') {
@@ -1657,7 +1673,8 @@ const App: React.FC = () => {
     <AuthWrapper>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       <ModernHeader 
-        activeSection={activeSection} 
+        activeSection={activeSection}
+        isAdmin={userRole === 'admin'}
         onSectionChange={(section) => {
           // Evitar cambio accidental de sección durante análisis
           if (progress > 0 && progress < 100) {

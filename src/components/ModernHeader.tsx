@@ -5,13 +5,15 @@ interface ModernHeaderProps {
   onSectionChange: (section: string) => void;
   onGuidedMode?: () => void;
   userMenu?: React.ReactNode;
+  isAdmin?: boolean;
 }
 
-const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionChange, onGuidedMode, userMenu }) => {
+const ModernHeader: React.FC<ModernHeaderProps> = ({ activeSection, onSectionChange, onGuidedMode, userMenu, isAdmin }) => {
   const sections = [
     { id: 'analysis', name: 'Análisis', icon: '🔬' },
     { id: 'dashboard', name: 'Dashboard', icon: '📊' },
-    { id: 'history', name: 'Historial', icon: '📈' }
+    { id: 'history', name: 'Historial', icon: '📈' },
+    ...(isAdmin ? [{ id: 'admin', name: 'Admin', icon: '🔧' }] : [])
   ];
 
   return (
