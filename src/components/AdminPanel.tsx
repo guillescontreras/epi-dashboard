@@ -3,9 +3,10 @@ import axios from 'axios';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { toast } from 'react-toastify';
 
-const ADMIN_STATS_URL = 'https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod/stats';
-const ADMIN_USERS_URL = 'https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod/users';
-const ADMIN_ACTIONS_URL = 'https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod/actions';
+const ADMIN_API_BASE = 'https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod';
+const ADMIN_STATS_URL = `${ADMIN_API_BASE}/stats`;
+const ADMIN_USERS_URL = `${ADMIN_API_BASE}/users`;
+const ADMIN_ACTIONS_URL = `${ADMIN_API_BASE}/actions`;
 
 interface User {
   username: string;
