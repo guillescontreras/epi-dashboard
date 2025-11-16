@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.9.3';
+export const APP_VERSION = '2.9.4';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.9.4': 'Feature: Informe completo en admin con ImageComparison (tabla EPP + imágenes lado a lado)',
   '2.9.3': 'Feature: Historial usuario con paginación + modal informe completo (UI idéntica a Historial)',
   '2.9.2': 'Feature: Gráficos de actividad temporal (últimos 30 días) con recharts',
   '2.9.1': 'Feature: Historial por usuario + usuarios activos + corrección conteo usuarios',

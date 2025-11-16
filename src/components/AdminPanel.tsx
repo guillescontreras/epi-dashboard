@@ -3,6 +3,7 @@ import axios from 'axios';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { toast } from 'react-toastify';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import ImageComparison from './ImageComparison';
 
 const ADMIN_API_BASE = 'https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod';
 const ADMIN_STATS_URL = `${ADMIN_API_BASE}/stats`;
@@ -542,23 +543,14 @@ const AdminPanel: React.FC = () => {
                 </div>
               )}
               
-              {/* Imagen */}
+              {/* Comparación de Imágenes */}
               {viewingAnalysis.imageUrl && (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                  <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-100">
-                    <h3 className="text-lg font-semibold text-gray-900">🖼️ Imagen Analizada</h3>
-                  </div>
-                  <div className="p-6">
-                    <img 
-                      src={viewingAnalysis.imageUrl} 
-                      alt="Análisis" 
-                      className="w-full rounded-lg shadow-lg"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext fill="%239ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" text-anchor="middle"%3EImagen no disponible%3C/text%3E%3C/svg%3E';
-                      }}
-                    />
-                  </div>
-                </div>
+                <ImageComparison
+                  results={viewingAnalysis}
+                  imageUrl={viewingAnalysis.imageUrl}
+                  minConfidence={viewingAnalysis.MinConfidence || 75}
+                  epiItems={viewingAnalysis.selectedEPPs || []}
+                />
               )}
             </div>
           </div>
