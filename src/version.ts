@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.9.0';
+export const APP_VERSION = '2.9.1';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.9.1': 'Feature: Historial por usuario + usuarios activos + corrección conteo usuarios',
   '2.9.0': 'Feature: Panel de administración con estadísticas y gestión de usuarios',
   '2.8.37': 'Fix: Historial ordenado por timestamp descendente + eliminación de duplicados',
   '2.8.36': 'Performance: Contador global optimizado - DynamoDB Scan en lugar de S3 ListObjects (~100ms vs ~2s)',

@@ -7,6 +7,7 @@ const ADMIN_API_BASE = 'https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/p
 const ADMIN_STATS_URL = `${ADMIN_API_BASE}/stats`;
 const ADMIN_USERS_URL = `${ADMIN_API_BASE}/users`;
 const ADMIN_ACTIONS_URL = `${ADMIN_API_BASE}/actions`;
+const ADMIN_USER_HISTORY_URL = `${ADMIN_API_BASE}/user-history`;
 
 interface User {
   username: string;
@@ -20,6 +21,7 @@ interface User {
 
 interface Stats {
   totalUsers: number;
+  activeUsers: number;
   totalAnalyses: number;
   byType: {
     ppe: number;
@@ -29,6 +31,11 @@ interface Stats {
   };
 }
 
+interface UserHistory {
+  history: any[];
+  count: number;
+}
+
 const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'stats' | 'users'>('stats');
   const [stats, setStats] = useState<Stats | null>(null);
@@ -36,6 +43,8 @@ const AdminPanel: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [userHistory, setUserHistory] = useState<any[]>([]);
+  const [loadingUserHistory, setLoadingUserHistory] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'stats') {
@@ -52,13 +61,7 @@ const AdminPanel: React.FC = () => {
       setStats(response.data);
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
-      // Mock data para desarrollo
-      setStats({
-        totalUsers: 0,
-        totalAnalyses: 0,
-        byType: { ppe: 0, face: 0, label: 0, text: 0 }
-      });
-      toast.info('Modo desarrollo: Estadísticas no disponibles');
+      toast.error('Error cargando estadísticas');
     } finally {
       setLoading(false);
     }
@@ -100,6 +103,23 @@ const AdminPanel: React.FC = () => {
     } catch (error) {
       console.error('Error cambiando rol:', error);
       toast.error('Error cambiando rol');
+    }
+  };
+
+  const handleViewHistory = async (user: User) => {
+    setSelectedUser(user);
+    setShowUserModal(true);
+    setLoadingUserHistory(true);
+    
+    try {
+      const response = await axios.get(`${ADMIN_USER_HISTORY_URL}?userId=${user.username}`);
+      setUserHistory(response.data.history || []);
+    } catch (error) {
+      console.error('Error cargando historial:', error);
+      toast.error('Error cargando historial del usuario');
+      setUserHistory([]);
+    } finally {
+      setLoadingUserHistory(false);
     }
   };
 
@@ -148,10 +168,14 @@ const AdminPanel: React.FC = () => {
             <div className="space-y-6">
               {stats && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-6 text-white">
                       <p className="text-4xl font-bold">{stats.totalUsers}</p>
                       <p className="text-sm opacity-90 mt-2">Usuarios Registrados</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-teal-500 to-green-500 rounded-xl p-6 text-white">
+                      <p className="text-4xl font-bold">{stats.activeUsers}</p>
+                      <p className="text-sm opacity-90 mt-2">Usuarios Activos</p>
                     </div>
                     <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-6 text-white">
                       <p className="text-4xl font-bold">{stats.totalAnalyses}</p>
@@ -223,6 +247,13 @@ const AdminPanel: React.FC = () => {
                         <td className="px-4 py-3 text-sm text-gray-500">{user.lastAnalysis || '-'}</td>
                         <td className="px-4 py-3 text-sm space-x-2">
                           <button
+                            onClick={() => handleViewHistory(user)}
+                            className="text-blue-600 hover:text-blue-800 font-medium"
+                            title="Ver historial"
+                          >
+                            👁️
+                          </button>
+                          <button
                             onClick={() => handleResetPassword(user.username)}
                             className="text-orange-600 hover:text-orange-800 font-medium"
                             title="Resetear contraseña"
@@ -246,6 +277,80 @@ const AdminPanel: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modal Historial Usuario */}
+      {showUserModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Historial de {selectedUser.email}</h2>
+                <p className="text-sm text-gray-600">{selectedUser.analysisCount} análisis realizados</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUserModal(false);
+                  setSelectedUser(null);
+                  setUserHistory([]);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {loadingUserHistory ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-500">Cargando historial...</p>
+                </div>
+              ) : userHistory.length > 0 ? (
+                <div className="space-y-4">
+                  {userHistory.map((analysis, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
+                             analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
+                             analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
+                             analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
+                             '🔍 Análisis General'}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {new Date(analysis.timestamp).toLocaleString()}
+                          </p>
+                          {analysis.analysisId && (
+                            <p className="text-xs text-gray-400 font-mono mt-1">
+                              ID: {analysis.analysisId}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
+                            {analysis.MinConfidence || 75}% confianza
+                          </span>
+                          {analysis.Summary && analysis.DetectionType === 'ppe_detection' && (
+                            <p className="text-sm text-gray-600 mt-2">
+                              {analysis.Summary.totalPersons} personas detectadas
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📊</div>
+                  <p className="text-gray-500">Este usuario aún no ha realizado análisis</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
