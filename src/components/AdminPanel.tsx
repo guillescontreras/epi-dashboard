@@ -91,8 +91,23 @@ const AdminPanel: React.FC = () => {
     if (!window.confirm(`¿Resetear contraseña de ${username}?`)) return;
     
     try {
-      await axios.post(ADMIN_ACTIONS_URL, { action: 'reset-password', username });
-      toast.success('Contraseña reseteada. El usuario recibirá un email.');
+      const response = await axios.post(ADMIN_ACTIONS_URL, { action: 'reset-password', username });
+      const tempPassword = response.data.temporaryPassword;
+      
+      if (tempPassword) {
+        // Mostrar contraseña temporal en modal
+        const message = `Contraseña temporal generada para ${username}:\n\n${tempPassword}\n\nEl usuario deberá cambiarla en el primer inicio de sesión.`;
+        alert(message);
+        
+        // Copiar al portapapeles
+        navigator.clipboard.writeText(tempPassword).then(() => {
+          toast.success('Contraseña temporal copiada al portapapeles');
+        }).catch(() => {
+          toast.success('Contraseña temporal generada (ver alerta)');
+        });
+      } else {
+        toast.success('Contraseña reseteada exitosamente');
+      }
     } catch (error) {
       console.error('Error reseteando contraseña:', error);
       toast.error('Error reseteando contraseña');

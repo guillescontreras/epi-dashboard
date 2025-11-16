@@ -69,16 +69,11 @@ const App: React.FC = () => {
       console.log('Usuario actual:', user);
       setCurrentUserId(user.username);
       
-      // Verificar rol de usuario
-      try {
-        const attributes = await fetchUserAttributes();
-        const role = attributes['custom:role'] as 'user' | 'admin' || 'user';
-        setUserRole(role);
-        console.log('👤 Rol de usuario:', role);
-      } catch (roleError) {
-        console.log('No se pudo obtener rol, asumiendo user');
-        setUserRole('user');
-      }
+      // Verificar rol de usuario - SIEMPRE
+      const attributes = await fetchUserAttributes();
+      const role = attributes['custom:role'] as 'user' | 'admin' || 'user';
+      setUserRole(role);
+      console.log('👤 Rol de usuario:', role);
       
       // Verificar si tiene perfil
       try {
@@ -92,6 +87,29 @@ const App: React.FC = () => {
         console.log('No se encontró perfil, mostrar modal');
         setShowProfileModal(true);
       }
+    } catch (error) {
+      console.error('Error cargando datos:', error);
+      setTotalAnalysisCount(0);
+      setUserRole('user');
+    }
+  };
+  
+  // Recargar rol cuando cambia activeSection
+  React.useEffect(() => {
+    const recheckRole = async () => {
+      try {
+        const attributes = await fetchUserAttributes();
+        const role = attributes['custom:role'] as 'user' | 'admin' || 'user';
+        if (role !== userRole) {
+          console.log('🔄 Rol actualizado:', role);
+          setUserRole(role);
+        }
+      } catch (error) {
+        console.log('Error verificando rol');
+      }
+    };
+    recheckRole();
+  }, [activeSection]);
     } catch (error) {
       console.error('Error cargando datos:', error);
       setTotalAnalysisCount(0);
