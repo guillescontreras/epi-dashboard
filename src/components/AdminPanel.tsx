@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { toast } from 'react-toastify';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 const ADMIN_API_BASE = 'https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod';
 const ADMIN_STATS_URL = `${ADMIN_API_BASE}/stats`;
@@ -29,6 +30,7 @@ interface Stats {
     label: number;
     text: number;
   };
+  dailyAnalyses?: Array<{ date: string; count: number }>;
 }
 
 interface UserHistory {
@@ -191,27 +193,84 @@ const AdminPanel: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución por Tipo</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-700">🦺 EPP Detection</span>
-                        <span className="font-bold text-blue-600">{stats.byType.ppe}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-700">👤 Face Detection</span>
-                        <span className="font-bold text-purple-600">{stats.byType.face}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-700">🏷️ Label Detection</span>
-                        <span className="font-bold text-green-600">{stats.byType.label}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-700">📝 Text Detection</span>
-                        <span className="font-bold text-orange-600">{stats.byType.text}</span>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-gray-50 rounded-xl p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución por Tipo</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700">🦺 EPP Detection</span>
+                          <span className="font-bold text-blue-600">{stats.byType.ppe}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700">👤 Face Detection</span>
+                          <span className="font-bold text-purple-600">{stats.byType.face}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700">🏷️ Label Detection</span>
+                          <span className="font-bold text-green-600">{stats.byType.label}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700">📝 Text Detection</span>
+                          <span className="font-bold text-orange-600">{stats.byType.text}</span>
+                        </div>
                       </div>
                     </div>
+
+                    {stats.dailyAnalyses && stats.dailyAnalyses.length > 0 && (
+                      <div className="bg-gray-50 rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">📈 Análisis Últimos 30 Días</h3>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <LineChart data={stats.dailyAnalyses}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis 
+                              dataKey="date" 
+                              tick={{ fontSize: 10 }}
+                              tickFormatter={(value) => {
+                                const date = new Date(value);
+                                return `${date.getDate()}/${date.getMonth() + 1}`;
+                              }}
+                            />
+                            <YAxis />
+                            <Tooltip 
+                              labelFormatter={(value) => {
+                                const date = new Date(value);
+                                return date.toLocaleDateString('es-ES');
+                              }}
+                            />
+                            <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
                   </div>
+
+                  {stats.dailyAnalyses && stats.dailyAnalyses.length > 0 && (
+                    <div className="bg-white rounded-xl p-6 border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Actividad Diaria Detallada</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={stats.dailyAnalyses}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="date" 
+                            tick={{ fontSize: 10 }}
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${date.getDate()}/${date.getMonth() + 1}`;
+                            }}
+                          />
+                          <YAxis />
+                          <Tooltip 
+                            labelFormatter={(value) => {
+                              const date = new Date(value);
+                              return date.toLocaleDateString('es-ES');
+                            }}
+                            formatter={(value) => [`${value} análisis`, 'Cantidad']}
+                          />
+                          <Bar dataKey="count" fill="#8b5cf6" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </>
               )}
             </div>

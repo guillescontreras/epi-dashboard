@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.9.1';
+export const APP_VERSION = '2.9.2';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.9.2': 'Feature: Gráficos de actividad temporal (últimos 30 días) con recharts',
   '2.9.1': 'Feature: Historial por usuario + usuarios activos + corrección conteo usuarios',
   '2.9.0': 'Feature: Panel de administración con estadísticas y gestión de usuarios',
   '2.8.37': 'Fix: Historial ordenado por timestamp descendente + eliminación de duplicados',
