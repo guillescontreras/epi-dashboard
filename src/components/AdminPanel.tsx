@@ -47,6 +47,9 @@ const AdminPanel: React.FC = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [userHistory, setUserHistory] = useState<any[]>([]);
   const [loadingUserHistory, setLoadingUserHistory] = useState(false);
+  const [lastUserHistoryKey, setLastUserHistoryKey] = useState<string | null>(null);
+  const [hasMoreUserHistory, setHasMoreUserHistory] = useState(false);
+  const [viewingAnalysis, setViewingAnalysis] = useState<any>(null);
 
   useEffect(() => {
     if (activeTab === 'stats') {
@@ -108,18 +111,37 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleViewHistory = async (user: User) => {
-    setSelectedUser(user);
-    setShowUserModal(true);
+  const handleViewHistory = async (user: User, loadMore = false) => {
+    if (!loadMore) {
+      setSelectedUser(user);
+      setShowUserModal(true);
+      setUserHistory([]);
+      setLastUserHistoryKey(null);
+    }
+    
     setLoadingUserHistory(true);
     
     try {
-      const response = await axios.get(`${ADMIN_USER_HISTORY_URL}?userId=${user.username}`);
-      setUserHistory(response.data.history || []);
+      let url = `${ADMIN_USER_HISTORY_URL}?userId=${user.username}&limit=10`;
+      if (loadMore && lastUserHistoryKey) {
+        url += `&lastKey=${encodeURIComponent(lastUserHistoryKey)}`;
+      }
+      
+      const response = await axios.get(url);
+      const newHistory = response.data.history || [];
+      
+      if (loadMore) {
+        setUserHistory(prev => [...prev, ...newHistory]);
+      } else {
+        setUserHistory(newHistory);
+      }
+      
+      setLastUserHistoryKey(response.data.lastKey || null);
+      setHasMoreUserHistory(!!response.data.lastKey);
     } catch (error) {
       console.error('Error cargando historial:', error);
       toast.error('Error cargando historial del usuario');
-      setUserHistory([]);
+      if (!loadMore) setUserHistory([]);
     } finally {
       setLoadingUserHistory(false);
     }
@@ -365,45 +387,177 @@ const AdminPanel: React.FC = () => {
                   <p className="text-gray-500">Cargando historial...</p>
                 </div>
               ) : userHistory.length > 0 ? (
-                <div className="space-y-4">
-                  {userHistory.map((analysis, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium text-gray-900">
-                            {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
-                             analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
-                             analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
-                             analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
-                             '🔍 Análisis General'}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {new Date(analysis.timestamp).toLocaleString()}
-                          </p>
-                          {analysis.analysisId && (
-                            <p className="text-xs text-gray-400 font-mono mt-1">
-                              ID: {analysis.analysisId}
+                <>
+                  <div className="space-y-4">
+                    {userHistory.map((analysis, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900">
+                              {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
+                               analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
+                               analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
+                               analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
+                               '🔍 Análisis General'}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {new Date(analysis.timestamp).toLocaleString()}
                             </p>
-                          )}
+                            {analysis.analysisId && (
+                              <p className="text-xs text-gray-400 font-mono mt-1">
+                                ID: {analysis.analysisId}
+                              </p>
+                            )}
+                            {analysis.DetectionType === 'ppe_detection' && analysis.selectedEPPs && analysis.selectedEPPs.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {analysis.selectedEPPs.map((epp: string) => {
+                                  const eppNames: any = {
+                                    'HEAD_COVER': 'Casco',
+                                    'EYE_COVER': 'Gafas',
+                                    'HAND_COVER': 'Guantes',
+                                    'FOOT_COVER': 'Calzado',
+                                    'FACE_COVER': 'Mascarilla',
+                                    'EAR_COVER': 'Orejeras'
+                                  };
+                                  return (
+                                    <span key={epp} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                      {eppNames[epp] || epp}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-right space-y-2">
+                            <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
+                              {analysis.MinConfidence || 75}% confianza
+                            </span>
+                            {analysis.Summary && analysis.DetectionType === 'ppe_detection' && (
+                              <p className="text-sm text-gray-600">
+                                {analysis.Summary.totalPersons} personas
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
-                            {analysis.MinConfidence || 75}% confianza
-                          </span>
-                          {analysis.Summary && analysis.DetectionType === 'ppe_detection' && (
-                            <p className="text-sm text-gray-600 mt-2">
-                              {analysis.Summary.totalPersons} personas detectadas
-                            </p>
-                          )}
-                        </div>
+                        
+                        <button
+                          onClick={() => setViewingAnalysis(analysis)}
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
+                        >
+                          📊 Ver Informe Completo
+                        </button>
                       </div>
+                    ))}
+                  </div>
+                  
+                  {hasMoreUserHistory && (
+                    <div className="mt-6 text-center">
+                      <button
+                        onClick={() => selectedUser && handleViewHistory(selectedUser, true)}
+                        disabled={loadingUserHistory}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                      >
+                        {loadingUserHistory ? (
+                          <div className="flex items-center space-x-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            <span>Cargando...</span>
+                          </div>
+                        ) : (
+                          <span>🔄 Cargar más</span>
+                        )}
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📊</div>
                   <p className="text-gray-500">Este usuario aún no ha realizado análisis</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Ver Análisis Completo */}
+      {viewingAnalysis && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">📊 Informe de Análisis</h2>
+                <p className="text-sm text-gray-600">{new Date(viewingAnalysis.timestamp).toLocaleString()}</p>
+              </div>
+              <button
+                onClick={() => setViewingAnalysis(null)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {/* Resumen del Análisis */}
+              {viewingAnalysis.DetectionType === 'ppe_detection' && (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+                    <h3 className="text-lg font-semibold text-gray-900">📊 Resumen del Análisis</h3>
+                  </div>
+                  <div className="p-6">
+                    {viewingAnalysis.analysisId && (
+                      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs font-semibold text-blue-700 mb-1">🎯 ID de Análisis:</p>
+                        <p className="text-sm font-mono text-blue-900">{viewingAnalysis.analysisId}</p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
+                        <p className="text-3xl font-bold">{viewingAnalysis.Summary?.totalPersons || 0}</p>
+                        <p className="text-sm opacity-90">Personas Detectadas</p>
+                      </div>
+                      <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
+                        <p className="text-3xl font-bold">{viewingAnalysis.MinConfidence}%</p>
+                        <p className="text-sm opacity-90">Confianza Mínima</p>
+                      </div>
+                      <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
+                        <p className="text-3xl font-bold">{viewingAnalysis.selectedEPPs?.length || 0}</p>
+                        <p className="text-sm opacity-90">EPPs Evaluados</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Resumen IA */}
+              {viewingAnalysis.aiSummary && (
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <span>🤖</span>
+                    <span>Resumen Inteligente</span>
+                  </h3>
+                  <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-line">
+                    {viewingAnalysis.aiSummary}
+                  </div>
+                </div>
+              )}
+              
+              {/* Imagen */}
+              {viewingAnalysis.imageUrl && (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+                    <h3 className="text-lg font-semibold text-gray-900">🖼️ Imagen Analizada</h3>
+                  </div>
+                  <div className="p-6">
+                    <img 
+                      src={viewingAnalysis.imageUrl} 
+                      alt="Análisis" 
+                      className="w-full rounded-lg shadow-lg"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext fill="%239ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" text-anchor="middle"%3EImagen no disponible%3C/text%3E%3C/svg%3E';
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
