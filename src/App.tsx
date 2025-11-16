@@ -110,11 +110,6 @@ const App: React.FC = () => {
     };
     recheckRole();
   }, [activeSection]);
-    } catch (error) {
-      console.error('Error cargando datos:', error);
-      setTotalAnalysisCount(0);
-    }
-  };
   
   const fetchHistory = async (loadMore = false) => {
     try {
