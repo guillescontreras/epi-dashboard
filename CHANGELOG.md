@@ -1,219 +1,119 @@
 # Changelog
 
-Todos los cambios notables en este proyecto serán documentados en este archivo.
+## 📚 Documentación del Proyecto
 
-El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
-y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
+Este proyecto mantiene una documentación detallada de su evolución y arquitectura técnica.
 
----
+### Documentación Principal
 
-## [2.4.0] - 2024-10-31
+Para seguir el desarrollo completo del proyecto, consulta:
 
-### Agregado
-- Dropdowns en cascada para ubicación geográfica en perfil de usuario
-- Selección de país con banderas usando country-state-city
-- Dropdown de provincias/estados que se carga según país seleccionado
-- Dropdown de ciudades que se carga según provincia seleccionada
-- Campos deshabilitados hasta que se complete la selección previa
+- **[ARQUITECTURA-TECNICA-EPI-COIRONTECH.md](./ARQUITECTURA-TECNICA-EPI-COIRONTECH.md)**  
+  Documento técnico completo con la arquitectura del sistema, servicios AWS utilizados, estructura de componentes, flujos de datos y decisiones técnicas.
 
-### Modificado
-- UserProfileModal ahora usa dropdowns en lugar de inputs de texto
-- Datos geográficos estandarizados sin errores de tipeo
-- Mejor UX con cascada automática de opciones
+- **[LOGS/Resumen-Jornada-XX.md](./LOGS/)**  
+  Resúmenes detallados de cada jornada de desarrollo que incluyen:
+  - Objetivos y contexto de cada sesión
+  - Problemas encontrados y soluciones implementadas
+  - Cambios en infraestructura AWS
+  - Métricas (commits, horas, recursos creados)
+  - Decisiones técnicas y aprendizajes
 
-### Dependencias
-- Agregada country-state-city@3.2.1
+### Jornadas de Desarrollo
 
----
-
-## [2.3.3] - 2024-10-31
-
-### Agregado
-- Botón para eliminar análisis del historial con confirmación
-- Componente ConfirmModal personalizado con diseño de la app
-- Lambda function delete-analysis para eliminar de DynamoDB
-- API Gateway endpoint DELETE /delete
-- Permisos IAM para DeleteItem en epi-user-analysis
-
-### Modificado
-- Nombres de PDFs ahora incluyen inspector y timestamp único
-- Formato: `Informe-EPP-{Inspector}-{YYYY-MM-DD-HHmm}.pdf`
-- Botón PDF solo visible para análisis de tipo EPP
-- Modal de confirmación personalizado reemplaza window.confirm
-
-### Corregido
-- Confusión al descargar múltiples PDFs con mismo nombre
-- Botón PDF aparecía en análisis sin resumen IA
-- Error 500 al eliminar análisis (nombre de tabla incorrecto)
-- Modal de confirmación nativo del navegador sin estilo de la app
+1. **[Jornada 1](./LOGS/Resumen-Jornada-01.md)** - Fundamentos y detección básica de EPP
+2. **[Jornada 2](./LOGS/Resumen-Jornada-02.md)** - Autenticación con Cognito y persistencia
+3. **[Jornada 3](./LOGS/Resumen-Jornada-03.md)** - Resúmenes IA con Bedrock y exportación PDF
+4. **[Jornada 4](./LOGS/Resumen-Jornada-04.md)** - Perfiles de usuario y mejoras UX
+5. **[Jornada 5](./LOGS/Resumen-Jornada-05.md)** - Video processing y detección en tiempo real
+6. **[Jornada 6](./LOGS/Resumen-Jornada-06.md)** - Optimizaciones y correcciones
+7. **[Jornada 7](./LOGS/Resumen-Jornada-07.md)** - Panel de administración completo
 
 ---
 
-## [2.3.2] - 2024-10-30
+## 🎯 Versión Actual: 2.9.5
 
-### Agregado
-- Opción "Editar Perfil" en menú de usuario
-- Modal reutilizable para crear/editar perfil con datos precargados
-- Título dinámico en modal según contexto (Completar/Editar)
-- Botón cancelar en modo edición
+**Fecha:** 16 de noviembre de 2025
 
-### Modificado
-- UserMenu.tsx: Nueva opción de edición de perfil
-- UserProfileModal.tsx: Soporte para datos iniciales
-- App.tsx: Integración con menú de usuario
+### Características Principales
 
----
+- ✅ Detección de EPP con AWS Rekognition (10 elementos)
+- ✅ Análisis de rostros, texto y objetos
+- ✅ Resúmenes inteligentes con Amazon Bedrock (Claude 3 Haiku)
+- ✅ Exportación de informes profesionales en PDF
+- ✅ Autenticación y gestión de usuarios con Cognito
+- ✅ Historial personal con paginación y lazy loading
+- ✅ Panel de administración con estadísticas y gestión de usuarios
+- ✅ Sistema de roles (admin/user)
+- ✅ Gráficos de actividad con Recharts
+- ✅ Reset de contraseñas y cambio de roles
+- ✅ Visualización de historial de cualquier usuario
 
-## [2.3.1] - 2024-10-30
+### Infraestructura AWS
 
-### Corregido
-- Error CORS en API Gateway al guardar perfil de usuario
-- Migración de HTTP API a REST API Gateway para soporte CORS completo
-- Permisos IAM faltantes para tabla UserProfiles (GetItem, PutItem)
-- Import duplicado de axios eliminado
-
-### Técnico
-- API Gateway ID: 22ieg9wnd8
-- Política IAM: UserProfilesAccess agregada a lambda-dynamodb-role
-
----
-
-## [2.3.0] - 2024-10-29
-
-### Agregado
-- Resúmenes inteligentes con Amazon Bedrock (Claude 3 Haiku)
-- Exportación de informes a PDF profesional con jsPDF
-- Sistema completo de perfil de usuario
-- Tabla DynamoDB UserProfiles
-- Lambda function user-profile para CRUD de perfiles
-- Nombre del inspector en PDFs generados
-- Guardado automático de resúmenes IA en DynamoDB
-- Vista estática de análisis históricos
-- Acceso completo a informes desde historial
-
-### Modificado
-- Migración de Amazon Titan a Claude 3 Haiku para mejor calidad
-- Resúmenes IA con porcentajes reales y recomendaciones específicas
-- Referencias a normas OSHA/ISO 45001 en informes
-
-### Técnico
-- Costo: $0.70 por 1000 análisis (vs $0.40 con Titan)
-- Archivo: src/utils/pdfGenerator.ts
-- Componente: UserProfileModal.tsx
+- **8 Funciones Lambda** para procesamiento serverless
+- **3 API Gateways** (análisis, perfiles, administración)
+- **2 Tablas DynamoDB** (análisis y perfiles)
+- **1 Bucket S3** para almacenamiento de imágenes
+- **1 User Pool Cognito** con roles personalizados
+- **Amplify** para hosting y CI/CD
 
 ---
 
-## [2.2.0] - 2024-10-28
+## 📋 Historial de Versiones
 
-### Agregado
-- Autenticación con AWS Cognito
-- Contador real de análisis desde S3 vía API Gateway + Lambda
-- Historial personal de análisis con DynamoDB
-- Menú de usuario con cambio de contraseña
-- Guardado automático de análisis en DynamoDB
-- Tabla AnalysisHistory
+### Versiones Mayores
 
-### Modificado
-- Sistema de autenticación completo
-- Persistencia de datos en la nube
-
----
-
-## [2.1.1] - 2024-10-27
-
-### Corregido
-- Flujo del asistente guiado optimizado
-- Eliminada duplicación de resultados
-- Barra de progreso corregida (no retrocede)
-- Modal de bienvenida responsive para móviles
-
-### Mejorado
-- Emergente verde permanece hasta acción del usuario
-- Botones "Nuevo Análisis" e "Inicio" reinician correctamente
-- Función resetToStart centralizada
+- **v2.9.x** - Panel de administración completo
+- **v2.8.x** - Optimizaciones de rendimiento
+- **v2.7.x** - Separación de User Pools
+- **v2.6.x** - Correcciones CORS y timeouts
+- **v2.5.x** - Video processing y detección en tiempo real
+- **v2.4.x** - Perfiles de usuario con geolocalización
+- **v2.3.x** - Resúmenes IA y exportación PDF
+- **v2.2.x** - Autenticación con Cognito
+- **v2.1.x** - Asistente guiado y mejoras UX
+- **v2.0.x** - Rediseño completo con branding CoironTech
+- **v1.x.x** - Versiones iniciales con detección básica
 
 ---
 
-## [2.1.0] - 2024-10-26
+## 🔍 Cómo Usar Esta Documentación
 
-### Agregado
-- Procesamiento de video con detección frame-by-frame
-- Detección en tiempo real con webcam
-- Captura de fotos desde cámara
-- Selector de cámara frontal/trasera
-- Modal de bienvenida interactivo
-- Asistente guiado (wizard) para análisis
-- Componentes: VideoProcessor, GuidedAnalysisWizard, RealtimeDetection
+1. **Para entender la arquitectura completa**: Lee [ARQUITECTURA-TECNICA-EPI-COIRONTECH.md](./ARQUITECTURA-TECNICA-EPI-COIRONTECH.md)
 
-### Mejorado
-- Controles de cámara optimizados para móviles
-- Detección de personas únicas en video
-- Modal para ver capturas en tamaño completo
+2. **Para ver el desarrollo cronológico**: Revisa los resúmenes de jornada en orden:
+   - [Jornada 1](./LOGS/Resumen-Jornada-01.md) → Fundamentos
+   - [Jornada 2](./LOGS/Resumen-Jornada-02.md) → Autenticación
+   - [Jornada 3](./LOGS/Resumen-Jornada-03.md) → IA y PDFs
+   - [Jornada 4](./LOGS/Resumen-Jornada-04.md) → Perfiles
+   - [Jornada 5](./LOGS/Resumen-Jornada-05.md) → Video/Realtime
+   - [Jornada 6](./LOGS/Resumen-Jornada-06.md) → Optimizaciones
+   - [Jornada 7](./LOGS/Resumen-Jornada-07.md) → Admin Panel
 
----
+3. **Para problemas específicos**: Busca en los resúmenes de jornada la sección "Problemas Resueltos"
 
-## [2.0.0] - 2024-10-25
-
-### Agregado
-- Rediseño completo de UI con branding CoironTech
-- Logo CoironTech en header, footer y modales
-- Paleta de colores corporativa
-- Footer con información de contacto
-
-### Modificado
-- Header completamente rediseñado
-- Optimización responsive para móviles
-- Nueva identidad visual
-
-### BREAKING CHANGES
-- Cambio completo de diseño visual
-- Nueva estructura de componentes de UI
+4. **Para configuración AWS**: Consulta la sección "Infraestructura" en cada resumen de jornada
 
 ---
 
-## [1.1.0] - 2024-10-20
+## 📊 Métricas del Proyecto
 
-### Agregado
-- Detección de rostros con AWS Rekognition
-- Detección de texto en imágenes
-- Detección de objetos (labels)
-- Selector de tipo de análisis
-- Soporte para múltiples tipos de detección
-
----
-
-## [1.0.0] - 2024-10-15
-
-### Agregado
-- Detección básica de EPP con AWS Rekognition
-- Subida de imágenes a S3
-- Visualización de bounding boxes
-- Análisis de confianza
-- Exportación CSV básica
-- Configuración de elementos EPP requeridos
-- Modo estricto de cumplimiento
-
-### Técnico
-- Integración con AWS Rekognition
-- Lambda para procesamiento de imágenes
-- API Gateway para endpoints
-- Bucket S3 para almacenamiento
+- **Duración total**: 7 jornadas de desarrollo
+- **Commits totales**: 50+
+- **Horas de desarrollo**: ~60 horas
+- **Servicios AWS**: 7 servicios principales
+- **Funciones Lambda**: 8 funciones
+- **Componentes React**: 15+ componentes
+- **Usuarios registrados**: 22
+- **Análisis realizados**: 97
 
 ---
 
-## Tipos de cambios
+## 🚀 Próximas Versiones
 
-- `Agregado` para funcionalidades nuevas
-- `Modificado` para cambios en funcionalidades existentes
-- `Obsoleto` para funcionalidades que serán eliminadas
-- `Eliminado` para funcionalidades eliminadas
-- `Corregido` para corrección de bugs
-- `Seguridad` para vulnerabilidades corregidas
+Las futuras mejoras y características se documentarán en nuevas jornadas de desarrollo.
 
 ---
 
-## Enlaces
-
-- [Repositorio](https://github.com/guillescontreras/epi-dashboard)
-- [Documentación](./README.md)
-- [Análisis de Versionado](./LOGS/Analisis-Versionado.md)
+**Nota**: Este CHANGELOG sirve como índice a la documentación detallada. Para información específica sobre cambios, problemas resueltos y decisiones técnicas, consulta los documentos referenciados arriba.
