@@ -42,7 +42,6 @@ const App: React.FC = () => {
   const [analysisHistory, setAnalysisHistory] = useState<any[]>([]);
   const [showRealtimeDetection, setShowRealtimeDetection] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [useGuidedMode, setUseGuidedMode] = useState(true);
   const [showVideoProcessor, setShowVideoProcessor] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [totalAnalysisCount, setTotalAnalysisCount] = useState<number>(0);
@@ -839,7 +838,6 @@ const App: React.FC = () => {
     setImageUrl('');
     setProgress(0);
     setDetectionType('ppe_detection');
-    setUseGuidedMode(true);
     setShowWelcome(false);
     setWizardKey(prev => prev + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -999,19 +997,16 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
-    if (useGuidedMode) {
+    if (activeSection === 'analysis') {
       return (
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+          <div className="mb-6">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Asistente de Análisis</h1>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-500 bg-yellow-100 px-2 py-1 rounded">⚠️ Modo Avanzado temporalmente deshabilitado</span>
-            </div>
           </div>
           <GuidedAnalysisWizard key={wizardKey} onComplete={handleGuidedComplete} progress={progress} setProgress={setProgress} />
           
           {/* Resultados en el asistente */}
-          {results && useGuidedMode && !showRealtimeDetection && !showVideoProcessor && (
+          {results && !showRealtimeDetection && !showVideoProcessor && (
             <div className="mt-8">
               <div className="mb-4 flex justify-end gap-3">
                 {results.DetectionType === 'ppe_detection' && (
@@ -1211,158 +1206,16 @@ const App: React.FC = () => {
       );
     }
     
-    switch (activeSection) {
-      case 'analysis':
-        return (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            <div className="xl:col-span-2">
-              <ModernAnalysisPanel
-                file={file}
-                setFile={setFile}
-                files={files}
-                setFiles={setFiles}
-                detectionType={detectionType}
-                setDetectionType={setDetectionType}
-                minConfidence={minConfidence}
-                setMinConfidence={setMinConfidence}
-                epiItems={epiItems}
-                handleEpiItemChange={handleEpiItemChange}
-                strictMode={strictMode}
-                setStrictMode={setStrictMode}
-                handleUpload={handleUpload}
-                progress={progress}
-                hasResults={results !== null}
-                setProgress={setProgress}
-              />
-            </div>
-            <div className="space-y-6">
-              {results && (
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                      <span>📊</span>
-                      <span>Resultados del Análisis</span>
-                    </h2>
-                  </div>
-                  
-                  <div className="p-6">
-                    {results.DetectionType === 'ppe_detection' && (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
-                            <p className="text-3xl font-bold">{results.Summary?.totalPersons || 0}</p>
-                            <p className="text-sm opacity-90">Personas Detectadas</p>
-                          </div>
-                          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
-                            <p className="text-3xl font-bold">{calculateCompliance(results, results.selectedEPPs || epiItems, results.MinConfidence || minConfidence)}</p>
-                            <p className="text-sm opacity-90">Cumplientes</p>
-                          </div>
-                          <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
-                            <p className="text-3xl font-bold">{minConfidence}%</p>
-                            <p className="text-sm opacity-90">Confianza Mínima</p>
-                          </div>
-                        </div>
-                        
-                        {/* Resumen por Elemento EPP */}
-                        <div className="bg-gray-50 rounded-xl p-4">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Elementos EPP Seleccionados:</h4>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            {epiItems.map((item) => {
-                              const itemName = item === 'HEAD_COVER' ? 'Casco' :
-                                             item === 'EYE_COVER' ? 'Gafas' :
-                                             item === 'HAND_COVER' ? 'Guantes' :
-                                             item === 'FOOT_COVER' ? 'Calzado' :
-                                             item === 'FACE_COVER' ? 'Mascarilla' :
-                                             item === 'EAR_COVER' ? 'Orejeras' : item;
-                              
-                              let maxConfidence = 0;
-                              let detected = false;
-                              results.ProtectiveEquipment?.forEach((person: any) => {
-                                person.BodyParts?.forEach((part: any) => {
-                                  part.EquipmentDetections?.forEach((eq: any) => {
-                                    if (eq.Type === item) {
-                                      detected = true;
-                                      if (eq.Confidence > maxConfidence) maxConfidence = eq.Confidence;
-                                    }
-                                  });
-                                });
-                              });
-                              
-                              const meetsThreshold = maxConfidence >= minConfidence;
-                              const badgeColor = !detected ? 'bg-red-500 text-white' : 
-                                               meetsThreshold ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white';
-                              const icon = !detected ? '❌' : meetsThreshold ? '✅' : '⚠️';
-                              
-                              return (
-                                <div key={item} className={`flex items-center justify-between p-2 rounded font-bold ${badgeColor}`}>
-                                  <span>{itemName}</span>
-                                  <span>{icon} {detected ? `${maxConfidence.toFixed(0)}%` : ''}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        
-                        <button
-                          onClick={exportCSV}
-                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-xl font-medium hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
-                        >
-                          <span>📄</span>
-                          <span>Exportar Reporte</span>
-                        </button>
-                      </div>
-                    )}
-                    {results.DetectionType === 'face_detection' && (
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-4 text-white text-center">
-                          <p className="text-3xl font-bold">{results.Summary?.totalFaces || 0}</p>
-                          <p className="text-sm opacity-90">Rostros Detectados</p>
-                        </div>
-                        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
-                          <p className="text-3xl font-bold">{minConfidence}%</p>
-                          <p className="text-sm opacity-90">Confianza Mínima</p>
-                        </div>
-                      </div>
-                    )}
-                    {results.DetectionType === 'ppe_batch_detection' && (
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-xl p-4 text-white text-center">
-                          <p className="text-3xl font-bold">{results.Summary?.totalImages || 0}</p>
-                          <p className="text-sm opacity-90">Imágenes Analizadas</p>
-                        </div>
-                        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white text-center">
-                          <p className="text-3xl font-bold">{results.Summary?.totalPersons || 0}</p>
-                          <p className="text-sm opacity-90">Personas Detectadas</p>
-                        </div>
-                        <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center">
-                          <p className="text-3xl font-bold">{results.Summary?.totalCompliant || 0}</p>
-                          <p className="text-sm opacity-90">Cumplientes</p>
-                        </div>
-                      </div>
-                    )}
-                    {results.DetectionType === 'text_detection' && (
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl p-4 text-white text-center">
-                          <p className="text-3xl font-bold">{results.Summary?.totalTextDetections || 0}</p>
-                          <p className="text-sm opacity-90">Textos Detectados</p>
-                        </div>
-                        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white text-center">
-                          <p className="text-3xl font-bold">{minConfidence}%</p>
-                          <p className="text-sm opacity-90">Confianza Mínima</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      case 'dashboard':
-        return <Dashboard analysisHistory={analysisHistory} calculateCompliance={calculateCompliance} />;
-      case 'admin':
-        return userRole === 'admin' ? <AdminPanel /> : null;
-      case 'history':
+    if (activeSection === 'dashboard') {
+      return <Dashboard analysisHistory={analysisHistory} calculateCompliance={calculateCompliance} />;
+    }
+    
+    if (activeSection === 'admin') {
+      return userRole === 'admin' ? <AdminPanel /> : null;
+    }
+    
+    if (activeSection === 'history') {
+
         // Si hay un resultado seleccionado, mostrar informe completo
         if (results && activeSection === 'history') {
           return (
@@ -1650,9 +1503,9 @@ const App: React.FC = () => {
             </div>
           </div>
         );
-      default:
-        return null;
     }
+    
+    return null;
   };
 
   // Si está mostrando FAQ, renderizar solo FAQ
@@ -1692,13 +1545,6 @@ const App: React.FC = () => {
           // Evitar cambio accidental de sección durante análisis
           if (progress > 0 && progress < 100) {
             return;
-          }
-          // Cambiar a modo avanzado si se selecciona dashboard o historial
-          if (section === 'dashboard' || section === 'history') {
-            setUseGuidedMode(false);
-          } else if (section === 'analysis') {
-            // Al hacer click en Análisis, ir al asistente
-            setUseGuidedMode(true);
           }
           setActiveSection(section);
         }}
@@ -1758,29 +1604,7 @@ const App: React.FC = () => {
           </div>
         )}
         
-        {/* Visualización de Resultados - Solo en modo avanzado */}
-        {results && !useGuidedMode && activeSection === 'analysis' && imageUrl && results.DetectionType !== 'ppe_video_detection' && (
-          <div className="mt-8">
-            <div className="mb-4 flex justify-end">
-              <button
-                onClick={resetToStart}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg flex items-center space-x-2"
-              >
-                <span>🆕</span>
-                <span>Nuevo Análisis</span>
-              </button>
-            </div>
-            {results.aiSummary && (
-              <AISummary summary={results.aiSummary} />
-            )}
-            <ImageComparison 
-              results={results}
-              imageUrl={imageUrl}
-              minConfidence={minConfidence}
-              epiItems={epiItems}
-            />
-          </div>
-        )}
+
       </main>
 
       <ToastContainer position="top-right" />
@@ -1790,7 +1614,6 @@ const App: React.FC = () => {
       {showWelcome && (
         <WelcomeModal onClose={() => {
           setShowWelcome(false);
-          setUseGuidedMode(true);
         }} />
       )}
       
@@ -1798,7 +1621,6 @@ const App: React.FC = () => {
         <RealtimeDetection
           onClose={() => {
             setShowRealtimeDetection(false);
-            setUseGuidedMode(true);
           }}
           epiItems={epiItems}
           minConfidence={minConfidence}
@@ -1811,7 +1633,6 @@ const App: React.FC = () => {
           onClose={() => {
             setShowVideoProcessor(false);
             setVideoFile(null);
-            setUseGuidedMode(true);
           }}
           minConfidence={minConfidence}
         />

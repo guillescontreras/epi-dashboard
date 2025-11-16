@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.9.5';
+export const APP_VERSION = '2.9.6';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.9.6': 'Refactor: Eliminado modo avanzado - solo asistente guiado para simplificar UX',
   '2.9.5': 'Fix: Detección rol admin + reset password con contraseña temporal',
   '2.9.4': 'Feature: Informe completo en admin con ImageComparison (tabla EPP + imágenes lado a lado)',
   '2.9.3': 'Feature: Historial usuario con paginación + modal informe completo (UI idéntica a Historial)',
@@ -100,4 +101,4 @@ export const VERSION_HISTORY = {
 };
 
 // Fecha de última actualización
-export const LAST_UPDATE = '2025-11-02';
+export const LAST_UPDATE = '2025-11-16';
