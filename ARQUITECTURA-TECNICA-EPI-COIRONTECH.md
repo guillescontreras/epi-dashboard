@@ -1,8 +1,8 @@
 # Documento Técnico de Arquitectura
 ## EPI-CoironTech - Sistema de Análisis Visual de Seguridad
 
-**Versión:** 2.8.34  
-**Fecha:** 13 de Noviembre 2025  
+**Versión:** 2.9.5  
+**Fecha:** 16 de Noviembre 2025  
 **Autor:** CoironTech Development Team  
 **Estado:** Producción
 
@@ -32,6 +32,9 @@ EPI-CoironTech es una aplicación web progresiva (PWA) desarrollada para el aná
 - ✅ Historial de análisis persistente
 - ✅ Modo guiado paso a paso
 - ✅ Análisis por lotes (batch processing)
+- ✅ Panel de administración completo
+- ✅ Sistema de roles (admin/user)
+- ✅ Estadísticas globales con gráficos
 
 ---
 
@@ -163,9 +166,10 @@ src/
 ├── version.ts                 # Control de versiones
 ├── components/
 │   ├── AuthWrapper.tsx        # HOC de autenticación
-│   ├── ModernHeader.tsx       # Header con branding
+│   ├── ModernHeader.tsx       # Header con branding + pestaña Admin
 │   ├── UserMenu.tsx           # Menú de usuario autenticado
 │   ├── Dashboard.tsx          # Panel principal
+│   ├── AdminPanel.tsx         # Panel de administración (666 líneas) ⭐ NUEVO
 │   ├── GuidedAnalysisWizard.tsx  # Asistente paso a paso
 │   ├── DragDropUpload.tsx     # Carga de archivos
 │   ├── VideoProcessor.tsx     # Procesamiento de video

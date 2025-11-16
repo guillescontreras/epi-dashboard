@@ -1,10 +1,10 @@
 # 📋 Resumen de Jornada 7
 
 ## 🎯 Objetivo de la Jornada
-Resolver error de CORS en API Gateway y separar User Pools de Cognito entre epi-dashboard e ia-control para evitar conflictos de configuración.
+Resolver error de CORS en API Gateway, separar User Pools de Cognito, optimizar performance del historial y contador global, e implementar panel de administración completo con estadísticas, gestión de usuarios y gráficos de actividad.
 
 **Punto de partida:** v2.8.34 (13/11/2025)  
-**Versión final:** v2.8.36 (15/11/2025)
+**Versión final:** v2.9.5 (16/11/2025)
 
 ---
 
@@ -235,14 +235,208 @@ config: Separar User Pool de Cognito para ia-control (us-east-1_mfnduAii4)
 
 ---
 
+### 7. **Panel de Administración Completo** ⭐⭐⭐
+
+**Objetivo:**
+Crear panel admin con estadísticas, gestión de usuarios, historial por usuario y gráficos de actividad.
+
+**Implementación:**
+
+#### 7.1 Sistema de Roles en Cognito
+
+1. **Atributo custom:role agregado:**
+   ```bash
+   aws cognito-idp add-custom-attributes \
+     --user-pool-id us-east-1_zrdfN7OKN \
+     --custom-attributes Name=role,AttributeDataType=String,Mutable=true
+   ```
+
+2. **Rol admin asignado:**
+   ```bash
+   aws cognito-idp admin-update-user-attributes \
+     --user-pool-id us-east-1_zrdfN7OKN \
+     --username guillescontreras@gmail.com \
+     --user-attributes Name=custom:role,Value=admin
+   ```
+
+3. **Verificación de rol en frontend:**
+   - `fetchUserAttributes()` obtiene `custom:role`
+   - Estado `userRole` controla visibilidad de pestaña Admin
+   - Recarga automática al cambiar sección
+
+#### 7.2 API Gateway Admin (epi-admin-api)
+
+**API Gateway ID:** `zwjh3jgrsi`
+
+**Endpoints creados:**
+- `GET /stats` - Estadísticas globales
+- `GET /users` - Listado de usuarios con stats
+- `POST /actions` - Acciones admin (reset password, cambiar rol)
+- `GET /user-history` - Historial de análisis por usuario
+
+**CORS configurado:**
+- Método OPTIONS en todos los recursos
+- Headers: `Access-Control-Allow-Origin: *`
+- Métodos: GET, POST, OPTIONS
+
+#### 7.3 Lambdas Admin Creadas
+
+**1. epi-admin-stats**
+- Cuenta usuarios de Cognito (fuente de verdad)
+- Usuarios activos (con al menos 1 análisis)
+- Total análisis por tipo
+- Análisis diarios (últimos 30 días)
+- Timeout: 30s
+
+**2. epi-admin-users**
+- Lista usuarios de Cognito con paginación
+- Enriquece con stats de DynamoDB
+- Cuenta análisis por usuario
+- Fecha último análisis
+- Ordena por actividad (más activos primero)
+- Timeout: 30s
+
+**3. epi-admin-actions**
+- Reset password con contraseña temporal (12 caracteres)
+- Cambio de rol (user ↔ admin)
+- Usa `admin_set_user_password` con `Permanent=False`
+- Retorna contraseña temporal al frontend
+- Timeout: 10s
+
+**4. epi-admin-user-history**
+- Query historial por userId
+- Paginación (10 análisis por página)
+- Extracción de analysisData
+- Conversión Decimal a float
+- Timeout: 10s
+
+#### 7.4 Permisos IAM Agregados
+
+**DynamoDBFullPolicy:**
+```json
+{
+  "Action": ["dynamodb:Scan", "dynamodb:Query", "dynamodb:GetItem"],
+  "Resource": "arn:aws:dynamodb:us-east-1:825765382487:table/epi-user-analysis"
+}
+```
+
+**CognitoAdminPolicy:**
+```json
+{
+  "Action": [
+    "cognito-idp:ListUsers",
+    "cognito-idp:AdminResetUserPassword",
+    "cognito-idp:AdminSetUserPassword",
+    "cognito-idp:AdminUpdateUserAttributes"
+  ],
+  "Resource": "arn:aws:cognito-idp:us-east-1:825765382487:userpool/us-east-1_zrdfN7OKN"
+}
+```
+
+#### 7.5 Frontend - Componente AdminPanel
+
+**Estructura:**
+- 2 tabs: Estadísticas | Usuarios
+- Diseño consistente con resto de la app
+- Responsive (mobile-friendly)
+
+**Tab Estadísticas:**
+- 5 cards: Usuarios Registrados, Usuarios Activos, Análisis Totales, Análisis EPP, Otros Análisis
+- Distribución por tipo (EPP, Rostros, Objetos, Texto)
+- Gráfico de línea: Análisis últimos 30 días
+- Gráfico de barras: Actividad diaria detallada
+- Librería: recharts
+
+**Tab Usuarios:**
+- Tabla con: Email, Nombre, Rol, Análisis, Último, Acciones
+- Ordenados por actividad (más activos primero)
+- Badges de rol (admin/user)
+- Botones de acción:
+  - 👁️ Ver historial
+  - 🔑 Resetear contraseña
+  - 👑/👤 Cambiar rol
+
+**Modal Historial Usuario:**
+- Paginación: 10 análisis iniciales
+- Botón "Cargar más" para siguientes 10
+- Cards con: Tipo, Fecha, ID, Confianza, EPPs
+- Botón "Ver Informe Completo" en cada análisis
+
+**Modal Informe Completo:**
+- Resumen (3 cards): Personas, Confianza, EPPs
+- Resumen IA (si existe)
+- Componente ImageComparison:
+  - Imágenes lado a lado (original + bounding boxes)
+  - Tabla detallada EPP por persona
+  - Detalles según tipo de análisis
+- UI idéntica a vista de usuario
+
+#### 7.6 Funcionalidades Implementadas
+
+**Estadísticas:**
+- ✅ Total usuarios registrados (Cognito)
+- ✅ Usuarios activos (con análisis)
+- ✅ Total análisis por tipo
+- ✅ Gráficos temporales (30 días)
+- ✅ Distribución por tipo de detección
+
+**Gestión de Usuarios:**
+- ✅ Listado completo con stats
+- ✅ Reset password con contraseña temporal
+- ✅ Cambio de rol (user ↔ admin)
+- ✅ Historial de análisis por usuario
+- ✅ Ver informe completo de cada análisis
+
+**Seguridad:**
+- ✅ Verificación de rol en frontend
+- ✅ Pestaña Admin solo visible para admins
+- ✅ Recarga automática de rol al cambiar sección
+- ✅ Contraseña temporal copiada al portapapeles
+
+#### 7.7 Problemas Resueltos
+
+**1. Discrepancia conteo usuarios (15 vs 22):**
+- Stats ahora cuenta usuarios de Cognito (fuente de verdad)
+- Diferencia entre registrados (22) y activos (15)
+
+**2. Pestaña Admin no aparece:**
+- Verificación de rol en cada cambio de sección
+- useEffect que recarga rol automáticamente
+
+**3. Reset password enviaba código:**
+- Cambiado a `admin_set_user_password`
+- Genera contraseña temporal de 12 caracteres
+- Usuario debe cambiarla en primer login
+
+**4. Error Decimal no serializable:**
+- Agregada función `decimal_default` en Lambdas
+- Convierte Decimal a float para JSON
+
+**5. Permisos IAM faltantes:**
+- Agregado `dynamodb:Query` para historial
+- Agregado `AdminSetUserPassword` para reset
+
+**Archivos creados:**
+- `/src/components/AdminPanel.tsx` (666 líneas)
+- `/tmp/epi-admin-stats-lambda.py`
+- `/tmp/epi-admin-users-lambda.py`
+- `/tmp/epi-admin-actions-lambda.py`
+- `/tmp/epi-admin-user-history-lambda.py`
+
+**Resultado:** Panel admin completo y funcional con todas las capacidades de gestión.
+
+---
+
 ## 📊 Métricas de la Jornada
 
 ### Cambios Realizados
-- **API Gateway:** 1 método OPTIONS agregado + headers CORS configurados
-- **Cognito:** 1 User Pool nuevo creado
-- **Lambda:** 2 funciones optimizadas (get-user-history timeout 30s, count-analysis DynamoDB)
-- **Configuración:** 1 archivo modificado (aws-config.ts)
-- **Commits:** 1 (ia-control)
+- **API Gateway:** 2 APIs configurados (n0f5jga1wc, zwjh3jgrsi)
+- **Cognito:** 1 User Pool nuevo + atributo custom:role
+- **Lambda:** 6 funciones (2 optimizadas, 4 nuevas admin)
+- **Frontend:** 1 componente nuevo (AdminPanel.tsx - 666 líneas)
+- **IAM:** 2 policies nuevas (DynamoDBFullPolicy, CognitoAdminPolicy)
+- **Librerías:** recharts instalado para gráficos
+- **Commits:** 15+ commits
 
 ### Bugs Críticos Corregidos
 1. ✅ Error CORS en carga de historial de epi-dashboard
@@ -254,6 +448,14 @@ config: Separar User Pool de Cognito para ia-control (us-east-1_mfnduAii4)
 3. ✅ Aislamiento completo entre epi-dashboard e ia-control
 4. ✅ Lazy loading de historial con paginación (10 items)
 5. ✅ Contador global optimizado (DynamoDB Scan vs S3 ListObjects)
+6. ✅ Panel de administración completo
+7. ✅ Sistema de roles (admin/user) en Cognito
+8. ✅ Estadísticas globales con gráficos temporales
+9. ✅ Gestión de usuarios (reset password, cambiar rol)
+10. ✅ Historial de análisis por usuario con paginación
+11. ✅ Informe completo con ImageComparison en admin
+12. ✅ API Gateway epi-admin-api con 4 endpoints
+13. ✅ 4 Lambdas admin con permisos IAM configurados
 
 ### Conceptos Clave Documentados
 1. **CORS Preflight:** Requiere método OPTIONS en API Gateway
@@ -264,28 +466,69 @@ config: Separar User Pool de Cognito para ia-control (us-east-1_mfnduAii4)
 
 ## 🔧 Infraestructura AWS
 
-### API Gateway Modificado
-- **get-user-history-api** (n0f5jga1wc)
-  - Agregado método OPTIONS al recurso raíz
-  - Headers CORS configurados
-  - Deployment a stage prod
+### API Gateways
+
+**1. get-user-history-api (n0f5jga1wc)**
+- Recurso: `/` (GET, OPTIONS)
+- Lambda: get-user-history
+- CORS configurado
+- Stage: prod
+
+**2. epi-admin-api (zwjh3jgrsi) - NUEVO**
+- Recursos:
+  - `/stats` (GET, OPTIONS) → epi-admin-stats
+  - `/users` (GET, OPTIONS) → epi-admin-users
+  - `/actions` (POST, OPTIONS) → epi-admin-actions
+  - `/user-history` (GET, OPTIONS) → epi-admin-user-history
+- CORS configurado en todos los endpoints
+- Stage: prod
+- URL: `https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod`
+
+### Lambdas
+
+**Optimizadas:**
+1. **get-user-history** - Timeout 30s, paginación
+2. **count-analysis** - DynamoDB Scan con COUNT
+
+**Nuevas (Admin):**
+3. **epi-admin-stats** - Estadísticas globales + gráficos
+4. **epi-admin-users** - Listado usuarios con stats
+5. **epi-admin-actions** - Reset password + cambiar rol
+6. **epi-admin-user-history** - Historial por usuario
 
 ### Cognito User Pools
 
-**epi-dashboard (sin cambios):**
+**epi-dashboard:**
 - User Pool ID: `us-east-1_zrdfN7OKN`
 - App Client ID: `1r4a4vec9qbfsk3vmj7em6pigm`
+- **Atributo custom:role agregado** (admin/user)
+- Admin: guillescontreras@gmail.com
 
 **ia-control (nuevo):**
 - User Pool ID: `us-east-1_mfnduAii4`
 - App Client ID: `1or1du6f82ralqtnu7bneh0511`
+
+### DynamoDB
+
+**Tabla: epi-user-analysis**
+- Partition Key: userId
+- Sort Key: timestamp
+- Usado por: Historial, Stats, Contador
+- Permisos: Scan, Query, GetItem
+
+### IAM Policies
+
+**Rol: lambda-s3-count-role**
+- DynamoDBFullPolicy (Scan, Query, GetItem)
+- CognitoAdminPolicy (ListUsers, AdminSetUserPassword, AdminUpdateUserAttributes)
+- S3ListPolicy (ListObjects)
 
 ---
 
 ## 📦 Estado del Proyecto
 
 ### Versión Actual
-**v2.8.36** - Optimizaciones de performance
+**v2.9.5** - Panel de administración completo
 
 ### Estabilidad
 ✅ **Alta** - CORS funcional, User Pools separados
@@ -297,22 +540,40 @@ config: Separar User Pool de Cognito para ia-control (us-east-1_mfnduAii4)
 
 ## 🎯 Próximos Pasos
 
+### Completado ✅
+- [x] Panel de administración funcional
+- [x] Estadísticas con gráficos temporales
+- [x] Gestión de usuarios completa
+- [x] Historial por usuario con informe completo
+- [x] Sistema de roles implementado
+
 ### Prioridad Alta
-1. **Migración de usuarios ia-control:**
+1. **Seguridad del Panel Admin:**
+   - Agregar Cognito Authorizer en API Gateway epi-admin-api
+   - Validar token JWT en Lambdas admin
+   - Rate limiting en endpoints admin
+
+2. **Migración de usuarios ia-control:**
    - Los usuarios existentes deberán registrarse nuevamente
    - Comunicar cambio a usuarios activos
-   - Opcional: Script de migración si hay muchos usuarios
 
 ### Prioridad Media
-2. **Documentar User Pools:**
+3. **Mejoras Panel Admin:**
+   - Filtros y búsqueda en tabla de usuarios
+   - Exportar estadísticas a CSV/PDF
+   - Gráficos adicionales (usuarios activos por semana, horas pico)
+   - Logs de acciones admin (auditoría)
+
+4. **Documentación:**
    - Actualizar ARQUITECTURA-TECNICA-EPI-COIRONTECH.md
    - Documentar User Pool de ia-control
-   - Guía de migración para usuarios
+   - Manual de uso del panel admin
 
 ### Prioridad Baja
-3. **Monitoreo:**
-   - Verificar que no haya más errores CORS
-   - Monitorear registros en nuevo User Pool
+5. **Monitoreo:**
+   - CloudWatch dashboards para métricas admin
+   - Alertas para acciones críticas
+   - Logs centralizados
 
 ---
 
@@ -357,14 +618,14 @@ Coirontech-AWS/
 
 ---
 
-**Fecha:** 15/11/2025  
-**Duración:** ~4 horas  
+**Fecha:** 15-16/11/2025  
+**Duración:** ~12 horas  
 **Versión inicial:** v2.8.34  
-**Versión final:** v2.8.36  
-**Commits realizados:** 1 (ia-control)  
-**AWS Resources creados:** 1 User Pool + 1 App Client  
-**API Gateway updates:** 1 (n0f5jga1wc)  
-**Lambda updates:** 2 (get-user-history, count-analysis)  
+**Versión final:** v2.9.5  
+**Commits realizados:** 15+  
+**AWS Resources creados:** 1 User Pool + 1 App Client + 1 API Gateway + 4 Lambdas  
+**API Gateway updates:** 2 (n0f5jga1wc, zwjh3jgrsi)  
+**Lambda updates:** 6 (get-user-history, count-analysis, epi-admin-stats, epi-admin-users, epi-admin-actions, epi-admin-user-history)  
 **Estado:** ✅ Jornada completada exitosamente
 
 ---
