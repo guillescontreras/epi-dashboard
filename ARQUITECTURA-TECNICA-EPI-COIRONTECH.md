@@ -1,7 +1,7 @@
 # Documento Técnico de Arquitectura
 ## EPI-CoironTech - Sistema de Análisis Visual de Seguridad
 
-**Versión:** 2.9.5  
+**Versión:** 2.9.6  
 **Fecha:** 16 de Noviembre 2025  
 **Autor:** CoironTech Development Team  
 **Estado:** Producción
@@ -30,7 +30,7 @@ EPI-CoironTech es una aplicación web progresiva (PWA) desarrollada para el aná
 - ✅ Exportación de informes en PDF
 - ✅ Autenticación y perfiles de usuario
 - ✅ Historial de análisis persistente
-- ✅ Modo guiado paso a paso
+- ✅ Asistente guiado paso a paso (único modo de análisis)
 - ✅ Análisis por lotes (batch processing)
 - ✅ Panel de administración completo
 - ✅ Sistema de roles (admin/user)

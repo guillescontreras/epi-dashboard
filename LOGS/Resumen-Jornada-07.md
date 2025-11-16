@@ -4,7 +4,7 @@
 Resolver error de CORS en API Gateway, separar User Pools de Cognito, optimizar performance del historial y contador global, e implementar panel de administración completo con estadísticas, gestión de usuarios y gráficos de actividad.
 
 **Punto de partida:** v2.8.34 (13/11/2025)  
-**Versión final:** v2.9.5 (16/11/2025)
+**Versión final:** v2.9.6 (16/11/2025)
 
 ---
 
@@ -427,6 +427,45 @@ Crear panel admin con estadísticas, gestión de usuarios, historial por usuario
 
 ---
 
+### 8. **Simplificación de Navegación - Eliminación Modo Avanzado** ⭐
+
+**Problema identificado:**
+- Existencia de "modo guiado" vs "modo avanzado" generaba confusión
+- Lógica compleja de cambio de modo (`useGuidedMode`)
+- Navegación a Admin/Historial no funcionaba correctamente desde asistente
+- Código difícil de mantener con switch statements y condicionales
+
+**Solución implementada:**
+
+1. **Eliminada variable `useGuidedMode`:**
+   - Removida de todos los estados
+   - Eliminada de funciones (resetToStart, modales)
+   - Simplificado flujo de navegación
+
+2. **Simplificado `renderContent()`:**
+   - Convertido switch statement a if statements
+   - Eliminado panel de análisis avanzado (ModernAnalysisPanel)
+   - Solo asistente guiado en sección "analysis"
+
+3. **Navegación directa:**
+   - Click en Admin → muestra AdminPanel directamente
+   - Click en Historial → muestra historial directamente
+   - Click en Dashboard → muestra dashboard directamente
+   - Sin cambios de modo intermedios
+
+4. **Código limpio:**
+   - 178 líneas eliminadas
+   - Lógica más clara y mantenible
+   - Sin condicionales complejos
+
+**Archivos modificados:**
+- `/src/App.tsx` (19 inserciones, 197 eliminaciones)
+- `/src/version.ts` (actualizado a v2.9.6)
+
+**Resultado:** Navegación simplificada, código más limpio, sin confusión de modos.
+
+---
+
 ## 📊 Métricas de la Jornada
 
 ### Cambios Realizados
@@ -456,6 +495,7 @@ Crear panel admin con estadísticas, gestión de usuarios, historial por usuario
 11. ✅ Informe completo con ImageComparison en admin
 12. ✅ API Gateway epi-admin-api con 4 endpoints
 13. ✅ 4 Lambdas admin con permisos IAM configurados
+14. ✅ Eliminación de modo avanzado - solo asistente guiado
 
 ### Conceptos Clave Documentados
 1. **CORS Preflight:** Requiere método OPTIONS en API Gateway
@@ -528,6 +568,7 @@ Crear panel admin con estadísticas, gestión de usuarios, historial por usuario
 ## 📦 Estado del Proyecto
 
 ### Versión Actual
+**v2.9.6** - Simplificación de navegación (eliminado modo avanzado)  
 **v2.9.5** - Panel de administración completo
 
 ### Estabilidad
@@ -621,7 +662,7 @@ Coirontech-AWS/
 **Fecha:** 15-16/11/2025  
 **Duración:** ~12 horas  
 **Versión inicial:** v2.8.34  
-**Versión final:** v2.9.5  
+**Versión final:** v2.9.6  
 **Commits realizados:** 15+  
 **AWS Resources creados:** 1 User Pool + 1 App Client + 1 API Gateway + 4 Lambdas  
 **API Gateway updates:** 2 (n0f5jga1wc, zwjh3jgrsi)  
