@@ -1,7 +1,10 @@
-export const APP_VERSION = '2.9.6';
+export const APP_VERSION = '2.10.0';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.10.0': 'Feature: Detección EPP en tiempo real con Rekognition - motion detection + análisis cada 10s',
+  '2.9.8': 'Fix: Simplificación de inicialización - delay de 500ms para asegurar autenticación',
+  '2.9.7': 'Fix crítico: Error de autenticación al cargar datos - inicialización después de login',
   '2.9.6': 'Refactor: Eliminado modo avanzado - solo asistente guiado para simplificar UX',
   '2.9.5': 'Fix: Detección rol admin + reset password con contraseña temporal',
   '2.9.4': 'Feature: Informe completo en admin con ImageComparison (tabla EPP + imágenes lado a lado)',

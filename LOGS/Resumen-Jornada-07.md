@@ -671,6 +671,77 @@ Coirontech-AWS/
 
 ---
 
+## 🚀 Actualización - Análisis de Performance Lambda EPP (17/11/2025)
+
+### 9. **Análisis de Configuración Lambda EPP** ⭐
+
+**Objetivo:** Optimizar tiempo de respuesta del Lambda de detección EPP (actualmente ~3.4s)
+
+**Lambda analizado:** `lambda-epi-function`
+- **Endpoint:** `https://tf52bbq6o6.execute-api.us-east-1.amazonaws.com/prod/analyze`
+- **Ubicación:** `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/`
+
+**Configuración actual identificada:**
+```json
+{
+  "FunctionName": "lambda-epi-function",
+  "Runtime": "nodejs20.x",
+  "MemorySize": 512,
+  "Timeout": 30,
+  "Architecture": "x86_64",
+  "Handler": "index.handler"
+}
+```
+
+**Análisis del código:**
+- **Detección híbrida:** 3 llamadas a Rekognition API por análisis
+  1. `DetectProtectiveEquipment` - EPP específico
+  2. `DetectLabels` - Objetos generales
+  3. `DetectFaces` - Detección de rostros
+- **Compresión de imagen:** Implementada (JPEG quality 80%)
+- **Procesamiento:** Análisis secuencial de cada API
+
+**Oportunidades de optimización identificadas:**
+
+1. **Memoria Lambda:**
+   - **Actual:** 512MB
+   - **Recomendado:** 1024MB (2x)
+   - **Beneficio:** Más CPU disponible, procesamiento más rápido
+   - **Costo:** Mínimo incremento (~$0.0001 por invocación)
+
+2. **Arquitectura:**
+   - **Actual:** x86_64
+   - **Recomendado:** ARM64 (Graviton2)
+   - **Beneficio:** 20% mejor performance, 20% menor costo
+   - **Compatibilidad:** Node.js 20.x totalmente compatible
+
+3. **Paralelización de APIs:**
+   - **Actual:** Llamadas secuenciales
+   - **Recomendado:** `Promise.all()` para llamadas paralelas
+   - **Beneficio:** Reducir tiempo de ~3.4s a ~2.0-2.5s
+
+4. **Optimización de imagen:**
+   - **Actual:** JPEG quality 80%
+   - **Evaluar:** Quality 70% o WebP format
+   - **Beneficio:** Menor tiempo de upload a S3
+
+**Estimación de mejora:**
+- **Tiempo actual:** ~3.4 segundos
+- **Tiempo optimizado:** ~2.0-2.5 segundos
+- **Mejora:** 30-40% reducción en tiempo de respuesta
+
+**Próximos pasos para implementar:**
+1. Actualizar configuración Lambda (memoria + arquitectura)
+2. Modificar código para paralelización de APIs
+3. Probar optimizaciones de compresión
+4. Medir performance antes/después
+
+**Archivos analizados:**
+- `/lambda-deteccion-seguridad/lambda_nodeJS/lambda-epi-function/index.mjs`
+- Backups de configuración en `/backups-epi/`
+
+---
+
 ## 🎓 Lecciones Aprendidas
 
 1. **CORS requiere configuración en múltiples capas:** No basta con que la Lambda devuelva headers CORS. El API Gateway también debe tener método OPTIONS configurado para CORS preflight.
@@ -690,3 +761,7 @@ Coirontech-AWS/
 6. **Documentación de decisiones arquitectónicas:** Documentar el "por qué" de decisiones como separar User Pools ayuda a futuros desarrolladores a entender el contexto.
 
 7. **Migración de usuarios:** Al cambiar User Pools, considerar el impacto en usuarios existentes y planificar estrategia de migración o comunicación.
+
+8. **Optimización Lambda incremental:** Antes de cambios de código complejos, optimizar configuración (memoria, arquitectura) puede dar mejoras significativas con riesgo mínimo.
+
+9. **Análisis de performance basado en datos:** Medir tiempos actuales antes de optimizar. El Lambda EPP actual (~3.4s) tiene margen de mejora del 30-40% con optimizaciones simples.

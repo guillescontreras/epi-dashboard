@@ -1,13 +1,15 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Webcam from 'react-webcam';
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
-import '@tensorflow/tfjs';
+import axios from 'axios';
+import { getCurrentUser } from 'aws-amplify/auth';
 
-interface Detection {
-  class: string;
-  score: number;
-  bbox: [number, number, number, number];
-  timestamp: number;
+interface EPPStatus {
+  HEAD_COVER: 'detectado' | 'no_detectado' | 'no_evaluable' | 'analizando' | 'disabled';
+  HAND_COVER: 'detectado' | 'no_detectado' | 'no_evaluable' | 'analizando' | 'disabled';
+  FACE_COVER: 'detectado' | 'no_detectado' | 'no_evaluable' | 'analizando' | 'disabled';
+  EYE_COVER: 'detectado' | 'no_detectado' | 'no_evaluable' | 'analizando' | 'disabled';
+  FOOT_COVER: 'detectado' | 'no_detectado' | 'no_evaluable' | 'analizando' | 'disabled';
+  EAR_COVER: 'detectado' | 'no_detectado' | 'no_evaluable' | 'analizando' | 'disabled';
 }
 
 interface RealtimeDetectionProps {
@@ -19,116 +21,313 @@ interface RealtimeDetectionProps {
 const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems, minConfidence }) => {
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [model, setModel] = useState<cocoSsd.ObjectDetection | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFrameRef = useRef<ImageData | null>(null);
+  
   const [isDetecting, setIsDetecting] = useState(false);
-  const [detections, setDetections] = useState<Detection[]>([]);
-  const [stats, setStats] = useState({ total: 0, compliant: 0, nonCompliant: 0 });
-  const [showSummary, setShowSummary] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [enabledEPPs, setEnabledEPPs] = useState<Set<keyof EPPStatus>>(new Set(['HEAD_COVER', 'HAND_COVER', 'FACE_COVER'] as (keyof EPPStatus)[]));
+  const [eppStatus, setEppStatus] = useState<EPPStatus>({
+    HEAD_COVER: 'disabled',
+    HAND_COVER: 'disabled', 
+    FACE_COVER: 'disabled',
+    EYE_COVER: 'disabled',
+    FOOT_COVER: 'disabled',
+    EAR_COVER: 'disabled'
+  });
+  const [lastAnalysis, setLastAnalysis] = useState<Date | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const analysisInProgressRef = useRef(false);
 
-  const epiMapping: { [key: string]: string[] } = {
-    HEAD_COVER: ['helmet', 'hat'],
-    HAND_COVER: ['glove'],
-    FACE_COVER: ['mask'],
-    EYE_COVER: ['glasses', 'sunglasses'],
-    FOOT_COVER: ['shoe', 'boot']
+  const eppNames = {
+    HEAD_COVER: 'Casco',
+    HAND_COVER: 'Guantes',
+    FACE_COVER: 'Mascarilla',
+    EYE_COVER: 'Gafas',
+    FOOT_COVER: 'Calzado',
+    EAR_COVER: 'Orejeras'
   };
 
-  useEffect(() => {
-    const loadModel = async () => {
-      const loadedModel = await cocoSsd.load();
-      setModel(loadedModel);
-    };
-    loadModel();
-  }, []);
-
-  const detectFrame = async () => {
-    if (!model || !webcamRef.current || !canvasRef.current || !isDetecting) return;
-
+  // Detección de movimiento
+  const detectMotion = () => {
+    if (!webcamRef.current?.video || !canvasRef.current) return false;
+    
     const video = webcamRef.current.video;
-    if (!video || video.readyState !== 4) {
-      setTimeout(detectFrame, 100);
-      return;
-    }
-
-    const predictions = await model.detect(video);
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) return false;
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const newDetections: Detection[] = [];
-    let personCount = 0;
-    let compliantCount = 0;
-
-    predictions.forEach((prediction) => {
-      if (prediction.score * 100 >= minConfidence) {
-        const [x, y, width, height] = prediction.bbox;
-        
-        if (prediction.class === 'person') {
-          personCount++;
-        }
-
-        const isEPP = Object.values(epiMapping).flat().includes(prediction.class);
-        const color = isEPP ? '#00ff00' : '#ff0000';
-
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x, y, width, height);
-
-        ctx.fillStyle = color;
-        ctx.font = '16px Arial';
-        ctx.fillText(
-          `${prediction.class} ${(prediction.score * 100).toFixed(1)}%`,
-          x,
-          y > 20 ? y - 5 : y + 20
-        );
-
-        newDetections.push({
-          class: prediction.class,
-          score: prediction.score * 100,
-          bbox: prediction.bbox,
-          timestamp: Date.now()
-        });
+    
+    const currentFrame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+    if (lastFrameRef.current) {
+      let diff = 0;
+      for (let i = 0; i < currentFrame.data.length; i += 4) {
+        const r = Math.abs(currentFrame.data[i] - lastFrameRef.current.data[i]);
+        const g = Math.abs(currentFrame.data[i + 1] - lastFrameRef.current.data[i + 1]);
+        const b = Math.abs(currentFrame.data[i + 2] - lastFrameRef.current.data[i + 2]);
+        diff += (r + g + b) / 3;
       }
+      const avgDiff = diff / (canvas.width * canvas.height);
+      const hasMotion = avgDiff > 10;
+      
+      if (hasMotion && !analysisInProgressRef.current) {
+        console.log(`🎯 Movimiento DETECTADO - Diferencia promedio: ${avgDiff.toFixed(2)}`);
+        analysisInProgressRef.current = true;
+        captureAndAnalyze();
+      }
+      
+      lastFrameRef.current = currentFrame;
+      return hasMotion;
+    }
+    
+    lastFrameRef.current = currentFrame;
+    return false;
+  };
+
+  // Capturar y analizar fotograma
+  const captureAndAnalyze = async () => {
+    if (!webcamRef.current || !isDetecting || isAnalyzing) {
+      console.log('❌ Análisis bloqueado - ya está analizando');
+      return;
+    }
+    
+    const enabledEPPsArray = Array.from(enabledEPPs);
+    if (enabledEPPsArray.length === 0) return;
+
+    setIsAnalyzing(true);
+    const startTime = Date.now();
+    console.log('🎯 Iniciando análisis EPP en tiempo real...');
+    console.log('📋 EPPs habilitados:', enabledEPPsArray);
+
+    // Marcar como analizando solo una vez
+    setEppStatus(prev => {
+      const newStatus = { ...prev };
+      enabledEPPsArray.forEach(epp => {
+        newStatus[epp] = 'analizando';
+      });
+      return newStatus;
     });
 
-    setDetections(prev => [...prev.slice(-50), ...newDetections]);
-    setStats({ total: personCount, compliant: compliantCount, nonCompliant: personCount - compliantCount });
+    try {
+      const imageSrc = webcamRef.current.getScreenshot({
+        width: 320,
+        height: 240
+      });
+      if (!imageSrc) return;
 
-    // Limitar a ~7 FPS
-    setTimeout(detectFrame, 143);
+      // Comprimir imagen para mayor velocidad
+      const img = new Image();
+      img.src = imageSrc;
+      await new Promise(resolve => img.onload = resolve);
+      
+      const compressCanvas = document.createElement('canvas');
+      const compressCtx = compressCanvas.getContext('2d');
+      compressCanvas.width = 320;
+      compressCanvas.height = 240;
+      compressCtx?.drawImage(img, 0, 0, 320, 240);
+      
+      const compressedDataUrl = compressCanvas.toDataURL('image/jpeg', 0.5);
+      const response = await fetch(compressedDataUrl);
+      const blob = await response.blob();
+      
+      const timestamp = Date.now();
+      const filename = `realtime_frame_${timestamp}.jpg`;
+      const file = new File([blob], filename, { type: 'image/jpeg' });
+
+      const uploadRes = await axios.get('https://kmekzxexq5.execute-api.us-east-1.amazonaws.com/prod/upload', {
+        params: { filename }
+      });
+      
+      await axios.put(uploadRes.data.url, file, {
+        headers: { 'Content-Type': 'image/jpeg' }
+      });
+
+      const analyzeRes = await axios.post('https://tf52bbq6o6.execute-api.us-east-1.amazonaws.com/prod/analyze', {
+        bucket: 'rekognition-gcontreras',
+        filename: `input/${filename}`,
+        detection_type: 'ppe_detection',
+        min_confidence: minConfidence,
+        epi_items: enabledEPPsArray
+      });
+
+      let responseData = analyzeRes.data;
+      if (typeof responseData === 'string') responseData = JSON.parse(responseData);
+      if (responseData.body) responseData = JSON.parse(responseData.body);
+
+      const resultsRes = await axios.get(responseData.presignedUrl);
+      const analysisData = resultsRes.data;
+      
+      console.log('📊 Datos de análisis recibidos:', analysisData);
+
+      const newStatus = { ...eppStatus };
+      enabledEPPsArray.forEach(epp => {
+        const result = evaluateEPP(analysisData, epp);
+        console.log(`🔍 ${epp}: ${result}`);
+        newStatus[epp] = result;
+      });
+      
+      setEppStatus(newStatus);
+      setLastAnalysis(new Date());
+      const totalTime = Date.now() - startTime;
+      console.log(`✅ Estado EPP actualizado en ${totalTime}ms:`, newStatus);
+      
+      // Esperar 10 segundos antes de permitir nuevo análisis
+      setIsAnalyzing(false);
+      analysisTimeoutRef.current = setTimeout(() => {
+        analysisInProgressRef.current = false;
+        console.log('✅ Sistema listo para nuevo análisis');
+      }, 10000);
+      
+    } catch (error) {
+      console.error('Error en análisis:', error);
+      setEppStatus(prev => {
+        const newStatus = { ...prev };
+        enabledEPPsArray.forEach(epp => {
+          newStatus[epp] = 'no_evaluable';
+        });
+        return newStatus;
+      });
+      
+      // En caso de error, también esperar 10 segundos
+      setIsAnalyzing(false);
+      analysisTimeoutRef.current = setTimeout(() => {
+        analysisInProgressRef.current = false;
+        console.log('✅ Sistema listo para nuevo análisis (después de error)');
+      }, 10000);
+    }
+  };
+
+  const evaluateEPP = (analysisData: any, eppType: keyof EPPStatus): 'detectado' | 'no_detectado' | 'no_evaluable' => {
+    if (!analysisData.ProtectiveEquipment || analysisData.ProtectiveEquipment.length === 0) {
+      return 'no_evaluable';
+    }
+
+    let detected = false;
+    let evaluable = false;
+
+    analysisData.ProtectiveEquipment.forEach((person: any) => {
+      person.BodyParts?.forEach((part: any) => {
+        const requiredParts = {
+          HEAD_COVER: ['HEAD'],
+          FACE_COVER: ['FACE'],
+          EYE_COVER: ['FACE'],
+          HAND_COVER: ['LEFT_HAND', 'RIGHT_HAND'],
+          FOOT_COVER: ['FOOT'],
+          EAR_COVER: ['HEAD']
+        };
+        
+        if (requiredParts[eppType]?.includes(part.Name)) {
+          evaluable = true;
+          
+          part.EquipmentDetections?.forEach((eq: any) => {
+            if (eq.Type === eppType && eq.Confidence >= minConfidence) {
+              detected = true;
+            }
+          });
+        }
+      });
+    });
+
+    if (!evaluable) return 'no_evaluable';
+    return detected ? 'detectado' : 'no_detectado';
   };
 
   useEffect(() => {
-    if (isDetecting && model) {
-      detectFrame();
+    if (isDetecting && !isAnalyzing) {
+      setEppStatus(prev => {
+        const newStatus = { ...prev };
+        Object.keys(eppNames).forEach(epp => {
+          const eppKey = epp as keyof EPPStatus;
+          // Solo resetear a inicial si no tiene resultados previos
+          if (prev[eppKey] === 'disabled' || (prev[eppKey] === 'no_evaluable' && !lastAnalysis)) {
+            newStatus[eppKey] = enabledEPPs.has(eppKey) ? 'no_evaluable' : 'disabled';
+          }
+        });
+        return newStatus;
+      });
+
+      const motionInterval = setInterval(detectMotion, 100);
+      
+      // Ya no necesitamos intervalo, el análisis se dispara desde detectMotion
+
+      return () => {
+        clearInterval(motionInterval);
+        if (analysisTimeoutRef.current) {
+          clearTimeout(analysisTimeoutRef.current);
+        }
+      };
     }
-  }, [isDetecting, model]);
+  }, [isDetecting, enabledEPPs, isAnalyzing, lastAnalysis]);
 
   const handleStart = () => {
     setIsDetecting(true);
-    setDetections([]);
+    setLastAnalysis(null);
   };
 
   const handleStop = () => {
     setIsDetecting(false);
-    setShowSummary(true);
-    // Detener el stream de la cámara
+    setIsAnalyzing(false);
+    analysisInProgressRef.current = false;
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    if (analysisTimeoutRef.current) {
+      clearTimeout(analysisTimeoutRef.current);
+    }
     if (webcamRef.current?.stream) {
       webcamRef.current.stream.getTracks().forEach(track => track.stop());
     }
   };
 
-  const detectionSummary = detections.reduce((acc: any, det) => {
-    acc[det.class] = (acc[det.class] || 0) + 1;
-    return acc;
-  }, {});
+  const toggleEPP = (epp: keyof EPPStatus) => {
+    setEnabledEPPs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(epp)) {
+        newSet.delete(epp);
+      } else {
+        newSet.add(epp);
+      }
+      return newSet;
+    });
+  };
+
+  const getStatusColor = (status: EPPStatus[keyof EPPStatus]) => {
+    switch (status) {
+      case 'detectado': return 'bg-green-500 text-white';
+      case 'no_detectado': return 'bg-red-500 text-white';
+      case 'no_evaluable': return 'bg-gray-500 text-white';
+      case 'analizando': return 'bg-blue-500 text-white animate-pulse';
+      case 'disabled': return 'bg-gray-200 text-gray-500';
+      default: return 'bg-gray-200 text-gray-500';
+    }
+  };
+
+  const getStatusIcon = (status: EPPStatus[keyof EPPStatus]) => {
+    switch (status) {
+      case 'detectado': return '✅';
+      case 'no_detectado': return '❌';
+      case 'no_evaluable': return '❓';
+      case 'analizando': return '🔄';
+      case 'disabled': return '⚪';
+      default: return '⚪';
+    }
+  };
+
+  const getStatusText = (status: EPPStatus[keyof EPPStatus]) => {
+    switch (status) {
+      case 'detectado': return 'Detectado';
+      case 'no_detectado': return 'No Detectado';
+      case 'no_evaluable': return 'No Evaluable';
+      case 'analizando': return 'Analizando...';
+      case 'disabled': return 'Deshabilitado';
+      default: return 'Deshabilitado';
+    }
+  };
 
   React.useEffect(() => {
     return () => {
@@ -163,33 +362,26 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                 />
                 <canvas
                   ref={canvasRef}
-                  className="absolute top-0 left-0 w-full h-full"
+                  className="absolute top-0 left-0 w-full h-full opacity-0 pointer-events-none"
                 />
               </div>
 
               <div className="mt-4 space-y-3">
                 <div className="flex space-x-3">
-                  {!isDetecting && !showSummary ? (
+                  {!isDetecting ? (
                     <button
                       onClick={handleStart}
-                      disabled={!model}
+                      disabled={enabledEPPs.size === 0}
                       className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {model ? '▶ Iniciar Detección' : '⏳ Cargando modelo...'}
+                      {enabledEPPs.size === 0 ? '⚠️ Selecciona EPPs' : '▶ Iniciar Monitoreo EPP'}
                     </button>
-                  ) : isDetecting ? (
+                  ) : (
                     <button
                       onClick={handleStop}
                       className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-orange-600 hover:to-red-700"
                     >
-                      ⏹ Finalizar y Ver Resumen
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => { setShowSummary(false); onClose(); }}
-                      className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-700"
-                    >
-                      🆕 Nuevo Análisis
+                      ⏹ Detener Monitoreo
                     </button>
                   )}
                   <button
@@ -204,56 +396,99 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
             </div>
 
             <div className="space-y-4">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
-                <h3 className="font-semibold text-gray-900 mb-3">📊 Estadísticas en Vivo</h3>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-3 border border-blue-200">
+                <h3 className="font-semibold text-gray-900 mb-2 text-sm">🛡️ Panel de Control EPP</h3>
+                <div className="space-y-2">
+                  {Object.entries(eppNames).map(([epp, name]) => {
+                    const eppKey = epp as keyof EPPStatus;
+                    const isEnabled = enabledEPPs.has(eppKey);
+                    const status = eppStatus[eppKey];
+                    
+                    return (
+                      <div key={epp} className={`flex items-center justify-between p-2 rounded-lg border transition-all duration-500 ${
+                        status === 'detectado' ? 'bg-green-100 border-green-400 shadow-lg shadow-green-200' :
+                        status === 'no_detectado' ? 'bg-red-100 border-red-400 shadow-lg shadow-red-200' :
+                        status === 'analizando' ? 'bg-blue-100 border-blue-400 animate-pulse' :
+                        status === 'no_evaluable' ? 'bg-yellow-100 border-yellow-400' :
+                        'bg-white hover:bg-gray-50'
+                      }`}>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-base">
+                            {epp === 'HEAD_COVER' ? '🪪' : epp === 'EYE_COVER' ? '🥽' : epp === 'HAND_COVER' ? '🧤' : epp === 'FOOT_COVER' ? '🥾' : epp === 'FACE_COVER' ? '😷' : '🎧'}
+                          </span>
+                          <span className={`text-xs font-medium transition-colors ${
+                            status === 'detectado' ? 'text-green-800 font-bold' :
+                            status === 'no_detectado' ? 'text-red-800 font-bold' :
+                            status === 'analizando' ? 'text-blue-800 font-bold' :
+                            status === 'no_evaluable' ? 'text-yellow-800 font-bold' :
+                            'text-gray-700'
+                          }`}>{name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(status)}`}>
+                            {getStatusIcon(status)}
+                          </div>
+                          <button
+                            onClick={() => toggleEPP(eppKey)}
+                            disabled={isDetecting}
+                            className={`relative w-10 h-5 rounded-full transition-all duration-200 ${
+                              isEnabled ? 'bg-blue-600' : 'bg-gray-300'
+                            } disabled:opacity-50`}
+                          >
+                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+                              isEnabled ? 'translate-x-5' : 'translate-x-0.5'
+                            }`} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border border-green-200">
+                <h3 className="font-semibold text-gray-900 mb-2 text-sm">📊 Estado del Sistema</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Personas detectadas:</span>
-                    <span className="text-2xl font-bold text-blue-600">{stats.total}</span>
+                    <span className="text-sm text-gray-600">Estado:</span>
+                    <span className={`text-sm font-bold ${isAnalyzing ? 'text-blue-600' : 'text-gray-400'}`}>
+                      {isAnalyzing ? '🔄 Analizando' : '⚪ Esperando'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Último análisis:</span>
+                    <span className="text-xs text-gray-500">
+                      {lastAnalysis ? lastAnalysis.toLocaleTimeString() : 'Ninguno'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Estado:</span>
+                    <span className={`text-sm font-bold ${
+                      isAnalyzing ? 'text-blue-600' : 'text-green-600'
+                    }`}>
+                      {isAnalyzing ? '🔄 Analizando...' : '✅ Listo'}
+                    </span>
                   </div>
                   <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                    ⏱️ Análisis: ~7 FPS
+                    🎯 Detecta movimiento → Analiza → Espera 10s
                   </div>
                 </div>
               </div>
 
-              {showSummary && (
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                  <h3 className="font-semibold text-gray-900 mb-3">🎯 Resumen de Sesión</h3>
-                  <div className="space-y-3">
-                    <div className="bg-white rounded-lg p-3">
-                      <p className="text-sm text-gray-600 mb-1">Personas detectadas</p>
-                      <p className="text-3xl font-bold text-green-600">{stats.total}</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 max-h-48 overflow-y-auto">
-                      <p className="text-sm font-semibold text-gray-900 mb-2">Objetos identificados:</p>
-                      {Object.entries(detectionSummary)
-                        .sort(([, a]: any, [, b]: any) => b - a)
-                        .map(([obj, count]: any) => (
-                          <div key={obj} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
-                            <span className="text-xs text-gray-700 capitalize">{obj}</span>
-                            <span className="text-xs font-bold text-green-600">{count}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                 <h3 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
                   <span>🧠</span>
-                  <span>Modelo de Detección</span>
+                  <span>Detección EPP con IA</span>
                 </h3>
                 <div className="text-xs text-gray-700 space-y-2">
-                  <p><strong>Estado actual:</strong></p>
+                  <p><strong>Cómo funciona:</strong></p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Detecta personas y objetos generales</li>
-                    <li>🛠️ Modelo en entrenamiento para EPPs específicos</li>
-                    <li>Próximamente: cascos, guantes, mascarillas, gafas, botas</li>
+                    <li>Detecta movimiento en tiempo real</li>
+                    <li>Análisis inmediato al detectar cambios</li>
+                    <li>Espera 10 segundos entre análisis</li>
                   </ul>
                   <p className="mt-2 text-blue-800 font-medium">
-                    🚀 Para detección precisa de EPPs, usa el análisis de imágenes
+                    🚀 Misma precisión que el análisis de imágenes
                   </p>
                 </div>
               </div>

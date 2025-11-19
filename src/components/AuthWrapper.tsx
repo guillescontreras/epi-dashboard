@@ -76,6 +76,26 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     checkAuth();
   }, []);
 
+  // Verificar términos cuando cambia el estado de autenticación
+  useEffect(() => {
+    const checkTerms = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user && !termsAccepted && !showTerms) {
+          const accepted = localStorage.getItem('termsAccepted');
+          if (accepted !== 'true') {
+            setShowTerms(true);
+          } else {
+            setTermsAccepted(true);
+          }
+        }
+      } catch {
+        // Usuario no autenticado
+      }
+    };
+    checkTerms();
+  }, [termsAccepted, showTerms]);
+
   const checkAuth = async () => {
     try {
       await getCurrentUser();
@@ -122,16 +142,6 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
       }}
     >
       {({ signOut, user }) => {
-        // Verificar términos cuando el usuario se autentica
-        if (user && !termsAccepted && !showTerms) {
-          const accepted = localStorage.getItem('termsAccepted');
-          if (accepted !== 'true') {
-            setShowTerms(true);
-          } else {
-            setTermsAccepted(true);
-          }
-        }
-
         return (
           <>
             {showTerms && user && (

@@ -153,21 +153,38 @@ const App: React.FC = () => {
   };
   
   React.useEffect(() => {
-    fetchAnalysisData();
-    
-    // Cargar contador de forma lazy (no bloquea carga inicial)
-    setTimeout(async () => {
+    // Solo ejecutar cuando el componente esté montado dentro del Authenticator
+    const initializeApp = async () => {
       try {
-        console.log('Obteniendo contador...');
-        const countResponse = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
-        const countData = await countResponse.json();
-        console.log('Contador recibido:', countData);
-        setTotalAnalysisCount(countData.count || 0);
+        // Verificar que el usuario esté autenticado antes de continuar
+        await getCurrentUser();
+        
+        // Ahora sí ejecutar fetchAnalysisData
+        await fetchAnalysisData();
+        
+        // Cargar contador de forma lazy (no bloquea carga inicial)
+        setTimeout(async () => {
+          try {
+            console.log('Obteniendo contador...');
+            const countResponse = await fetch('https://9znhglw756.execute-api.us-east-1.amazonaws.com/prod');
+            const countData = await countResponse.json();
+            console.log('Contador recibido:', countData);
+            setTotalAnalysisCount(countData.count || 0);
+          } catch (error) {
+            console.error('Error cargando contador:', error);
+            setTotalAnalysisCount(0);
+          }
+        }, 100);
       } catch (error) {
-        console.error('Error cargando contador:', error);
-        setTotalAnalysisCount(0);
+        // Usuario no autenticado aún, no hacer nada
+        console.log('Usuario no autenticado, esperando...');
       }
-    }, 100);
+    };
+    
+    // Ejecutar con un pequeño delay para asegurar que Amplify esté listo
+    const timer = setTimeout(initializeApp, 500);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   // Cargar historial solo cuando se accede a la sección
@@ -853,6 +870,8 @@ const App: React.FC = () => {
       if (config.detectionType === 'realtime_video' && config.file) {
         setVideoFile(config.file);
         setShowVideoProcessor(true);
+      } else if (config.detectionType === 'realtime_ppe') {
+        setShowRealtimeDetection(true);
       } else {
         setShowRealtimeDetection(true);
       }

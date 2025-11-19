@@ -41,7 +41,7 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
   ];
 
   const realtimeDetectionTypes: Array<{value: string; label: string; icon: string; desc: string; disabled?: boolean}> = [
-    { value: 'realtime_ppe_coming', label: 'Detección de EPPs', icon: '🦺', desc: '🚧 Próximamente - Modelo en entrenamiento', disabled: true },
+    { value: 'realtime_ppe', label: 'Detección de EPPs', icon: '🦺', desc: 'Detecta EPPs con Rekognition cada 10s' },
     { value: 'realtime_objects', label: 'Detección de Objetos', icon: '🏷️', desc: 'Detecta personas y objetos en tiempo real' }
   ];
 
@@ -52,7 +52,17 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
 
   const handleDetectionTypeSelect = (type: string) => {
     setDetectionType(type);
-    setStep(3);
+    // Si es detección EPP en tiempo real, ir directo a la cámara
+    if (type === 'realtime_ppe') {
+      onComplete({
+        mode: 'realtime',
+        detectionType: 'realtime_ppe',
+        minConfidence: 75,
+        epiItems: ['HEAD_COVER', 'EYE_COVER']
+      });
+    } else {
+      setStep(3);
+    }
   };
 
   const handleEpiItemChange = (item: string) => {
@@ -283,8 +293,8 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
           {mode === 'image' ? (
             <DragDropUpload onFileSelect={setFile} selectedFile={file} />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-8 border-2 border-pink-200 text-center cursor-pointer hover:shadow-xl transition-all" onClick={() => setFile(null)}>
+            <div className="flex justify-center">
+              <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-8 border-2 border-pink-200 text-center cursor-pointer hover:shadow-xl transition-all max-w-md" onClick={() => setFile(null)}>
                 <div className="w-20 h-20 mx-auto bg-pink-500 rounded-full flex items-center justify-center mb-4">
                   <span className="text-4xl">📹</span>
                 </div>
@@ -292,81 +302,6 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
                 <p className="text-sm text-gray-600">
                   Detección instantánea desde tu cámara
                 </p>
-              </div>
-              
-              <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl p-8 border-2 border-purple-200 text-center">
-                {file && file.type.startsWith('video/') && videoThumbnail ? (
-                  <div className="space-y-4">
-                    <div className="w-full h-48 mx-auto bg-gray-900 rounded-lg overflow-hidden relative">
-                      <img
-                        src={videoThumbnail}
-                        alt="Video preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                        <span className="text-white text-6xl">▶️</span>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                    <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                    <label
-                      htmlFor="video-upload"
-                      className="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 cursor-pointer transition-all"
-                    >
-                      Cambiar Video
-                    </label>
-                  </div>
-                ) : (
-                  <>
-                    <div className="w-20 h-20 mx-auto bg-purple-500 rounded-full flex items-center justify-center mb-4">
-                      <span className="text-4xl">🎬</span>
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">Subir Video</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Analiza un video con boxes dibujados
-                    </p>
-                    <label
-                      htmlFor="video-upload"
-                      className="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 cursor-pointer transition-all"
-                    >
-                      Seleccionar Video
-                    </label>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept="video/mp4,video/avi,video/mov,video/quicktime"
-                  onChange={(e) => {
-                    const videoFile = e.target.files?.[0] || null;
-                    setFile(videoFile);
-                    if (videoFile) {
-                      // Generar miniatura
-                      const video = document.createElement('video');
-                      const canvas = document.createElement('canvas');
-                      const ctx = canvas.getContext('2d');
-                      
-                      video.preload = 'metadata';
-                      video.src = URL.createObjectURL(videoFile);
-                      
-                      video.onloadeddata = () => {
-                        video.currentTime = 1;
-                      };
-                      
-                      video.onseeked = () => {
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const thumbnail = canvas.toDataURL('image/jpeg');
-                        setVideoThumbnail(thumbnail);
-                        URL.revokeObjectURL(video.src);
-                      };
-                    } else {
-                      setVideoThumbnail(null);
-                    }
-                  }}
-                  className="hidden"
-                  id="video-upload"
-                />
               </div>
             </div>
           )}
@@ -443,8 +378,6 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
                 </div>
               ) : mode === 'image' ? (
                 <span>🚀 Iniciar Análisis</span>
-              ) : file ? (
-                <span>🎬 Procesar Video</span>
               ) : (
                 <span>📹 Abrir Cámara</span>
               )}
