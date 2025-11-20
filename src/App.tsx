@@ -26,10 +26,12 @@ import FeedbackModal from './components/FeedbackModal';
 import ContactModal from './components/ContactModal';
 import AdminPanel from './components/AdminPanel';
 import { fetchUserAttributes } from 'aws-amplify/auth';
+import { usePushNotifications } from './hooks/usePushNotifications';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('analysis');
   const [userRole, setUserRole] = useState<'user' | 'admin'>('user');
+  const { isSupported: isPushSupported, isSubscribed, subscribeToPush } = usePushNotifications();
   const [file, setFile] = useState<File | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [imageUrl, setImageUrl] = useState<string>('');
@@ -175,6 +177,18 @@ const App: React.FC = () => {
             setTotalAnalysisCount(0);
           }
         }, 100);
+        
+        // Solicitar permisos push automáticamente en móvil
+        setTimeout(async () => {
+          if (isPushSupported && !isSubscribed && 'ontouchstart' in window) {
+            try {
+              console.log('📱 Dispositivo móvil detectado, solicitando permisos push...');
+              await subscribeToPush();
+            } catch (error) {
+              console.log('Usuario rechazó permisos push o error:', error);
+            }
+          }
+        }, 2000);
       } catch (error) {
         // Usuario no autenticado aún, no hacer nada
         console.log('Usuario no autenticado, esperando...');
