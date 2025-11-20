@@ -225,9 +225,18 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
             </div>
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-xs text-blue-800">
-                <span className="font-semibold">ℹ️ Cómo funciona:</span> El sistema detecta todos los EPPs con confianza ≥50%. 
-                Este umbral solo determina el <strong>estado visual</strong> (Cumple/No cumple). 
-                Ejemplo: Si configuras 75%, un calzado detectado al 69% se mostrará como "No cumple 69%" en rojo.
+                <span className="font-semibold">ℹ️ Cómo funciona:</span> 
+                {detectionType === 'ppe_detection' || detectionType === 'realtime_ppe' ? (
+                  <>El sistema detecta todos los EPPs con confianza ≥50%. Este umbral solo determina el <strong>estado visual</strong> (Cumple/No cumple). Ejemplo: Si configuras 75%, un calzado detectado al 69% se mostrará como "No cumple 69%" en rojo.</>
+                ) : detectionType === 'face_detection' ? (
+                  <>El sistema detecta rostros con confianza ≥{minConfidence}%. Solo se mostrarán los rostros que superen este umbral. Ejemplo: Si configuras 80%, solo aparecerán rostros detectados con 80% o más de confianza.</>
+                ) : detectionType === 'label_detection' ? (
+                  <>El sistema identifica objetos con confianza ≥{minConfidence}%. Solo se mostrarán los objetos que superen este umbral. Ejemplo: Si configuras 70%, solo aparecerán objetos detectados con 70% o más de confianza.</>
+                ) : detectionType === 'text_detection' ? (
+                  <>El sistema extrae texto con confianza ≥{minConfidence}%. Solo se mostrará el texto que supere este umbral. Ejemplo: Si configuras 85%, solo aparecerá texto detectado con 85% o más de confianza.</>
+                ) : (
+                  <>El sistema aplica el umbral de confianza de {minConfidence}% para determinar qué elementos mostrar en los resultados.</>
+                )}
               </p>
             </div>
           </div>
