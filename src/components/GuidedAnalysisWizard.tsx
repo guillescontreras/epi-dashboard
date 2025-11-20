@@ -42,7 +42,7 @@ const GuidedAnalysisWizard: React.FC<GuidedAnalysisWizardProps> = ({ onComplete,
 
   const realtimeDetectionTypes: Array<{value: string; label: string; icon: string; desc: string; disabled?: boolean}> = [
     { value: 'realtime_ppe', label: 'Detección de EPPs', icon: '🦺', desc: 'Detecta EPPs con Rekognition cada 10s' },
-    { value: 'realtime_objects', label: 'Detección de Objetos', icon: '🏷️', desc: 'Detecta personas y objetos en tiempo real' }
+    { value: 'realtime_objects', label: 'Detección de Objetos', icon: '🏷️', desc: 'Próximamente disponible', disabled: true }
   ];
 
   const handleModeSelect = (selectedMode: 'image' | 'realtime') => {

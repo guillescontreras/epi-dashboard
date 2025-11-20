@@ -1,7 +1,8 @@
-export const APP_VERSION = '2.10.0';
+export const APP_VERSION = '2.10.1';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.10.1': 'Fix: Desactivar temporalmente detección de objetos en tiempo real hasta completar desarrollo',
   '2.10.0': 'Feature: Detección EPP en tiempo real con Rekognition - motion detection + análisis cada 10s',
   '2.9.8': 'Fix: Simplificación de inicialización - delay de 500ms para asegurar autenticación',
   '2.9.7': 'Fix crítico: Error de autenticación al cargar datos - inicialización después de login',
