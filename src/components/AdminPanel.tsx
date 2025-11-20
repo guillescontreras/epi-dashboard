@@ -335,6 +335,8 @@ const AdminPanel: React.FC = () => {
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             user.role === 'admin' 
                               ? 'bg-purple-100 text-purple-800' 
+                              : user.role === 'supervisor'
+                              ? 'bg-green-100 text-green-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}>
                             {user.role || 'user'}
@@ -357,10 +359,19 @@ const AdminPanel: React.FC = () => {
                           >
                             🔑
                           </button>
+                          {user.role !== 'admin' && (
+                            <button
+                              onClick={() => handleChangeRole(user.username, user.role === 'supervisor' ? 'user' : 'supervisor')}
+                              className="text-green-600 hover:text-green-800 font-medium"
+                              title={user.role === 'supervisor' ? 'Quitar supervisor' : 'Hacer supervisor'}
+                            >
+                              {user.role === 'supervisor' ? '👤' : '👮'}
+                            </button>
+                          )}
                           <button
                             onClick={() => handleChangeRole(user.username, user.role === 'admin' ? 'user' : 'admin')}
                             className="text-purple-600 hover:text-purple-800 font-medium"
-                            title="Cambiar rol"
+                            title="Cambiar rol admin"
                           >
                             {user.role === 'admin' ? '👤' : '👑'}
                           </button>

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 interface EPPStatus {
   HEAD_COVER: 'detectado' | 'no_detectado' | 'no_evaluable' | 'analizando' | 'disabled';
@@ -39,6 +40,21 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analysisInProgressRef = useRef(false);
+  
+  // Estados para alertas multicanal
+  const [alertsEnabled, setAlertsEnabled] = useState(false);
+  const [alertEPPs, setAlertEPPs] = useState<Set<keyof EPPStatus>>(new Set(['HEAD_COVER', 'HAND_COVER'] as (keyof EPPStatus)[]));
+  const [lastAlertTime, setLastAlertTime] = useState<Date | null>(null);
+  const [alertCooldown] = useState(5); // 5 minutos
+  const [showToast, setShowToast] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
+  const [supervisors, setSupervisors] = useState<Array<{username: string, email: string, name: string, role: string}>>([]);
+  const [selectedSupervisor, setSelectedSupervisor] = useState('');
+  const [alertTypes, setAlertTypes] = useState({
+    push: false,
+    email: false,
+    sms: false
+  });
+  const { isSupported: isPushSupported, isSubscribed, subscribeToPush, unsubscribeFromPush, loading: pushLoading } = usePushNotifications();
 
   const eppNames = {
     HEAD_COVER: 'Casco',
@@ -55,7 +71,7 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
     
     const video = webcamRef.current.video;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return false;
 
     canvas.width = video.videoWidth;
@@ -176,6 +192,9 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
       const totalTime = Date.now() - startTime;
       console.log(`✅ Estado EPP actualizado en ${totalTime}ms:`, newStatus);
       
+      // Verificar si hay EPPs faltantes para alertas
+      await checkAndSendAlert(newStatus, enabledEPPsArray);
+      
       // Esperar 10 segundos antes de permitir nuevo análisis
       setIsAnalyzing(false);
       analysisTimeoutRef.current = setTimeout(() => {
@@ -235,6 +254,93 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
 
     if (!evaluable) return 'no_evaluable';
     return detected ? 'detectado' : 'no_detectado';
+  };
+
+  // Función para verificar y enviar alertas SMS
+  const checkAndSendAlert = async (currentStatus: EPPStatus, enabledEPPsArray: string[]) => {
+    if (!alertsEnabled || !selectedSupervisor) return;
+    
+    // Verificar cooldown
+    if (lastAlertTime) {
+      const timeSinceLastAlert = (Date.now() - lastAlertTime.getTime()) / (1000 * 60);
+      if (timeSinceLastAlert < alertCooldown) {
+        console.log(`⏰ Cooldown activo: ${Math.ceil(alertCooldown - timeSinceLastAlert)} min restantes`);
+        return;
+      }
+    }
+    
+    // Encontrar EPPs faltantes que están en la lista de alertas
+    const missingEPPs = enabledEPPsArray.filter(epp => {
+      const eppKey = epp as keyof EPPStatus;
+      return alertEPPs.has(eppKey) && currentStatus[eppKey] === 'no_detectado';
+    });
+    
+    if (missingEPPs.length === 0) return;
+    
+    try {
+      const user = await getCurrentUser();
+      const response = await axios.post('https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod/send-alert', {
+        supervisorUsername: selectedSupervisor,
+        missingEPPs,
+        timestamp: Date.now(),
+        workerUserId: user.username,
+        alertTypes
+      });
+      
+      console.log('✅ Alerta enviada exitosamente');
+      
+      // Mostrar notificación de éxito
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Alerta Enviada', {
+          body: `Alerta enviada a supervisor: ${selectedSupervisor}`,
+          icon: '/favicon.ico'
+        });
+      }
+      
+      setShowToast({message: `Alerta enviada: ${missingEPPs.map(epp => eppNames[epp as keyof typeof eppNames]).join(', ')} no detectado`, type: 'info'});
+      setTimeout(() => setShowToast(null), 4000);
+      setLastAlertTime(new Date());
+    } catch (error) {
+      console.error('❌ Error enviando alerta:', error);
+      setShowToast({message: 'Error enviando alerta', type: 'error'});
+      setTimeout(() => setShowToast(null), 3000);
+    }
+  };
+  
+  // Guardar configuración de alertas en DynamoDB
+  const saveAlertConfig = async () => {
+    if (!selectedSupervisor) return;
+    
+    try {
+      const user = await getCurrentUser();
+      await axios.put('https://rg38nq36tb.execute-api.us-east-1.amazonaws.com/prod', {
+        userId: user.username,
+        enabled: alertsEnabled,
+        enabledEPPs: Array.from(alertEPPs),
+        cooldownMinutes: alertCooldown,
+        selectedSupervisor,
+        alertTypes
+      });
+      console.log('💾 Configuración de alertas guardada');
+      setShowToast({message: 'Configuración de alertas guardada exitosamente', type: 'success'});
+      setTimeout(() => setShowToast(null), 3000);
+    } catch (error) {
+      console.error('❌ Error guardando configuración:', error);
+      setShowToast({message: 'Error guardando configuración de alertas', type: 'error'});
+      setTimeout(() => setShowToast(null), 3000);
+    }
+  };
+  
+  const toggleAlertEPP = (epp: keyof EPPStatus) => {
+    setAlertEPPs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(epp)) {
+        newSet.delete(epp);
+      } else {
+        newSet.add(epp);
+      }
+      return newSet;
+    });
   };
 
   useEffect(() => {
@@ -329,7 +435,19 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
     }
   };
 
+  // Cargar supervisores al montar el componente
   React.useEffect(() => {
+    const fetchSupervisors = async () => {
+      try {
+        const response = await axios.get('https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod/supervisors');
+        setSupervisors(response.data.supervisors || []);
+      } catch (error) {
+        console.error('Error cargando supervisores:', error);
+      }
+    };
+    
+    fetchSupervisors();
+    
     return () => {
       // Cleanup: detener cámara al desmontar componente
       if (webcamRef.current?.stream) {
@@ -475,6 +593,149 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                 </div>
               </div>
 
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-3 border border-orange-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-gray-900 text-sm flex items-center space-x-2">
+                    <span>📱</span>
+                    <span>Envío de Alerta</span>
+                  </h3>
+                  <button
+                    onClick={() => setAlertsEnabled(!alertsEnabled)}
+                    className={`relative w-10 h-5 rounded-full transition-all duration-200 ${
+                      alertsEnabled ? 'bg-orange-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+                      alertsEnabled ? 'translate-x-5' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
+                
+                {alertsEnabled && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-2">
+                        📢 Tipos de alerta:
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={alertTypes.push}
+                            onChange={(e) => setAlertTypes(prev => ({...prev, push: e.target.checked}))}
+                            disabled={!isPushSupported || !isSubscribed}
+                            className="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500 disabled:opacity-50"
+                          />
+                          <span className="text-xs text-gray-700">🔔 Push Notification</span>
+                          {isPushSupported ? (
+                            isSubscribed ? (
+                              <span className="text-xs text-green-600 font-medium">✅ Activo</span>
+                            ) : (
+                              <button
+                                onClick={subscribeToPush}
+                                disabled={pushLoading}
+                                className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+                              >
+                                {pushLoading ? '⏳ Activando...' : '🔔 Activar Push'}
+                              </button>
+                            )
+                          ) : (
+                            <span className="text-xs text-red-600">❌ No soportado</span>
+                          )}
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={alertTypes.email}
+                            onChange={(e) => setAlertTypes(prev => ({...prev, email: e.target.checked}))}
+                            className="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                          />
+                          <span className="text-xs text-gray-700">📧 Email</span>
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={alertTypes.sms}
+                            onChange={(e) => setAlertTypes(prev => ({...prev, sms: e.target.checked}))}
+                            className="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                          />
+                          <span className="text-xs text-gray-700">📱 SMS</span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        🚨 EPPs para alertar:
+                      </label>
+                      <div className="grid grid-cols-2 gap-1">
+                        {Object.entries(eppNames).map(([epp, name]) => {
+                          const eppKey = epp as keyof EPPStatus;
+                          const isAlertEnabled = alertEPPs.has(eppKey);
+                          
+                          return (
+                            <label key={epp} className="flex items-center space-x-1 cursor-pointer p-1 rounded hover:bg-orange-100">
+                              <input
+                                type="checkbox"
+                                checked={isAlertEnabled}
+                                onChange={() => toggleAlertEPP(eppKey)}
+                                className="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                              />
+                              <span className="text-xs text-gray-700">{name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        👮 Supervisor a notificar:
+                      </label>
+                      {supervisors.length > 0 ? (
+                        <select
+                          value={selectedSupervisor}
+                          onChange={(e) => setSelectedSupervisor(e.target.value)}
+                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        >
+                          <option value="">Seleccionar supervisor...</option>
+                          {supervisors.map((supervisor) => (
+                            <option key={supervisor.username} value={supervisor.username}>
+                              {supervisor.role === 'admin' ? '👑' : '👮'} {supervisor.name || supervisor.email}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic">No hay supervisores disponibles</p>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">Cooldown: {alertCooldown} min</span>
+                      <button
+                        onClick={saveAlertConfig}
+                        disabled={!selectedSupervisor || (!alertTypes.push && !alertTypes.email && !alertTypes.sms)}
+                        className="px-2 py-1 bg-orange-600 text-white text-xs rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        💾 Guardar
+                      </button>
+                    </div>
+                    
+                    {lastAlertTime && (
+                      <div className="text-xs text-gray-500 pt-1 border-t border-orange-200">
+                        📱 Última alerta: {lastAlertTime.toLocaleTimeString()}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {!alertsEnabled && (
+                  <p className="text-xs text-gray-600">
+                    Activa las alertas para notificar al supervisor cuando no se detecten EPPs críticos
+                  </p>
+                )}
+              </div>
+
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                 <h3 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
                   <span>🧠</span>
@@ -495,6 +756,23 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
             </div>
           </div>
         </div>
+        
+        {/* Toast Notification */}
+        {showToast && (
+          <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium ${
+            showToast.type === 'success' ? 'bg-green-600' :
+            showToast.type === 'error' ? 'bg-red-600' :
+            'bg-blue-600'
+          }`}>
+            <div className="flex items-center space-x-2">
+              <span>
+                {showToast.type === 'success' ? '✅' :
+                 showToast.type === 'error' ? '❌' : '📱'}
+              </span>
+              <span>{showToast.message}</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
