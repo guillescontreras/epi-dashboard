@@ -43,12 +43,8 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
   
   // Estados para alertas multicanal
   const [alertsEnabled, setAlertsEnabled] = useState(false);
-  const [alertEPPs, setAlertEPPs] = useState<Set<keyof EPPStatus>>(new Set(['HEAD_COVER', 'HAND_COVER'] as (keyof EPPStatus)[]));
-  const [lastAlertTime, setLastAlertTime] = useState<Date | null>(null);
-  const [alertCooldown] = useState(5); // 5 minutos
+  const [lastAlertTime, setLastAlertTime] = useState<{email?: Date, sms?: Date, push?: Date}>({});
   const [showToast, setShowToast] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
-  const [supervisors, setSupervisors] = useState<Array<{username: string, email: string, name: string, role: string}>>([]);
-  const [selectedSupervisor, setSelectedSupervisor] = useState('');
   const [alertTypes, setAlertTypes] = useState({
     push: false,
     email: false,
@@ -256,50 +252,55 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
     return detected ? 'detectado' : 'no_detectado';
   };
 
-  // Función para verificar y enviar alertas SMS
+  // Función para verificar y enviar alertas
   const checkAndSendAlert = async (currentStatus: EPPStatus, enabledEPPsArray: string[]) => {
-    if (!alertsEnabled || !selectedSupervisor) return;
+    if (!alertsEnabled) return;
     
-    // Verificar cooldown
-    if (lastAlertTime) {
-      const timeSinceLastAlert = (Date.now() - lastAlertTime.getTime()) / (1000 * 60);
-      if (timeSinceLastAlert < alertCooldown) {
-        console.log(`⏰ Cooldown activo: ${Math.ceil(alertCooldown - timeSinceLastAlert)} min restantes`);
-        return;
-      }
-    }
-    
-    // Encontrar EPPs faltantes que están en la lista de alertas
+    // Encontrar EPPs faltantes (solo los habilitados en el panel)
     const missingEPPs = enabledEPPsArray.filter(epp => {
       const eppKey = epp as keyof EPPStatus;
-      return alertEPPs.has(eppKey) && currentStatus[eppKey] === 'no_detectado';
+      return currentStatus[eppKey] === 'no_detectado';
     });
     
     if (missingEPPs.length === 0) return;
     
+    const now = Date.now();
+    const cooldowns = { email: 10, sms: 10, push: 0 }; // minutos
+    
+    // Filtrar tipos de alerta según cooldown
+    const activeAlertTypes = {
+      push: alertTypes.push,
+      email: alertTypes.email && (!lastAlertTime.email || (now - lastAlertTime.email.getTime()) / (1000 * 60) >= cooldowns.email),
+      sms: alertTypes.sms && (!lastAlertTime.sms || (now - lastAlertTime.sms.getTime()) / (1000 * 60) >= cooldowns.sms)
+    };
+    
+    // Si no hay alertas activas, salir
+    if (!activeAlertTypes.push && !activeAlertTypes.email && !activeAlertTypes.sms) {
+      console.log('⏰ Todas las alertas en cooldown');
+      return;
+    }
+    
     try {
       const user = await getCurrentUser();
       const response = await axios.post('https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod/send-alert', {
-        supervisorUsername: selectedSupervisor,
+        supervisorUsername: user.username, // Usuario actual
         missingEPPs,
-        timestamp: Date.now(),
+        timestamp: now,
         workerUserId: user.username,
-        alertTypes
+        alertTypes: activeAlertTypes
       });
       
       console.log('✅ Alerta enviada exitosamente');
       
-      // Mostrar notificación de éxito
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Alerta Enviada', {
-          body: `Alerta enviada a supervisor: ${selectedSupervisor}`,
-          icon: '/favicon.ico'
-        });
-      }
+      // Actualizar tiempos de última alerta
+      const newLastAlertTime = { ...lastAlertTime };
+      if (activeAlertTypes.email) newLastAlertTime.email = new Date();
+      if (activeAlertTypes.sms) newLastAlertTime.sms = new Date();
+      if (activeAlertTypes.push) newLastAlertTime.push = new Date();
+      setLastAlertTime(newLastAlertTime);
       
       setShowToast({message: `Alerta enviada: ${missingEPPs.map(epp => eppNames[epp as keyof typeof eppNames]).join(', ')} no detectado`, type: 'info'});
       setTimeout(() => setShowToast(null), 4000);
-      setLastAlertTime(new Date());
     } catch (error) {
       console.error('❌ Error enviando alerta:', error);
       setShowToast({message: 'Error enviando alerta', type: 'error'});
@@ -307,41 +308,9 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
     }
   };
   
-  // Guardar configuración de alertas en DynamoDB
-  const saveAlertConfig = async () => {
-    if (!selectedSupervisor) return;
-    
-    try {
-      const user = await getCurrentUser();
-      await axios.put('https://rg38nq36tb.execute-api.us-east-1.amazonaws.com/prod', {
-        userId: user.username,
-        enabled: alertsEnabled,
-        enabledEPPs: Array.from(alertEPPs),
-        cooldownMinutes: alertCooldown,
-        selectedSupervisor,
-        alertTypes
-      });
-      console.log('💾 Configuración de alertas guardada');
-      setShowToast({message: 'Configuración de alertas guardada exitosamente', type: 'success'});
-      setTimeout(() => setShowToast(null), 3000);
-    } catch (error) {
-      console.error('❌ Error guardando configuración:', error);
-      setShowToast({message: 'Error guardando configuración de alertas', type: 'error'});
-      setTimeout(() => setShowToast(null), 3000);
-    }
-  };
+
   
-  const toggleAlertEPP = (epp: keyof EPPStatus) => {
-    setAlertEPPs(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(epp)) {
-        newSet.delete(epp);
-      } else {
-        newSet.add(epp);
-      }
-      return newSet;
-    });
-  };
+
 
   useEffect(() => {
     if (isDetecting && !isAnalyzing) {
@@ -435,19 +404,7 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
     }
   };
 
-  // Cargar supervisores al montar el componente
   React.useEffect(() => {
-    const fetchSupervisors = async () => {
-      try {
-        const response = await axios.get('https://zwjh3jgrsi.execute-api.us-east-1.amazonaws.com/prod/supervisors');
-        setSupervisors(response.data.supervisors || []);
-      } catch (error) {
-        console.error('Error cargando supervisores:', error);
-      }
-    };
-    
-    fetchSupervisors();
-    
     return () => {
       // Cleanup: detener cámara al desmontar componente
       if (webcamRef.current?.stream) {
@@ -513,28 +470,28 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-3 border border-blue-200">
-                <h3 className="font-semibold text-gray-900 mb-2 text-sm">🛡️ Panel de Control EPP</h3>
-                <div className="space-y-2">
+            <div className="space-y-2">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-2 border border-blue-200">
+                <h3 className="font-semibold text-gray-900 mb-1.5 text-xs">🛡️ Panel EPP</h3>
+                <div className="space-y-1">
                   {Object.entries(eppNames).map(([epp, name]) => {
                     const eppKey = epp as keyof EPPStatus;
                     const isEnabled = enabledEPPs.has(eppKey);
                     const status = eppStatus[eppKey];
                     
                     return (
-                      <div key={epp} className={`flex items-center justify-between p-2 rounded-lg border transition-all duration-500 ${
+                      <div key={epp} className={`flex items-center justify-between p-1.5 rounded border transition-all duration-500 ${
                         status === 'detectado' ? 'bg-green-100 border-green-400 shadow-lg shadow-green-200' :
                         status === 'no_detectado' ? 'bg-red-100 border-red-400 shadow-lg shadow-red-200' :
                         status === 'analizando' ? 'bg-blue-100 border-blue-400 animate-pulse' :
                         status === 'no_evaluable' ? 'bg-yellow-100 border-yellow-400' :
                         'bg-white hover:bg-gray-50'
                       }`}>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-base">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-sm">
                             {epp === 'HEAD_COVER' ? '🪪' : epp === 'EYE_COVER' ? '🥽' : epp === 'HAND_COVER' ? '🧤' : epp === 'FOOT_COVER' ? '🥾' : epp === 'FACE_COVER' ? '😷' : '🎧'}
                           </span>
-                          <span className={`text-xs font-medium transition-colors ${
+                          <span className={`text-[10px] font-medium transition-colors ${
                             status === 'detectado' ? 'text-green-800 font-bold' :
                             status === 'no_detectado' ? 'text-red-800 font-bold' :
                             status === 'analizando' ? 'text-blue-800 font-bold' :
@@ -542,19 +499,19 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                             'text-gray-700'
                           }`}>{name}</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <div className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(status)}`}>
+                        <div className="flex items-center space-x-1.5">
+                          <div className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(status)}`}>
                             {getStatusIcon(status)}
                           </div>
                           <button
                             onClick={() => toggleEPP(eppKey)}
                             disabled={isDetecting}
-                            className={`relative w-10 h-5 rounded-full transition-all duration-200 ${
+                            className={`relative w-8 h-4 rounded-full transition-all duration-200 ${
                               isEnabled ? 'bg-blue-600' : 'bg-gray-300'
                             } disabled:opacity-50`}
                           >
-                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
-                              isEnabled ? 'translate-x-5' : 'translate-x-0.5'
+                            <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-200 ${
+                              isEnabled ? 'translate-x-4' : 'translate-x-0.5'
                             }`} />
                           </button>
                         </div>
@@ -564,49 +521,49 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border border-green-200">
-                <h3 className="font-semibold text-gray-900 mb-2 text-sm">📊 Estado del Sistema</h3>
-                <div className="space-y-2">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2 border border-green-200">
+                <h3 className="font-semibold text-gray-900 mb-1.5 text-xs">📊 Estado</h3>
+                <div className="space-y-1">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Estado:</span>
-                    <span className={`text-sm font-bold ${isAnalyzing ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <span className="text-[10px] text-gray-600">Actividad:</span>
+                    <span className={`text-[10px] font-bold ${isAnalyzing ? 'text-blue-600' : 'text-gray-400'}`}>
                       {isAnalyzing ? '🔄 Analizando' : '⚪ Esperando'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Último análisis:</span>
-                    <span className="text-xs text-gray-500">
-                      {lastAnalysis ? lastAnalysis.toLocaleTimeString() : 'Ninguno'}
+                    <span className="text-[10px] text-gray-600">Último:</span>
+                    <span className="text-[10px] text-gray-500">
+                      {lastAnalysis ? lastAnalysis.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'}) : '-'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Estado:</span>
-                    <span className={`text-sm font-bold ${
-                      isAnalyzing ? 'text-blue-600' : 'text-green-600'
+                    <span className="text-[10px] text-gray-600">Estado:</span>
+                    <span className={`text-[10px] font-bold ${
+                      isAnalyzing ? 'text-blue-600' : analysisInProgressRef.current ? 'text-orange-600' : 'text-green-600'
                     }`}>
-                      {isAnalyzing ? '🔄 Analizando...' : '✅ Listo'}
+                      {isAnalyzing ? '🔄 Analizando...' : analysisInProgressRef.current ? '⏳ Cooldown' : '✅ Listo'}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                    🎯 Detecta movimiento → Analiza → Espera 10s
+                  <div className="text-[9px] text-gray-500 mt-1 pt-1 border-t border-gray-200">
+                    🎯 Movimiento → Análisis → 10s
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-3 border border-orange-200">
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-2 border border-orange-200">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900 text-sm flex items-center space-x-2">
+                  <h3 className="font-semibold text-gray-900 text-xs flex items-center space-x-1.5">
                     <span>📱</span>
                     <span>Envío de Alerta</span>
                   </h3>
                   <button
                     onClick={() => setAlertsEnabled(!alertsEnabled)}
-                    className={`relative w-10 h-5 rounded-full transition-all duration-200 ${
+                    className={`relative w-8 h-4 rounded-full transition-all duration-200 ${
                       alertsEnabled ? 'bg-orange-600' : 'bg-gray-300'
                     }`}
                   >
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
-                      alertsEnabled ? 'translate-x-5' : 'translate-x-0.5'
+                    <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-200 ${
+                      alertsEnabled ? 'translate-x-4' : 'translate-x-0.5'
                     }`} />
                   </button>
                 </div>
@@ -664,66 +621,20 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                       </div>
                     </div>
                     
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        🚨 EPPs para alertar:
-                      </label>
-                      <div className="grid grid-cols-2 gap-1">
-                        {Object.entries(eppNames).map(([epp, name]) => {
-                          const eppKey = epp as keyof EPPStatus;
-                          const isAlertEnabled = alertEPPs.has(eppKey);
-                          
-                          return (
-                            <label key={epp} className="flex items-center space-x-1 cursor-pointer p-1 rounded hover:bg-orange-100">
-                              <input
-                                type="checkbox"
-                                checked={isAlertEnabled}
-                                onChange={() => toggleAlertEPP(eppKey)}
-                                className="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                              />
-                              <span className="text-xs text-gray-700">{name}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
+                    <div className="p-2 bg-orange-100 rounded-lg border border-orange-300">
+                      <p className="text-[10px] text-orange-800">
+                        <strong>ℹ️ Importante:</strong> Las alertas se envían a tu usuario registrado. Asegúrate de tener tus datos completos (email/teléfono) en tu perfil.
+                      </p>
+                      <p className="text-[10px] text-orange-700 mt-1">
+                        <strong>⏰ Recurrencia:</strong> Email/SMS cada 10 min. Push sin límite.
+                      </p>
                     </div>
                     
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        👮 Supervisor a notificar:
-                      </label>
-                      {supervisors.length > 0 ? (
-                        <select
-                          value={selectedSupervisor}
-                          onChange={(e) => setSelectedSupervisor(e.target.value)}
-                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        >
-                          <option value="">Seleccionar supervisor...</option>
-                          {supervisors.map((supervisor) => (
-                            <option key={supervisor.username} value={supervisor.username}>
-                              {supervisor.role === 'admin' ? '👑' : '👮'} {supervisor.name || supervisor.email}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <p className="text-xs text-gray-500 italic">No hay supervisores disponibles</p>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600">Cooldown: {alertCooldown} min</span>
-                      <button
-                        onClick={saveAlertConfig}
-                        disabled={!selectedSupervisor || (!alertTypes.push && !alertTypes.email && !alertTypes.sms)}
-                        className="px-2 py-1 bg-orange-600 text-white text-xs rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        💾 Guardar
-                      </button>
-                    </div>
-                    
-                    {lastAlertTime && (
-                      <div className="text-xs text-gray-500 pt-1 border-t border-orange-200">
-                        📱 Última alerta: {lastAlertTime.toLocaleTimeString()}
+                    {(lastAlertTime.email || lastAlertTime.sms || lastAlertTime.push) && (
+                      <div className="text-[10px] text-gray-500 pt-1 border-t border-orange-200 space-y-0.5">
+                        {lastAlertTime.email && <p>📧 Email: {lastAlertTime.email.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'})}</p>}
+                        {lastAlertTime.sms && <p>📱 SMS: {lastAlertTime.sms.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'})}</p>}
+                        {lastAlertTime.push && <p>🔔 Push: {lastAlertTime.push.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'})}</p>}
                       </div>
                     )}
                   </div>
@@ -731,24 +642,24 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                 
                 {!alertsEnabled && (
                   <p className="text-xs text-gray-600">
-                    Activa las alertas para notificar al supervisor cuando no se detecten EPPs críticos
+                    Activa las alertas para recibir notificaciones cuando no se detecten los EPPs seleccionados en el panel
                   </p>
                 )}
               </div>
 
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
+              <div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
+                <h3 className="font-semibold text-gray-900 mb-1.5 text-xs flex items-center space-x-1.5">
                   <span>🧠</span>
                   <span>Detección EPP con IA</span>
                 </h3>
-                <div className="text-xs text-gray-700 space-y-2">
+                <div className="text-[10px] text-gray-700 space-y-1">
                   <p><strong>Cómo funciona:</strong></p>
-                  <ul className="list-disc list-inside space-y-1">
+                  <ul className="list-disc list-inside space-y-0.5">
                     <li>Detecta movimiento en tiempo real</li>
                     <li>Análisis inmediato al detectar cambios</li>
                     <li>Espera 10 segundos entre análisis</li>
                   </ul>
-                  <p className="mt-2 text-blue-800 font-medium">
+                  <p className="mt-1 text-blue-800 font-medium">
                     🚀 Misma precisión que el análisis de imágenes
                   </p>
                 </div>

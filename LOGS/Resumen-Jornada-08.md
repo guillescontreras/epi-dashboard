@@ -116,8 +116,12 @@ Optimizar performance del sistema de detección EPP, implementar paralelización
 ### Estabilidad
 ✅ **Alta** - Sistema completo y funcional
 
-### Bugs Pendientes
-**Ninguno** - Sistema estable
+### Bugs Corregidos (20/11/2025)
+✅ **CORS send-alert** - Configurado OPTIONS con headers correctos  
+✅ **Email destinatario** - Cambiado de fijo a supervisor real desde Cognito  
+✅ **Push notifications parsing** - Manejo correcto formato DynamoDB  
+✅ **Leyendas tipo detección** - Específicas por cada tipo (EPP/Rostros/Objetos/Texto)  
+✅ **Solicitud automática push** - Permisos solicitados al iniciar app en móvil
 
 ---
 
@@ -129,6 +133,11 @@ Optimizar performance del sistema de detección EPP, implementar paralelización
 3. **Web Push API** - Service Worker y suscripciones
 4. **Optimización memoria** - Lambda 1024MB
 5. **Panel alertas rediseñado** - UX mejorada
+6. **CORS configurado** - Endpoint send-alert con OPTIONS
+7. **Email a supervisor** - Remitente ia-agent@coirontech.com, destinatario supervisor
+8. **Push notifications fix** - Parsing DynamoDB corregido
+9. **Leyendas específicas** - Por tipo de detección
+10. **Auto-solicitud push** - Permisos automáticos en móvil
 
 ### Prioridad Alta (Futuras jornadas)
 1. **Medir performance real** con memoria 1024MB
@@ -177,11 +186,11 @@ lambda-deteccion-seguridad/
 
 ---
 
-**Fecha:** 17/11/2025  
-**Hora inicio:** [Pendiente]  
+**Fecha:** 17-20/11/2025  
+**Hora inicio:** 17/11/2025  
 **Versión inicial:** v2.10.1  
-**Versión final:** v2.12.0  
-**Estado:** ✅ Sistema alertas multicanal completado - Performance optimizada
+**Versión final:** v2.13.0  
+**Estado:** ✅ Sistema alertas multicanal completado y corregido - Push notifications funcional
 
 ---
 
@@ -192,3 +201,37 @@ lambda-deteccion-seguridad/
 3. **Integración inteligente datos:** Usar Cognito elimina campos manuales y reduce errores
 4. **Roles granulares útiles:** Separar admin/supervisor/user mejora organización empresarial
 5. **UX simplificada:** Eliminar configuración manual mejora adopción usuario
+6. **CORS crítico:** Siempre configurar OPTIONS para endpoints cross-origin
+7. **DynamoDB formato:** Manejar tanto formato nativo (M/S/N) como JSON string
+8. **SES remitente verificado:** Usar email verificado como remitente, cualquier destinatario válido
+9. **UX contextual:** Leyendas específicas por contexto mejoran comprensión usuario
+10. **Push proactivo:** Solicitar permisos automáticamente en móvil mejora adopción
+
+---
+
+## 🐛 Correcciones Realizadas (20/11/2025)
+
+### 1. **CORS Endpoint send-alert**
+**Problema:** Error CORS al enviar alertas desde frontend  
+**Solución:** Configurado método OPTIONS con headers CORS en API Gateway  
+**Resultado:** ✅ Alertas enviadas sin errores de red
+
+### 2. **Email Destinatario Incorrecto**
+**Problema:** Emails enviados a ia-agent@coirontech.com en lugar del supervisor  
+**Solución:** Cambiar destinatario a `supervisorInfo.email` desde Cognito  
+**Resultado:** ✅ Emails llegan al supervisor correcto
+
+### 3. **Push Notifications JSON Parsing**
+**Problema:** Error "[object Object] is not valid JSON" al enviar push  
+**Solución:** Manejar formato DynamoDB (tipo M) además de JSON string  
+**Resultado:** ✅ Push notifications procesadas correctamente
+
+### 4. **Leyendas Genéricas**
+**Problema:** Misma leyenda EPP en todos los tipos de detección  
+**Solución:** Leyendas específicas por tipo (EPP/Rostros/Objetos/Texto)  
+**Resultado:** ✅ Usuario comprende mejor cada tipo de análisis
+
+### 5. **Solicitud Manual Push**
+**Problema:** Usuario debe buscar botón para activar push en móvil  
+**Solución:** Solicitud automática 2s después de cargar app (solo móvil)  
+**Resultado:** ✅ Activación inmediata sin intervención usuario
