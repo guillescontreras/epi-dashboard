@@ -138,6 +138,11 @@ Optimizar performance del sistema de detección EPP, implementar paralelización
 8. **Push notifications fix** - Parsing DynamoDB corregido
 9. **Leyendas específicas** - Por tipo de detección
 10. **Auto-solicitud push** - Permisos automáticos en móvil
+11. **Alertas a usuario actual** - Eliminado selector supervisor
+12. **EPPs del panel** - Alertas usan EPPs seleccionados
+13. **Recurrencia controlada** - Email/SMS 10min, Push sin límite
+14. **UI compacta** - Panel EPP optimizado para móvil
+15. **Estado cooldown** - Muestra "⏳ Cooldown" durante 10s
 
 ### Prioridad Alta (Futuras jornadas)
 1. **Medir performance real** con memoria 1024MB
@@ -189,8 +194,8 @@ lambda-deteccion-seguridad/
 **Fecha:** 17-20/11/2025  
 **Hora inicio:** 17/11/2025  
 **Versión inicial:** v2.10.1  
-**Versión final:** v2.13.0  
-**Estado:** ✅ Sistema alertas multicanal completado y corregido - Push notifications funcional
+**Versión final:** v2.14.0  
+**Estado:** ✅ Sistema alertas multicanal optimizado - UX mejorada y recurrencia controlada
 
 ---
 
@@ -235,3 +240,44 @@ lambda-deteccion-seguridad/
 **Problema:** Usuario debe buscar botón para activar push en móvil  
 **Solución:** Solicitud automática 2s después de cargar app (solo móvil)  
 **Resultado:** ✅ Activación inmediata sin intervención usuario
+
+---
+
+## 🎨 Optimizaciones UX (20/11/2025)
+
+### 1. **Alertas a Usuario Actual**
+**Cambio:** Eliminado selector de supervisor  
+**Implementación:** Alertas se envían al usuario logueado  
+**Beneficio:** Simplifica configuración, cada usuario recibe sus propias alertas
+
+### 2. **EPPs del Panel de Control**
+**Cambio:** Eliminada sección "EPPs para alertar"  
+**Implementación:** Alertas usan EPPs seleccionados en panel de control  
+**Beneficio:** Configuración unificada, menos redundancia
+
+### 3. **Recurrencia Controlada**
+**Implementación:**
+- 📧 **Email:** 10 minutos entre envíos
+- 📱 **SMS:** 10 minutos entre envíos
+- 🔔 **Push:** Sin límite (inmediato)
+**Beneficio:** Evita spam de emails/SMS, push notifications instantáneas
+
+### 4. **UI Compacta**
+**Cambios:**
+- Panel EPP: Tamaños reducidos (text-xs → text-[10px])
+- Espaciados: p-3 → p-2, space-y-4 → space-y-2
+- Toggles: w-10 h-5 → w-8 h-4
+- Estado: Formato compacto con timestamps cortos
+**Beneficio:** Mejor visualización en móvil, menos scroll
+
+### 5. **Estado Cooldown Visible**
+**Cambio:** Estado muestra "⏳ Cooldown" durante 10s  
+**Antes:** Mostraba "✅ Listo" incluso en cooldown  
+**Beneficio:** Usuario sabe cuándo puede hacer nuevo análisis
+
+### 6. **Explicación Recurrencia**
+**Agregado:** Info box con:
+- Alertas van al usuario registrado
+- Necesidad de datos completos en perfil
+- Recurrencia por tipo de alerta
+**Beneficio:** Usuario comprende funcionamiento del sistema

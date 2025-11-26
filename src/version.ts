@@ -1,7 +1,9 @@
-export const APP_VERSION = '2.12.0';
+export const APP_VERSION = '2.14.0';
 
 // Historial de versiones
 export const VERSION_HISTORY = {
+  '2.14.0': 'Optimization: Sistema alertas optimizado - Usuario actual, EPPs del panel, recurrencia 10min, UI compacta',
+  '2.13.0': 'Fix: Correcciones sistema alertas - CORS, email supervisor, push parsing, leyendas específicas, auto-solicitud push',
   '2.12.0': 'Feature: Sistema de alertas multicanal - Push notifications, Email y SMS a supervisores',
   '2.11.0': 'Feature: Sistema de alertas SMS en tiempo real - Notificaciones cuando no se detectan EPPs críticos',
   '2.10.1': 'Fix: Desactivar temporalmente detección de objetos en tiempo real hasta completar desarrollo',
@@ -107,4 +109,4 @@ export const VERSION_HISTORY = {
 };
 
 // Fecha de última actualización
-export const LAST_UPDATE = '2025-11-16';
+export const LAST_UPDATE = '2025-11-20';
