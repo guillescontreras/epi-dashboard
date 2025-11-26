@@ -188,6 +188,30 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
       const totalTime = Date.now() - startTime;
       console.log(`✅ Estado EPP actualizado en ${totalTime}ms:`, newStatus);
       
+      // Guardar estadísticas en DynamoDB
+      try {
+        const user = await getCurrentUser();
+        const compliantCount = enabledEPPsArray.filter(epp => newStatus[epp as keyof EPPStatus] === 'detectado').length;
+        await axios.post('https://fzxam9mfn1.execute-api.us-east-1.amazonaws.com/prod', {
+          userId: user.username,
+          analysisData: {
+            analysisId: `realtime_${Date.now()}`,
+            timestamp: Date.now(),
+            DetectionType: 'realtime_epp',
+            Summary: {
+              totalPersons: 1,
+              compliant: compliantCount === enabledEPPsArray.length ? 1 : 0
+            },
+            selectedEPPs: enabledEPPsArray,
+            eppStatus: newStatus,
+            MinConfidence: minConfidence
+          }
+        });
+        console.log('📊 Estadísticas guardadas');
+      } catch (dbError) {
+        console.error('❌ Error guardando estadísticas:', dbError);
+      }
+      
       // Verificar si hay EPPs faltantes para alertas
       await checkAndSendAlert(newStatus, enabledEPPsArray);
       

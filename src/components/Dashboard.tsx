@@ -7,7 +7,8 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ analysisHistory, calculateCompliance }) => {
   const totalAnalysis = analysisHistory.length;
-  const ppeAnalysis = analysisHistory.filter(a => a.DetectionType === 'ppe_detection').length;
+  const ppeAnalysis = analysisHistory.filter(a => a.DetectionType === 'ppe_detection' || a.DetectionType === 'realtime_epp').length;
+  const realtimeAnalysis = analysisHistory.filter(a => a.DetectionType === 'realtime_epp').length;
   const avgConfidence = analysisHistory.length > 0 
     ? (analysisHistory.reduce((sum, a) => sum + (a.MinConfidence || 0), 0) / analysisHistory.length).toFixed(1)
     : 0;
@@ -114,18 +115,28 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory, calculateComplia
                     <div className="flex items-center space-x-3">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg ${
                         analysis.DetectionType === 'ppe_detection' ? 'bg-green-100 text-green-600' :
+                        analysis.DetectionType === 'realtime_epp' ? 'bg-pink-100 text-pink-600' :
                         analysis.DetectionType === 'face_detection' ? 'bg-blue-100 text-blue-600' :
                         'bg-purple-100 text-purple-600'
                       }`}>
                         {analysis.DetectionType === 'ppe_detection' ? '🦺' : 
+                         analysis.DetectionType === 'realtime_epp' ? '🎬' :
                          analysis.DetectionType === 'face_detection' ? '👤' : '🔍'}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">
-                          {analysis.DetectionType === 'ppe_detection' ? 'Análisis EPP' :
-                           analysis.DetectionType === 'face_detection' ? 'Detección Rostros' :
-                           'Análisis General'}
-                        </p>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-semibold text-gray-900">
+                            {analysis.DetectionType === 'ppe_detection' ? 'Análisis EPP' :
+                             analysis.DetectionType === 'realtime_epp' ? 'Tiempo Real EPP' :
+                             analysis.DetectionType === 'face_detection' ? 'Detección Rostros' :
+                             'Análisis General'}
+                          </p>
+                          {analysis.DetectionType === 'realtime_epp' && (
+                            <span className="bg-pink-100 text-pink-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              🎥 LIVE
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-500">
                           {new Date(analysis.timestamp || Date.now()).toLocaleString()}
                         </p>
@@ -137,7 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisHistory, calculateComplia
                       </p>
                       {analysis.Summary && (
                         <p className="text-sm text-gray-500">
-                          {analysis.DetectionType === 'ppe_detection' && 
+                          {(analysis.DetectionType === 'ppe_detection' || analysis.DetectionType === 'realtime_epp') && 
                             `${calculateCompliance(analysis, analysis.selectedEPPs || [], analysis.MinConfidence || 75)}/${analysis.Summary.totalPersons} cumplientes`}
                           {analysis.DetectionType === 'face_detection' && 
                             `${analysis.Summary.totalFaces} rostros detectados`}
