@@ -1480,6 +1480,7 @@ const App: React.FC = () => {
                       <div className="mt-3 flex gap-2">
                         <button
                           onClick={() => {
+                            if (analysis.DetectionType === 'realtime_epp') return;
                             // Cargar análisis completo en vista de historial
                             setResults(analysis);
                             setImageUrl(analysis.imageUrl || '');
@@ -1501,9 +1502,19 @@ const App: React.FC = () => {
                               window.scrollTo({ top: 0, behavior: 'smooth' });
                             }, 100);
                           }}
-                          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
+                          disabled={analysis.DetectionType === 'realtime_epp'}
+                          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center space-x-2 ${
+                            analysis.DetectionType === 'realtime_epp'
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                          }`}
                         >
-                          📊 Ver Informe Completo
+                          <span>📊 Ver Informe Completo</span>
+                          {analysis.DetectionType === 'realtime_epp' && (
+                            <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              🚧 Próximamente
+                            </span>
+                          )}
                         </button>
                         <button
                           onClick={() => {
