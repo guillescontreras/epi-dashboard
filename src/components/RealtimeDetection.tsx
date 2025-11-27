@@ -495,27 +495,27 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
             </div>
 
             <div className="space-y-2">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-2 border border-blue-200">
-                <h3 className="font-semibold text-gray-900 mb-1.5 text-xs">🛡️ Panel EPP</h3>
-                <div className="space-y-1">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-2.5 border border-blue-200">
+                <h3 className="font-semibold text-gray-900 mb-2 text-sm">🛡️ Panel EPP</h3>
+                <div className="space-y-1.5">
                   {Object.entries(eppNames).map(([epp, name]) => {
                     const eppKey = epp as keyof EPPStatus;
                     const isEnabled = enabledEPPs.has(eppKey);
                     const status = eppStatus[eppKey];
                     
                     return (
-                      <div key={epp} className={`flex items-center justify-between p-1.5 rounded border transition-all duration-500 ${
+                      <div key={epp} className={`flex items-center justify-between p-2 rounded border transition-all duration-500 ${
                         status === 'detectado' ? 'bg-green-100 border-green-400 shadow-lg shadow-green-200' :
                         status === 'no_detectado' ? 'bg-red-100 border-red-400 shadow-lg shadow-red-200' :
                         status === 'analizando' ? 'bg-blue-100 border-blue-400 animate-pulse' :
                         status === 'no_evaluable' ? 'bg-yellow-100 border-yellow-400' :
                         'bg-white hover:bg-gray-50'
                       }`}>
-                        <div className="flex items-center space-x-1.5">
-                          <span className="text-sm">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-base">
                             {epp === 'HEAD_COVER' ? '🪪' : epp === 'EYE_COVER' ? '🥽' : epp === 'HAND_COVER' ? '🧤' : epp === 'FOOT_COVER' ? '🥾' : epp === 'FACE_COVER' ? '😷' : '🎧'}
                           </span>
-                          <span className={`text-[10px] font-medium transition-colors ${
+                          <span className={`text-xs font-medium transition-colors ${
                             status === 'detectado' ? 'text-green-800 font-bold' :
                             status === 'no_detectado' ? 'text-red-800 font-bold' :
                             status === 'analizando' ? 'text-blue-800 font-bold' :
@@ -523,18 +523,18 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                             'text-gray-700'
                           }`}>{name}</span>
                         </div>
-                        <div className="flex items-center space-x-1.5">
-                          <div className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(status)}`}>
+                        <div className="flex items-center space-x-2">
+                          <div className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(status)}`}>
                             {getStatusIcon(status)}
                           </div>
                           <button
                             onClick={() => toggleEPP(eppKey)}
                             disabled={isDetecting}
-                            className={`relative w-8 h-4 rounded-full transition-all duration-200 ${
+                            className={`relative w-9 h-5 rounded-full transition-all duration-200 ${
                               isEnabled ? 'bg-blue-600' : 'bg-gray-300'
                             } disabled:opacity-50`}
                           >
-                            <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-200 ${
+                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
                               isEnabled ? 'translate-x-4' : 'translate-x-0.5'
                             }`} />
                           </button>
@@ -545,48 +545,48 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2 border border-green-200">
-                <h3 className="font-semibold text-gray-900 mb-1.5 text-xs">📊 Estado</h3>
-                <div className="space-y-1">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2.5 border border-green-200">
+                <h3 className="font-semibold text-gray-900 mb-2 text-sm">📊 Estado</h3>
+                <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-gray-600">Actividad:</span>
-                    <span className={`text-[10px] font-bold ${isAnalyzing ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <span className="text-xs text-gray-600">Actividad:</span>
+                    <span className={`text-xs font-bold ${isAnalyzing ? 'text-blue-600' : 'text-gray-400'}`}>
                       {isAnalyzing ? '🔄 Analizando' : '⚪ Esperando'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-gray-600">Último:</span>
-                    <span className="text-[10px] text-gray-500">
+                    <span className="text-xs text-gray-600">Último:</span>
+                    <span className="text-xs text-gray-500">
                       {lastAnalysis ? lastAnalysis.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'}) : '-'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-gray-600">Estado:</span>
-                    <span className={`text-[10px] font-bold ${
+                    <span className="text-xs text-gray-600">Estado:</span>
+                    <span className={`text-xs font-bold ${
                       isAnalyzing ? 'text-blue-600' : analysisInProgressRef.current ? 'text-orange-600' : 'text-green-600'
                     }`}>
                       {isAnalyzing ? '🔄 Analizando...' : analysisInProgressRef.current ? '⏳ Cooldown' : '✅ Listo'}
                     </span>
                   </div>
-                  <div className="text-[9px] text-gray-500 mt-1 pt-1 border-t border-gray-200">
+                  <div className="text-[10px] text-gray-500 mt-1.5 pt-1.5 border-t border-gray-200">
                     🎯 Movimiento → Análisis → 10s
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-2 border border-orange-200">
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-2.5 border border-orange-200">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900 text-xs flex items-center space-x-1.5">
+                  <h3 className="font-semibold text-gray-900 text-sm flex items-center space-x-2">
                     <span>📱</span>
                     <span>Envío de Alerta</span>
                   </h3>
                   <button
                     onClick={() => setAlertsEnabled(!alertsEnabled)}
-                    className={`relative w-8 h-4 rounded-full transition-all duration-200 ${
+                    className={`relative w-9 h-5 rounded-full transition-all duration-200 ${
                       alertsEnabled ? 'bg-orange-600' : 'bg-gray-300'
                     }`}
                   >
-                    <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-200 ${
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
                       alertsEnabled ? 'translate-x-4' : 'translate-x-0.5'
                     }`} />
                   </button>
@@ -605,7 +605,7 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                             checked={alertTypes.push}
                             onChange={(e) => setAlertTypes(prev => ({...prev, push: e.target.checked}))}
                             disabled={!isPushSupported || !isSubscribed}
-                            className="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500 disabled:opacity-50"
+                            className="w-3.5 h-3.5 text-orange-600 border-gray-300 rounded focus:ring-orange-500 disabled:opacity-50"
                           />
                           <span className="text-xs text-gray-700">🔔 Push Notification</span>
                           {isPushSupported ? (
@@ -629,7 +629,7 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                             type="checkbox"
                             checked={alertTypes.email}
                             onChange={(e) => setAlertTypes(prev => ({...prev, email: e.target.checked}))}
-                            className="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                            className="w-3.5 h-3.5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                           />
                           <span className="text-xs text-gray-700">📧 Email</span>
                         </label>
@@ -638,7 +638,7 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                             type="checkbox"
                             checked={alertTypes.sms}
                             onChange={(e) => setAlertTypes(prev => ({...prev, sms: e.target.checked}))}
-                            className="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                            className="w-3.5 h-3.5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                           />
                           <span className="text-xs text-gray-700">📱 SMS</span>
                         </label>
@@ -646,16 +646,16 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                     </div>
                     
                     <div className="p-2 bg-orange-100 rounded-lg border border-orange-300">
-                      <p className="text-[10px] text-orange-800">
+                      <p className="text-xs text-orange-800">
                         <strong>ℹ️ Importante:</strong> Las alertas se envían a tu usuario registrado. Asegúrate de tener tus datos completos (email/teléfono) en tu perfil.
                       </p>
-                      <p className="text-[10px] text-orange-700 mt-1">
+                      <p className="text-xs text-orange-700 mt-1">
                         <strong>⏰ Recurrencia:</strong> Email/SMS cada 10 min. Push sin límite.
                       </p>
                     </div>
                     
                     {(lastAlertTime.email || lastAlertTime.sms || lastAlertTime.push) && (
-                      <div className="text-[10px] text-gray-500 pt-1 border-t border-orange-200 space-y-0.5">
+                      <div className="text-xs text-gray-500 pt-1.5 border-t border-orange-200 space-y-1">
                         {lastAlertTime.email && <p>📧 Email: {lastAlertTime.email.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'})}</p>}
                         {lastAlertTime.sms && <p>📱 SMS: {lastAlertTime.sms.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'})}</p>}
                         {lastAlertTime.push && <p>🔔 Push: {lastAlertTime.push.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'})}</p>}
@@ -671,12 +671,12 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                 )}
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
-                <h3 className="font-semibold text-gray-900 mb-1.5 text-xs flex items-center space-x-1.5">
+              <div className="bg-blue-50 rounded-lg p-2.5 border border-blue-200">
+                <h3 className="font-semibold text-gray-900 mb-2 text-sm flex items-center space-x-2">
                   <span>🧠</span>
                   <span>Detección EPP con IA</span>
                 </h3>
-                <div className="text-[10px] text-gray-700 space-y-1">
+                <div className="text-xs text-gray-700 space-y-1">
                   <p><strong>Cómo funciona:</strong></p>
                   <ul className="list-disc list-inside space-y-0.5">
                     <li>Detecta movimiento en tiempo real</li>

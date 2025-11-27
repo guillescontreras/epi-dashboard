@@ -141,8 +141,13 @@ Optimizar performance del sistema de detección EPP, implementar paralelización
 11. **Alertas a usuario actual** - Eliminado selector supervisor
 12. **EPPs del panel** - Alertas usan EPPs seleccionados
 13. **Recurrencia controlada** - Email/SMS 10min, Push sin límite
-14. **UI compacta** - Panel EPP optimizado para móvil
+14. **UI compacta mejorada** - Panel EPP legible en móviles (text-xs)
 15. **Estado cooldown** - Muestra "⏳ Cooldown" durante 10s
+16. **Estadísticas tiempo real** - Guardado automático en DynamoDB ⭐
+17. **Dashboard LIVE** - Badge "🎥 LIVE" para análisis tiempo real ⭐
+18. **Backend reorganizado** - Carpeta backend/ con todas las Lambdas ⭐
+19. **Lambda admin-stats** - Soporte realtime_epp en estadísticas ⭐
+20. **AdminPanel actualizado** - Filtros incluyen realtime_epp ⭐
 
 ### Prioridad Alta (Futuras jornadas)
 1. **Medir performance real** con memoria 1024MB
@@ -194,8 +199,8 @@ lambda-deteccion-seguridad/
 **Fecha:** 17-20/11/2025  
 **Hora inicio:** 17/11/2025  
 **Versión inicial:** v2.10.1  
-**Versión final:** v2.14.0  
-**Estado:** ✅ Sistema alertas multicanal optimizado - UX mejorada y recurrencia controlada
+**Versión final:** v2.14.0+  
+**Estado:** ✅ Sistema alertas multicanal optimizado - Estadísticas tiempo real - Backend reorganizado
 
 ---
 
@@ -281,3 +286,103 @@ lambda-deteccion-seguridad/
 - Necesidad de datos completos en perfil
 - Recurrencia por tipo de alerta
 **Beneficio:** Usuario comprende funcionamiento del sistema
+
+---
+
+## 📊 Estadísticas Tiempo Real (27/11/2025)
+
+### Implementación Completa
+
+**Guardado Automático:**
+- Cada análisis en tiempo real se guarda en DynamoDB
+- Tabla: `epi-user-analysis`
+- DetectionType: `realtime_epp`
+- Incluye: analysisId, timestamp, Summary, selectedEPPs, eppStatus, MinConfidence
+
+**Integración Dashboard:**
+- Badge "🎥 LIVE" en rosa para análisis tiempo real
+- Icono 🎬 diferenciador
+- Incluido en conteo "Análisis EPP"
+- Incluido en cálculo de cumplimiento EPP
+
+**Integración AdminPanel:**
+- Filtros actualizados para incluir `realtime_epp`
+- Badge "🎥 LIVE" en historial de usuarios
+- Visualización completa de análisis tiempo real
+
+**Lambda admin-stats:**
+- Línea 90 actualizada: `'ppe': by_type.get('ppe_detection', 0) + by_type.get('realtime_epp', 0)`
+- Estadísticas globales incluyen análisis tiempo real
+- Gráficos diarios incluyen tiempo real
+
+---
+
+## 🗂️ Reorganización Backend (27/11/2025)
+
+### Estructura Creada
+
+```
+backend/
+├── lambdas/
+│   ├── admin/              # 4 Lambdas Python 3.9
+│   │   ├── epi-admin-stats-lambda-v2-updated.py ⭐
+│   │   ├── epi-admin-users-lambda-v2.py
+│   │   ├── epi-admin-user-history-lambda.py
+│   │   └── epi-admin-actions-lambda-updated.py
+│   ├── analysis/           # 3 Lambdas (Node.js + Python)
+│   │   ├── index.mjs (rekognition-processor)
+│   │   ├── save-analysis-lambda.py
+│   │   └── delete-analysis-lambda.py
+│   ├── user/               # 1 Lambda Python 3.9
+│   │   └── user-profile-lambda.py
+│   ├── ai/                 # 1 Lambda Python 3.9
+│   │   └── bedrock-summary-lambda.py
+│   ├── notifications/      # 4 Lambdas (Node.js + Python)
+│   │   ├── index.js (epi-send-push con web-push)
+│   │   ├── epi-push-subscription-lambda.js
+│   │   ├── epi-sms-alerts-lambda-fixed.js
+│   │   └── epi-get-supervisors-lambda.py
+│   └── utils/              # 1 Lambda Node.js
+│       └── index.mjs (upload-presigned)
+├── api-gateway/
+└── README.md
+```
+
+### Beneficios
+
+1. **Versionado:** Todo el código backend en Git
+2. **Documentación:** README.md completo con endpoints y deploy
+3. **Organización:** Lambdas agrupadas por funcionalidad
+4. **Backup:** Código descargado desde AWS (versiones actuales)
+5. **Deploy:** Proceso documentado para cada Lambda
+
+---
+
+## 🎨 Optimización UX Móvil (27/11/2025)
+
+### Problema Identificado
+Panel EPP con `text-[10px]` (10px) era ilegible en móviles
+
+### Solución Implementada
+- **Títulos:** text-xs → text-sm (12px → 14px)
+- **Nombres EPP:** text-[10px] → text-xs (10px → 12px)
+- **Iconos EPP:** text-sm → text-base (14px → 16px)
+- **Badges estado:** text-[10px] → text-xs (10px → 12px)
+- **Toggle switches:** w-8 h-4 → w-9 h-5 (más fácil tocar)
+- **Checkboxes:** w-3 h-3 → w-3.5 h-3.5 (área táctil mayor)
+- **Padding:** Incrementado ligeramente (p-2 → p-2.5)
+
+### Resultado
+✅ Panel compacto pero legible en móviles
+✅ Controles táctiles más accesibles
+✅ Balance entre espacio y usabilidad
+
+---
+
+## 🎓 Lecciones Adicionales
+
+12. **Estadísticas unificadas:** Guardar análisis tiempo real en misma tabla facilita reportes
+13. **Backend centralizado:** Tener código Lambda en repositorio mejora versionado y deploy
+14. **Legibilidad móvil:** text-xs (12px) es mínimo recomendado para móviles
+15. **Organización por categoría:** Agrupar Lambdas por funcionalidad facilita mantenimiento
+16. **Documentación inline:** README.md en backend/ esencial para nuevos desarrolladores

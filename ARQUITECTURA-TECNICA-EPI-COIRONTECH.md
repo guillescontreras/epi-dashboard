@@ -157,34 +157,48 @@ EPI-CoironTech es una aplicación web progresiva (PWA) desarrollada para el aná
 }
 ```
 
-### 3.2 Estructura de Componentes
+### 3.2 Estructura del Proyecto
 
 ```
-src/
-├── App.tsx                    # Componente raíz, orquestación principal
-├── aws-config.js              # Configuración de Amplify/Cognito
-├── version.ts                 # Control de versiones
-├── components/
-│   ├── AuthWrapper.tsx        # HOC de autenticación
-│   ├── ModernHeader.tsx       # Header con branding + pestaña Admin
-│   ├── UserMenu.tsx           # Menú de usuario autenticado
-│   ├── Dashboard.tsx          # Panel principal
-│   ├── AdminPanel.tsx         # Panel de administración (666 líneas) ⭐ NUEVO
-│   ├── GuidedAnalysisWizard.tsx  # Asistente paso a paso
-│   ├── DragDropUpload.tsx     # Carga de archivos
-│   ├── VideoProcessor.tsx     # Procesamiento de video
-│   ├── RealtimeDetection.tsx  # Detección en tiempo real
-│   ├── ImageComparison.tsx    # Comparación original/anotada
-│   ├── ResultsVisualization.tsx  # Visualización de resultados
-│   ├── AISummary.tsx          # Resumen generado por IA
-│   ├── UserProfileModal.tsx   # Gestión de perfil
-│   ├── ContactModal.tsx       # Formulario de contacto
-│   ├── FeedbackModal.tsx      # Feedback del usuario
-│   ├── FAQ.tsx                # Preguntas frecuentes
-│   ├── TermsAndConditions.tsx # Términos legales
-│   └── WelcomeModal.tsx       # Onboarding
-└── utils/
-    └── pdfGenerator.ts        # Generación de informes PDF
+epi-dashboard/
+├── backend/                   # ⭐ Backend serverless
+│   ├── lambdas/
+│   │   ├── admin/            # Lambdas de administración
+│   │   ├── analysis/         # Lambdas de análisis
+│   │   ├── user/             # Lambdas de usuarios
+│   │   ├── ai/               # Lambdas de IA
+│   │   ├── notifications/    # Lambdas de alertas
+│   │   └── utils/            # Lambdas de utilidades
+│   ├── api-gateway/          # Configuraciones API Gateway
+│   └── README.md             # Documentación backend
+├── src/
+│   ├── App.tsx               # Componente raíz
+│   ├── aws-config.js         # Configuración Amplify/Cognito
+│   ├── version.ts            # Control de versiones
+│   ├── components/
+│   │   ├── AuthWrapper.tsx
+│   │   ├── ModernHeader.tsx
+│   │   ├── UserMenu.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── AdminPanel.tsx
+│   │   ├── GuidedAnalysisWizard.tsx
+│   │   ├── DragDropUpload.tsx
+│   │   ├── VideoProcessor.tsx
+│   │   ├── RealtimeDetection.tsx
+│   │   ├── ImageComparison.tsx
+│   │   ├── ResultsVisualization.tsx
+│   │   ├── AISummary.tsx
+│   │   ├── UserProfileModal.tsx
+│   │   ├── ContactModal.tsx
+│   │   ├── FeedbackModal.tsx
+│   │   ├── FAQ.tsx
+│   │   ├── TermsAndConditions.tsx
+│   │   └── WelcomeModal.tsx
+│   └── utils/
+│       └── pdfGenerator.ts
+├── public/
+├── LOGS/                      # Resúmenes de jornada
+└── package.json
 ```
 
 ### 3.3 Flujo de Análisis de Imágenes
@@ -872,6 +886,7 @@ La evolución detallada del proyecto, incluyendo bugs corregidos, features imple
 - **Jornada 01-04:** Desarrollo inicial y features base
 - **Jornada 05 (v2.8.9 → v2.8.18):** Corrección de guardado en historial para todos los tipos de análisis
 - **Jornada 06 (v2.8.19 → v2.8.34):** Filtrado de EPPs, sistema de colores, UX de progreso unificado
+- **Jornada 08 (v2.14.0+):** Estadísticas tiempo real, reorganización backend, optimización UX móvil
 
 **Contenido de cada resumen:**
 - Objetivo de la jornada
@@ -890,6 +905,32 @@ La evolución detallada del proyecto, incluyendo bugs corregidos, features imple
 
 ---
 
-**Última actualización:** 13 de Noviembre 2025  
-**Versión del documento:** 1.2  
+**Última actualización:** 27 de Noviembre 2025  
+**Versión del documento:** 1.3  
 **Estado:** Producción Estable
+
+### v2.14.0+ (Noviembre 2025)
+
+**Reorganización del proyecto:**
+
+1. **Carpeta backend/ creada:**
+   - Todas las Lambdas descargadas desde AWS y organizadas por categoría
+   - Estructura: admin/, analysis/, user/, ai/, notifications/, utils/
+   - Documentación completa en backend/README.md
+
+2. **Lambda epi-admin-stats actualizada:**
+   - Soporte para `realtime_epp` en estadísticas
+   - Conteo EPP incluye análisis de tiempo real
+   - Línea 90: `'ppe': by_type.get('ppe_detection', 0) + by_type.get('realtime_epp', 0)`
+
+3. **AdminPanel.tsx actualizado:**
+   - Badge "🎥 LIVE" para análisis de tiempo real
+   - Filtros incluyen `realtime_epp` en historial de usuarios
+   - Icono 🎬 para diferenciar análisis en tiempo real
+
+4. **RealtimeDetection.tsx optimizado:**
+   - Mejora de legibilidad en móviles (text-xs en lugar de text-[10px])
+   - Controles táctiles más grandes (w-9 h-5)
+   - Balance entre compactación y usabilidad
+
+**Resultado:** Código backend centralizado en el repositorio, estadísticas completas incluyendo tiempo real, mejor UX móvil.

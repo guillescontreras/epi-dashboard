@@ -420,13 +420,21 @@ const AdminPanel: React.FC = () => {
                       <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex-1">
-                            <h3 className="font-medium text-gray-900">
-                              {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
-                               analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
-                               analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
-                               analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
-                               '🔍 Análisis General'}
-                            </h3>
+                            <div className="flex items-center space-x-2">
+                              <h3 className="font-medium text-gray-900">
+                                {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
+                                 analysis.DetectionType === 'realtime_epp' ? '🎬 Tiempo Real EPP' :
+                                 analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
+                                 analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
+                                 analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
+                                 '🔍 Análisis General'}
+                              </h3>
+                              {analysis.DetectionType === 'realtime_epp' && (
+                                <span className="bg-pink-100 text-pink-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                  🎥 LIVE
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-500">
                               {new Date(analysis.timestamp).toLocaleString()}
                             </p>
@@ -435,7 +443,7 @@ const AdminPanel: React.FC = () => {
                                 ID: {analysis.analysisId}
                               </p>
                             )}
-                            {analysis.DetectionType === 'ppe_detection' && analysis.selectedEPPs && analysis.selectedEPPs.length > 0 && (
+                            {(analysis.DetectionType === 'ppe_detection' || analysis.DetectionType === 'realtime_epp') && analysis.selectedEPPs && analysis.selectedEPPs.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {analysis.selectedEPPs.map((epp: string) => {
                                   const eppNames: any = {
@@ -459,7 +467,7 @@ const AdminPanel: React.FC = () => {
                             <span className="inline-flex px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
                               {analysis.MinConfidence || 75}% confianza
                             </span>
-                            {analysis.Summary && analysis.DetectionType === 'ppe_detection' && (
+                            {analysis.Summary && (analysis.DetectionType === 'ppe_detection' || analysis.DetectionType === 'realtime_epp') && (
                               <p className="text-sm text-gray-600">
                                 {analysis.Summary.totalPersons} personas
                               </p>
@@ -526,7 +534,7 @@ const AdminPanel: React.FC = () => {
             
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
               {/* Resumen del Análisis */}
-              {viewingAnalysis.DetectionType === 'ppe_detection' && (
+              {(viewingAnalysis.DetectionType === 'ppe_detection' || viewingAnalysis.DetectionType === 'realtime_epp') && (
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
                   <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-4 border-b border-gray-100">
                     <h3 className="text-lg font-semibold text-gray-900">📊 Resumen del Análisis</h3>
