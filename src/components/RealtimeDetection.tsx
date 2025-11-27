@@ -38,6 +38,7 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
   });
   const [lastAnalysis, setLastAnalysis] = useState<Date | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isCooldown, setIsCooldown] = useState(false);
   const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analysisInProgressRef = useRef(false);
   
@@ -217,8 +218,10 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
       
       // Esperar 10 segundos antes de permitir nuevo análisis
       setIsAnalyzing(false);
+      setIsCooldown(true);
       analysisTimeoutRef.current = setTimeout(() => {
         analysisInProgressRef.current = false;
+        setIsCooldown(false);
         console.log('✅ Sistema listo para nuevo análisis');
       }, 10000);
       
@@ -234,8 +237,10 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
       
       // En caso de error, también esperar 10 segundos
       setIsAnalyzing(false);
+      setIsCooldown(true);
       analysisTimeoutRef.current = setTimeout(() => {
         analysisInProgressRef.current = false;
+        setIsCooldown(false);
         console.log('✅ Sistema listo para nuevo análisis (después de error)');
       }, 10000);
     }
@@ -451,12 +456,12 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
         <div className="p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <div className="relative bg-black rounded-xl overflow-hidden">
+              <div className="relative bg-black rounded-xl overflow-hidden max-h-[40vh] lg:max-h-none">
                 <Webcam
                   ref={webcamRef}
                   audio={false}
                   screenshotFormat="image/jpeg"
-                  className="w-full"
+                  className="w-full h-full object-cover"
                   videoConstraints={{ facingMode }}
                 />
                 <canvas
@@ -495,6 +500,36 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
             </div>
 
             <div className="space-y-2">
+              {/* Panel Estado - Primero en móvil */}
+              <div className="lg:hidden bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2.5 border border-green-200">
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div className="text-center">
+                    <div className="text-[10px] text-gray-500 mb-0.5">Estado</div>
+                    <div className={`text-xs font-bold ${
+                      isAnalyzing ? 'text-blue-600' : isCooldown ? 'text-orange-600' : 'text-green-600'
+                    }`}>
+                      {isAnalyzing ? '🔄' : isCooldown ? '⏳' : '✅'}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[10px] text-gray-500 mb-0.5">Actividad</div>
+                    <div className={`text-xs font-bold ${isAnalyzing ? 'text-blue-600' : 'text-gray-400'}`}>
+                      {isAnalyzing ? '🔄' : '⚪'}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[10px] text-gray-500 mb-0.5">Último</div>
+                    <div className="text-xs text-gray-700 font-medium">
+                      {lastAnalysis ? lastAnalysis.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'}) : '-'}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-[10px] text-gray-500 text-center pt-1.5 border-t border-gray-200">
+                  🎯 Movimiento → Análisis → 10s
+                </div>
+              </div>
+
+              {/* Panel EPP */}
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-2.5 border border-blue-200">
                 <h3 className="font-semibold text-gray-900 mb-2 text-sm">🛡️ Panel EPP</h3>
                 <div className="space-y-1.5">
@@ -545,32 +580,33 @@ const RealtimeDetection: React.FC<RealtimeDetectionProps> = ({ onClose, epiItems
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2.5 border border-green-200">
+              {/* Panel Estado - Desktop */}
+              <div className="hidden lg:block bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2.5 border border-green-200">
                 <h3 className="font-semibold text-gray-900 mb-2 text-sm">📊 Estado</h3>
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-600">Actividad:</span>
-                    <span className={`text-xs font-bold ${isAnalyzing ? 'text-blue-600' : 'text-gray-400'}`}>
-                      {isAnalyzing ? '🔄 Analizando' : '⚪ Esperando'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-600">Último:</span>
-                    <span className="text-xs text-gray-500">
-                      {lastAnalysis ? lastAnalysis.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'}) : '-'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-600">Estado:</span>
-                    <span className={`text-xs font-bold ${
-                      isAnalyzing ? 'text-blue-600' : analysisInProgressRef.current ? 'text-orange-600' : 'text-green-600'
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div className="text-center">
+                    <div className="text-[10px] text-gray-500 mb-0.5">Estado</div>
+                    <div className={`text-xs font-bold ${
+                      isAnalyzing ? 'text-blue-600' : isCooldown ? 'text-orange-600' : 'text-green-600'
                     }`}>
-                      {isAnalyzing ? '🔄 Analizando...' : analysisInProgressRef.current ? '⏳ Cooldown' : '✅ Listo'}
-                    </span>
+                      {isAnalyzing ? '🔄' : isCooldown ? '⏳' : '✅'}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-gray-500 mt-1.5 pt-1.5 border-t border-gray-200">
-                    🎯 Movimiento → Análisis → 10s
+                  <div className="text-center">
+                    <div className="text-[10px] text-gray-500 mb-0.5">Actividad</div>
+                    <div className={`text-xs font-bold ${isAnalyzing ? 'text-blue-600' : 'text-gray-400'}`}>
+                      {isAnalyzing ? '🔄' : '⚪'}
+                    </div>
                   </div>
+                  <div className="text-center">
+                    <div className="text-[10px] text-gray-500 mb-0.5">Último</div>
+                    <div className="text-xs text-gray-700 font-medium">
+                      {lastAnalysis ? lastAnalysis.toLocaleTimeString('es', {hour: '2-digit', minute: '2-digit'}) : '-'}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-[10px] text-gray-500 text-center pt-1.5 border-t border-gray-200">
+                  🎯 Movimiento → Análisis → 10s
                 </div>
               </div>
 

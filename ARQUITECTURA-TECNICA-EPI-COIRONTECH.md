@@ -1,8 +1,8 @@
 # Documento Técnico de Arquitectura
 ## EPI-CoironTech - Sistema de Análisis Visual de Seguridad
 
-**Versión:** 2.9.6  
-**Fecha:** 16 de Noviembre 2025  
+**Versión:** 2.14.1  
+**Fecha:** 27 de Noviembre 2025  
 **Autor:** CoironTech Development Team  
 **Estado:** Producción
 
@@ -932,5 +932,25 @@ La evolución detallada del proyecto, incluyendo bugs corregidos, features imple
    - Mejora de legibilidad en móviles (text-xs en lugar de text-[10px])
    - Controles táctiles más grandes (w-9 h-5)
    - Balance entre compactación y usabilidad
+   - Video reducido a 40vh en móviles (max-h-[40vh] lg:max-h-none)
+   - Panel Estado reordenado: justo debajo del video en móvil
+   - Panel Estado compacto: grid 3 columnas con iconos centrados
 
 **Resultado:** Código backend centralizado en el repositorio, estadísticas completas incluyendo tiempo real, mejor UX móvil.
+
+### v2.14.1 (Noviembre 2025)
+
+**Optimización UX Móvil Tiempo Real:**
+
+1. **Layout móvil mejorado:**
+   - Video reducido a 40vh en móviles para evitar scroll excesivo
+   - Panel Estado duplicado con orden diferente: móvil (justo debajo video) vs desktop (posición original)
+   - Orden móvil: Video → Estado → Panel EPP → Alertas → Info IA
+
+2. **Panel Estado compacto:**
+   - Grid horizontal 3 columnas en lugar de lista vertical
+   - Iconos centrados grandes (✅/⏳/🔄/⚪) para mejor visibilidad
+   - Etiquetas pequeñas (text-[10px]) arriba de cada valor
+   - Reducción ~40% altura vertical
+
+**Resultado:** Mejor visibilidad inmediata del estado en móvil, panel más compacto sin perder legibilidad.

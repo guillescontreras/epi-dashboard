@@ -148,6 +148,8 @@ Optimizar performance del sistema de detección EPP, implementar paralelización
 18. **Backend reorganizado** - Carpeta backend/ con todas las Lambdas ⭐
 19. **Lambda admin-stats** - Soporte realtime_epp en estadísticas ⭐
 20. **AdminPanel actualizado** - Filtros incluyen realtime_epp ⭐
+21. **Layout móvil tiempo real** - Video 40vh, panel Estado reordenado ⭐
+22. **Panel Estado compacto** - Grid horizontal 3 columnas, iconos centrados ⭐
 
 ### Prioridad Alta (Futuras jornadas)
 1. **Medir performance real** con memoria 1024MB
@@ -199,7 +201,7 @@ lambda-deteccion-seguridad/
 **Fecha:** 17-20/11/2025  
 **Hora inicio:** 17/11/2025  
 **Versión inicial:** v2.10.1  
-**Versión final:** v2.14.0+  
+**Versión final:** v2.14.1  
 **Estado:** ✅ Sistema alertas multicanal optimizado - Estadísticas tiempo real - Backend reorganizado
 
 ---
@@ -216,6 +218,9 @@ lambda-deteccion-seguridad/
 8. **SES remitente verificado:** Usar email verificado como remitente, cualquier destinatario válido
 9. **UX contextual:** Leyendas específicas por contexto mejoran comprensión usuario
 10. **Push proactivo:** Solicitar permisos automáticamente en móvil mejora adopción
+11. **Layout móvil priorizado:** Video más pequeño (40vh) y panel Estado justo debajo mejora visibilidad
+12. **Grid horizontal compacto:** Usar grid 3 columnas con iconos centrados ahorra espacio vertical
+13. **Iconos sobre texto:** Iconos grandes (✅/⏳/🔄) más escaneables que texto completo
 
 ---
 
@@ -386,3 +391,5 @@ Panel EPP con `text-[10px]` (10px) era ilegible en móviles
 14. **Legibilidad móvil:** text-xs (12px) es mínimo recomendado para móviles
 15. **Organización por categoría:** Agrupar Lambdas por funcionalidad facilita mantenimiento
 16. **Documentación inline:** README.md en backend/ esencial para nuevos desarrolladores
+17. **Layout móvil adaptativo:** Duplicar paneles con lg:hidden/hidden lg:block permite orden diferente móvil/desktop
+18. **Compactación inteligente:** Reducir altura sin sacrificar legibilidad usando grid y iconos

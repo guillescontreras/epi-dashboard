@@ -127,7 +127,10 @@ const App: React.FC = () => {
       const historyData = await historyResponse.json();
       console.log('Historial recibido:', historyData);
       
-      const newHistory = historyData.history || [];
+      const newHistory = (historyData.history || []).map((item: any) => ({
+        ...item,
+        DetectionType: item.DetectionType || item.analysisData?.DetectionType || 'unknown'
+      }));
       
       if (loadMore) {
         // Combinar y eliminar duplicados por timestamp
@@ -1410,13 +1413,21 @@ const App: React.FC = () => {
                     <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
-                          <h3 className="font-medium text-gray-900">
-                            {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
-                             analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
-                             analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
-                             analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
-                             '🔍 Análisis General'}
-                          </h3>
+                          <div className="flex items-center space-x-2">
+                            <h3 className="font-medium text-gray-900">
+                              {analysis.DetectionType === 'ppe_detection' ? '🦺 Análisis EPP' :
+                               analysis.DetectionType === 'realtime_epp' ? '🎬 Tiempo Real EPP' :
+                               analysis.DetectionType === 'face_detection' ? '👤 Detección Rostros' :
+                               analysis.DetectionType === 'text_detection' ? '📝 Detección Texto' :
+                               analysis.DetectionType === 'label_detection' ? '🏷️ Detección Objetos' :
+                               '🔍 Análisis General'}
+                            </h3>
+                            {analysis.DetectionType === 'realtime_epp' && (
+                              <span className="bg-pink-100 text-pink-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                🎥 LIVE
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-500">
                             {new Date(analysis.timestamp).toLocaleString()}
                           </p>

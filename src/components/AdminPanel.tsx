@@ -25,8 +25,11 @@ interface Stats {
   totalUsers: number;
   activeUsers: number;
   totalAnalyses: number;
+  staticAnalyses: number;
+  realtimeAnalyses: number;
   byType: {
-    ppe: number;
+    ppe_static: number;
+    ppe_realtime: number;
     face: number;
     label: number;
     text: number;
@@ -208,26 +211,22 @@ const AdminPanel: React.FC = () => {
             <div className="space-y-6">
               {stats && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-6 text-white">
-                      <p className="text-4xl font-bold">{stats.totalUsers}</p>
-                      <p className="text-sm opacity-90 mt-2">Usuarios Registrados</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-teal-500 to-green-500 rounded-xl p-6 text-white">
-                      <p className="text-4xl font-bold">{stats.activeUsers}</p>
-                      <p className="text-sm opacity-90 mt-2">Usuarios Activos</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-6 text-white">
                       <p className="text-4xl font-bold">{stats.totalAnalyses}</p>
                       <p className="text-sm opacity-90 mt-2">Análisis Totales</p>
                     </div>
-                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white">
-                      <p className="text-4xl font-bold">{stats.byType.ppe}</p>
-                      <p className="text-sm opacity-90 mt-2">Análisis EPP</p>
+                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-6 text-white">
+                      <p className="text-4xl font-bold">{stats.staticAnalyses}</p>
+                      <p className="text-sm opacity-90 mt-2">Análisis Estáticos</p>
                     </div>
-                    <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-6 text-white">
-                      <p className="text-4xl font-bold">{stats.byType.face + stats.byType.label + stats.byType.text}</p>
-                      <p className="text-sm opacity-90 mt-2">Otros Análisis</p>
+                    <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl p-6 text-white">
+                      <p className="text-4xl font-bold">{stats.realtimeAnalyses}</p>
+                      <p className="text-sm opacity-90 mt-2">🎥 Tiempo Real</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl p-6 text-white">
+                      <p className="text-4xl font-bold">{stats.totalUsers}</p>
+                      <p className="text-sm opacity-90 mt-2">Usuarios ({stats.activeUsers} activos)</p>
                     </div>
                   </div>
 
@@ -236,8 +235,15 @@ const AdminPanel: React.FC = () => {
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución por Tipo</h3>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-700">🦺 EPP Detection</span>
-                          <span className="font-bold text-blue-600">{stats.byType.ppe}</span>
+                          <span className="text-gray-700">🦺 EPP Estático</span>
+                          <span className="font-bold text-blue-600">{stats.byType.ppe_static}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700 flex items-center space-x-1">
+                            <span>🎬 EPP Tiempo Real</span>
+                            <span className="bg-pink-100 text-pink-700 text-[9px] font-bold px-1 py-0.5 rounded">🎥 LIVE</span>
+                          </span>
+                          <span className="font-bold text-pink-600">{stats.byType.ppe_realtime}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-gray-700">👤 Face Detection</span>
